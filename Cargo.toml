@@ -1,0 +1,18 @@
+[package]
+name = "good_lp"
+version = "0.0.1"
+authors = ["Ophir LOJKINE <contact@ophir.dev>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[features]
+default = ["coin_cbc"]
+
+[dependencies]
+coin_cbc = { version = "0.1", optional = true }
+minilp = { version = "0.2", optional = true }
+
+[dev-dependencies]
+trybuild = "1"

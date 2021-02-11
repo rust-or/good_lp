@@ -1,0 +1,14 @@
+error[E0308]: mismatched types
+ --> $DIR/test_different_types.rs:8:20
+  |
+6 |     let mut var1 = variables!();
+  |                    ------------ the expected closure
+7 |     let mut var2 = variables!();
+  |                    ------------ the found closure
+8 |     sametype(var1, var2)
+  |                    ^^^^ expected closure, found a different closure
+  |
+  = note: expected struct `good_lp::variable::ProblemVariables<[closure@$DIR/src/variable.rs:141:60: 141:64]>` (closure)
+             found struct `good_lp::variable::ProblemVariables<[closure@$DIR/src/variable.rs:141:60: 141:64]>` (closure)
+  = note: no two closures, even if identical, have the same type
+  = help: consider boxing your closure and/or using it as a trait object
