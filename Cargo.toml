@@ -3,6 +3,8 @@ name = "good_lp"
 version = "0.0.1"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
+repository = "https://github.com/lovasoa/good_lp"
+documentation = "https://docs.rs/good_lp"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
