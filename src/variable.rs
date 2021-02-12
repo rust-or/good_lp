@@ -87,6 +87,11 @@ impl VariableDefinition {
         self.max = max.into();
         self
     }
+
+    /// Set both the lower and higher bounds of the variable
+    pub fn clamp<N1: Into<f64>, N2: Into<f64>>(self, min: N1, max: N2) -> Self {
+        self.min(min).max(max)
+    }
 }
 
 /// Creates an unbounded continuous linear variable
