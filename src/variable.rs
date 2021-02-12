@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::ops::{Div, Mul};
+use std::ops::{Div, Mul, Neg};
 
 use crate::expression::{Expression, LinearExpression};
 use crate::solvers::ObjectiveDirection;
@@ -210,4 +210,12 @@ impl<F> Div<f64> for Variable<F> {
 impl<F> Div<i32> for Variable<F> {
     type Output = Expression<F>;
     fn div(self, rhs: i32) -> Self::Output { self * (1. / f64::from(rhs)) }
+}
+
+impl<T> Neg for Variable<T> {
+    type Output = Expression<T>;
+
+    fn neg(self) -> Self::Output {
+        -Expression::from(self)
+    }
 }
