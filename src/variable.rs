@@ -120,6 +120,13 @@ impl<F: Fn()> ProblemVariables<F> {
         Variable { _problem_type: PhantomData, index }
     }
 
+    /// Adds a list of variables with the given definition
+    pub fn add_vector(&mut self, var_def: VariableDefinition, len: usize) -> Vec<Variable<F>> {
+        (0..len).map(|_i| {
+            self.add(var_def.clone())
+        }).collect()
+    }
+
     /// Creates an optimization problem with the given objective. Don't solve it immediately
     pub fn optimise<E: Into<Expression<F>>>(
         self,
