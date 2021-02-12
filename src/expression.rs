@@ -112,11 +112,11 @@ impl<F> Expression<F> {
     /// let b = vars.add(variable().max(4));
     /// let objective = a + b;
     /// let solution = vars.maximise(objective.clone()).using(coin_cbc).solve()?;
-    /// assert_eq!(objective.eval(&solution), 5.);
+    /// assert_eq!(objective.eval_with(&solution), 5.);
     /// # use good_lp::ResolutionError;
     /// # Ok::<_, ResolutionError>(())
     /// ```
-    pub fn eval<S: Solution<F>>(&self, values: &S) -> f64 {
+    pub fn eval_with<S: Solution<F>>(&self, values: &S) -> f64 {
         self.constant +
             self.linear.coefficients
                 .iter()
@@ -331,6 +331,6 @@ mod tests {
         let mut values = HashMap::new();
         values.insert(a, 100);
         values.insert(b, -1);
-        assert_eq!((a + 3 * (b + 3)).eval(&values), 106.)
+        assert_eq!((a + 3 * (b + 3)).eval_with(&values), 106.)
     }
 }

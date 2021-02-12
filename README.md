@@ -15,5 +15,6 @@ fn main() {
         .with(1 + a >> 4. - b)
         .solve()?;
     println!("a={}   b={}", solution.value(a), solution.value(b));
+    println!("a + b = {}", solution.eval(a + b));
 }
 ```
