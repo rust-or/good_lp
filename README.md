@@ -24,11 +24,11 @@ fn main() {
 This library offers an abstraction over multiple solvers. By default, it uses [cbc](https://www.coin-or.org/Cbc/), but
 you can also activate other solvers using cargo features.
 
-#### cbc
+#### [cbc](https://www.coin-or.org/Cbc/)
 
 Used by default, performant, but requires to have a C compiler and the cbc C library installed.
 
-#### minilp
+#### [minilp](https://docs.rs/minilp)
 
 minilp is a pure rust solver, which means it works out of the box without installing anything else.
 
@@ -36,7 +36,7 @@ You can activate it with :
 
 ```toml
 [dependencies.good_lp]
-version = "0.0.4"
+version = "0.1.0"
 default-features = false
 features = ["minilp"]
 ```
