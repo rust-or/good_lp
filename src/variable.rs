@@ -5,7 +5,7 @@ use std::ops::{Add, Mul, Sub, Div};
 
 use crate::expression::{Expression, LinearExpression};
 use std::fmt::{Formatter, Debug};
-use crate::solvers::{Solver, ObjectiveDirection};
+use crate::solvers::ObjectiveDirection;
 
 /// A variable in a problem
 #[derive(Debug, Default)]
@@ -109,19 +109,23 @@ impl<F: Fn()> ProblemVariables<F> {
         Variable { _problem_type: PhantomData, index }
     }
 
-    pub fn optimise<E: Into<Expression<F>>, S: Solver<F>>(
+    pub fn optimise<E: Into<Expression<F>>>(
         self,
         direction: ObjectiveDirection,
         objective: E,
-    ) -> S {
-        S::new(self, direction, objective.into())
+    ) -> UnsolvedProblem<F> {
+        UnsolvedProblem {
+            objective: objective.into(),
+            direction,
+            variables: self,
+        }
     }
 
-    pub fn maximise<E: Into<Expression<F>>, S: Solver<F>>(self, objective: E) -> S {
+    pub fn maximise<E: Into<Expression<F>>>(self, objective: E) -> UnsolvedProblem<F> {
         self.optimise(ObjectiveDirection::Maximisation, objective)
     }
 
-    pub fn minimise<E: Into<Expression<F>>, S: Solver<F>>(self, objective: E) -> S {
+    pub fn minimise<E: Into<Expression<F>>>(self, objective: E) -> UnsolvedProblem<F> {
         self.optimise(ObjectiveDirection::Minimisation, objective)
     }
 }
@@ -139,6 +143,19 @@ impl<F> IntoIterator for ProblemVariables<F>{
 macro_rules! variables {
     () => {
         $crate::variable::ProblemVariables::__new_internal(||())
+    }
+}
+
+pub struct UnsolvedProblem<F> {
+    pub(crate) objective: Expression<F>,
+    pub(crate) direction: ObjectiveDirection,
+    pub(crate) variables: ProblemVariables<F>,
+}
+
+impl<F> UnsolvedProblem<F> {
+    pub fn using<S, G>(self, solver: S) -> G
+        where S: FnOnce(UnsolvedProblem<F>) -> G {
+        solver(self)
     }
 }
 
@@ -234,5 +251,13 @@ impl<F> Sub<Variable<F>> for Variable<F> {
 
     fn sub(self, rhs: Variable<F>) -> Self::Output {
         Expression::from(self) - rhs
+    }
+}
+
+impl<F> Sub<Variable<F>> for f64 {
+    type Output = Expression<F>;
+
+    fn sub(self, rhs: Variable<F>) -> Self::Output {
+        self - Expression::from(rhs)
     }
 }

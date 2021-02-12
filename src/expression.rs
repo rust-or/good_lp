@@ -244,6 +244,14 @@ impl<F> Mul<Expression<F>> for i32 {
     }
 }
 
+impl<F> Sub<Expression<F>> for f64 {
+    type Output = Expression<F>;
+
+    fn sub(self, rhs: Expression<F>) -> Self::Output {
+        rhs + (-self)
+    }
+}
+
 impl<'a, F, A> std::iter::Sum<A> for Expression<F>
     where Expression<F>: From<A> {
     fn sum<I: Iterator<Item=A>>(iter: I) -> Self {

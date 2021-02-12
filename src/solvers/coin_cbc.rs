@@ -1,35 +1,37 @@
-use crate::solvers::{Solver, ObjectiveDirection, Solution, ResolutionError};
-use crate::{Constraint, Expression, Variable};
-use crate::variable::ProblemVariables;
+use crate::solvers::{ObjectiveDirection, Solution, ResolutionError, SolverModel};
+use crate::{Constraint, Variable};
+use crate::variable::UnsolvedProblem;
 use coin_cbc::{raw::Status, Model, Sense, Col, Solution as CbcSolution};
 use std::marker::PhantomData;
 
-struct CoinCbc<F> {
+
+pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
+    let UnsolvedProblem { objective, direction, variables } = to_solve;
+    let mut model = Model::default();
+    let columns: Vec<Col> = variables.into_iter().map(
+        |_var| model.add_col()
+    ).collect();
+    for (var, coeff) in objective.linear.coefficients.into_iter() {
+        model.set_obj_coeff(columns[var.index()], coeff);
+    }
+    model.set_obj_sense(match direction {
+        ObjectiveDirection::Maximisation => Sense::Maximize,
+        ObjectiveDirection::Minimisation => Sense::Minimize,
+    });
+    CoinCbcProblem { model, columns, variable_type: PhantomData }
+}
+
+pub struct CoinCbcProblem<F> {
     model: Model,
     columns: Vec<Col>,
     variable_type: PhantomData<F>,
 }
 
-impl<T> Solver<T> for CoinCbc<T> {
+impl<T> SolverModel<T> for CoinCbcProblem<T> {
     type Solution = CoinCbcSolution<T>;
     type Error = ResolutionError;
 
-    fn new(variables: ProblemVariables<T>, direction: ObjectiveDirection, objective: Expression<T>) -> Self {
-        let mut model = Model::default();
-        let columns: Vec<Col> = variables.into_iter().map(
-            |_var| model.add_col()
-        ).collect();
-        for (var, coeff) in objective.linear.coefficients.into_iter() {
-            model.set_obj_coeff(columns[var.index()], coeff);
-        }
-        model.set_obj_sense(match direction {
-            ObjectiveDirection::Maximisation => Sense::Maximize,
-            ObjectiveDirection::Minimisation => Sense::Minimize,
-        });
-        CoinCbc { model, columns, variable_type: PhantomData }
-    }
-
-    fn with(&mut self, constraint: Constraint<T>) -> &mut Self {
+    fn with(mut self, constraint: Constraint<T>) -> Self {
         let row = self.model.add_row();
         let constant = -constraint.expression.constant;
         if constraint.is_equality {
