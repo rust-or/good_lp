@@ -1,25 +1,25 @@
 /// A Linear Programming modeler that is easy to use, performant with large problems, and well-typed.
 ///
 /// ```rust
-/// use good_lp::{variables, coin_cbc, SolverModel, Solution};
+/// use good_lp::{variables, variable, coin_cbc, SolverModel, Solution};
 ///
 /// let mut vars = variables!();
-/// let a = vars.add_variable();
-/// let b = vars.add_variable();
-/// let solution = vars.maximise(9. * (a * 2 + b / 3))
+/// let a = vars.add(variable().max(1));
+/// let b = vars.add(variable().min(2).max(4));
+/// let solution = vars.maximise(10 * (a - b / 5) - b)
 ///     .using(coin_cbc)
 ///     .with(a + 2. << b)
-///     .with(3. - a >> b)
+///     .with(1 + a >> 4. - b)
 ///     .solve()?;
 ///
-/// assert_eq!(solution.value(a), 0.5);
-/// assert_eq!(solution.value(b), 2.5);
+/// assert_eq!(solution.value(a), 1.);
+/// assert_eq!(solution.value(b), 3.);
 /// # use good_lp::ResolutionError;
 /// # Ok::<_, ResolutionError>(())
 /// ```
 
 pub use expression::Expression;
-pub use variable::Variable;
+pub use variable::{Variable, variable};
 pub use constraint::Constraint;
 pub use solvers::{ResolutionError, Solution, SolverModel};
 pub use solvers::coin_cbc::coin_cbc;
@@ -29,3 +29,4 @@ mod expression;
 pub mod variable;
 mod solvers;
 pub mod constraint;
+mod variables_macro;

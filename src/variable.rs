@@ -60,11 +60,41 @@ pub trait FormatWithVars<F> {
     }
 }
 
-pub struct VariableDefinition;
+#[derive(Clone, PartialEq)]
+pub struct VariableDefinition {
+    pub(crate) min: f64,
+    pub(crate) max: f64,
+}
+
+impl VariableDefinition {
+    pub fn min<N: Into<f64>>(mut self, min: N) -> Self {
+        self.min = min.into();
+        self
+    }
+    pub fn max<N: Into<f64>>(mut self, max: N) -> Self {
+        self.max = max.into();
+        self
+    }
+}
+
+impl Default for VariableDefinition {
+    fn default() -> Self {
+        VariableDefinition {
+            min: f64::NEG_INFINITY,
+            max: f64::INFINITY,
+        }
+    }
+}
+
+/// Returns an anonymous unbounded continuous variable definition
+pub fn variable() -> VariableDefinition {
+    VariableDefinition::default()
+}
 
 /// Represents the variable for a given problem.
 /// Each problem has a unique type, which prevents using the variables
-/// from one problem inside an other one
+/// from one problem inside an other one.
+/// Instances of this type should be created exclusively using the [variables!] macro.
 pub struct ProblemVariables<F> {
     _type_signature: F,
     variables: Vec<VariableDefinition>,
@@ -78,12 +108,19 @@ impl<F: Fn()> ProblemVariables<F> {
         ProblemVariables { _type_signature, variables: vec![] }
     }
 
+    /// Add a anonymous unbounded continuous variable to the problem
     pub fn add_variable(&mut self) -> Variable<F> {
+        self.add(variable())
+    }
+
+    /// Add a variable with the given definition
+    pub fn add(&mut self, var_def: VariableDefinition) -> Variable<F> {
         let index = self.variables.len();
-        self.variables.push(VariableDefinition);
+        self.variables.push(var_def);
         Variable { _problem_type: PhantomData, index }
     }
 
+    /// Creates an optimization problem with the given objective. Don't solve it immediately
     pub fn optimise<E: Into<Expression<F>>>(
         self,
         direction: ObjectiveDirection,
@@ -96,10 +133,12 @@ impl<F: Fn()> ProblemVariables<F> {
         }
     }
 
+    /// Creates an maximization problem with the given objective. Don't solve it immediately
     pub fn maximise<E: Into<Expression<F>>>(self, objective: E) -> UnsolvedProblem<F> {
         self.optimise(ObjectiveDirection::Maximisation, objective)
     }
 
+    /// Creates an minimization problem with the given objective. Don't solve it immediately
     pub fn minimise<E: Into<Expression<F>>>(self, objective: E) -> UnsolvedProblem<F> {
         self.optimise(ObjectiveDirection::Minimisation, objective)
     }
@@ -111,13 +150,6 @@ impl<F> IntoIterator for ProblemVariables<F>{
 
     fn into_iter(self) -> Self::IntoIter {
         self.variables.into_iter()
-    }
-}
-
-#[macro_export]
-macro_rules! variables {
-    () => {
-        $crate::variable::ProblemVariables::__new_internal(||())
     }
 }
 

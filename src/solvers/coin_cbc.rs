@@ -1,6 +1,6 @@
 use crate::solvers::{ObjectiveDirection, Solution, ResolutionError, SolverModel};
 use crate::{Constraint, Variable};
-use crate::variable::UnsolvedProblem;
+use crate::variable::{UnsolvedProblem, VariableDefinition};
 use coin_cbc::{raw::Status, Model, Sense, Col, Solution as CbcSolution};
 use std::marker::PhantomData;
 
@@ -9,7 +9,16 @@ pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
     let UnsolvedProblem { objective, direction, variables } = to_solve;
     let mut model = Model::default();
     let columns: Vec<Col> = variables.into_iter().map(
-        |_var| model.add_col()
+        |VariableDefinition { min, max, .. }| {
+            let col = model.add_col();
+            if min > f64::NEG_INFINITY {
+                model.set_col_lower(col, min)
+            }
+            if max < f64::INFINITY {
+                model.set_col_upper(col, max)
+            }
+            col
+        }
     ).collect();
     for (var, coeff) in objective.linear.coefficients.into_iter() {
         model.set_obj_coeff(columns[var.index()], coeff);
