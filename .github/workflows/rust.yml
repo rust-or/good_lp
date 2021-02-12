@@ -20,6 +20,6 @@ jobs:
     - name: install deps
       run: sudo apt-get install coinor-cbc coinor-libcbc-dev
     - name: Build
-      run: cargo build --verbose --all-features
+      run: cargo build --verbose --all-features --tests
     - name: Run tests
       run: cargo test --verbose --all-features
