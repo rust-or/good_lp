@@ -1,5 +1,7 @@
 #[cfg(feature = "coin_cbc")]
 pub mod coin_cbc;
+#[cfg(feature = "minilp")]
+pub mod minilp;
 
 use crate::Variable;
 use crate::{Constraint, Expression};

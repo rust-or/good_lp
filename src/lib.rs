@@ -27,6 +27,9 @@ pub use variable::{variable, Variable};
 #[cfg(feature = "coin_cbc")]
 pub use solvers::coin_cbc::coin_cbc;
 
+#[cfg(feature = "minilp")]
+pub use solvers::minilp::minilp;
+
 mod expression;
 #[macro_use]
 pub mod variable;

@@ -24,6 +24,16 @@ pub struct Variable<T> {
 }
 
 impl<T> Variable<T> {
+    /// No one should use this method outside of [VariableDefinition]
+    fn at(index: usize) -> Self {
+        Self {
+            _problem_type: PhantomData,
+            index,
+        }
+    }
+}
+
+impl<T> Variable<T> {
     pub(super) fn index(&self) -> usize {
         self.index
     }
@@ -138,10 +148,7 @@ impl<F: Fn()> ProblemVariables<F> {
     pub fn add(&mut self, var_def: VariableDefinition) -> Variable<F> {
         let index = self.variables.len();
         self.variables.push(var_def);
-        Variable {
-            _problem_type: PhantomData,
-            index,
-        }
+        Variable::at(index)
     }
 
     /// Adds a list of variables with the given definition
@@ -170,6 +177,16 @@ impl<F: Fn()> ProblemVariables<F> {
     /// Creates an minimization problem with the given objective. Don't solve it immediately
     pub fn minimise<E: Into<Expression<F>>>(self, objective: E) -> UnsolvedProblem<F> {
         self.optimise(ObjectiveDirection::Minimisation, objective)
+    }
+
+    /// Iterates over the couples of variables with their properties
+    pub fn iter_variables_with_def(
+        &self,
+    ) -> impl Iterator<Item = (Variable<F>, &VariableDefinition)> {
+        self.variables
+            .iter()
+            .enumerate()
+            .map(|(i, def)| (Variable::at(i), def))
     }
 }
 

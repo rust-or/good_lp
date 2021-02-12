@@ -18,3 +18,28 @@ fn main() {
     println!("a + b = {}", solution.eval(a + b));
 }
 ```
+
+## Solvers
+
+This library offers an abstraction over multiple solvers. By default, it uses [cbc](https://www.coin-or.org/Cbc/), but
+you can also activate other solvers using cargo features.
+
+#### cbc
+
+Used by default, performant, but requires to have a C compiler and the cbc C library installed.
+
+#### minilp
+
+minilp is a pure rust solver, which means it works out of the box without installing anything else.
+
+You can activate it with :
+
+```toml
+[dependencies.good_lp]
+version = "0.0.4"
+default-features = false
+features = ["minilp"]
+```
+
+Then use `minilp` instead of `coin_cbc` in your code:
+`use good_lp::minilp` and then `vars.maximise(objective).using(minilp)`.
