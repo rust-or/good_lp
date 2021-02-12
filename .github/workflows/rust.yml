@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install deps
-      run: sudo apt-get install coinor-cbc
+      run: sudo apt-get install coinor-cbc coinor-libcbc-dev
     - name: Build
       run: cargo build --verbose --all-features
     - name: Run tests
