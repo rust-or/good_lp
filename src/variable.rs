@@ -1,10 +1,10 @@
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::ops::{Add, Mul, Sub, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 use crate::expression::{Expression, LinearExpression};
-use std::fmt::{Formatter, Debug};
 use crate::solvers::ObjectiveDirection;
 
 /// A variable in a problem
@@ -57,31 +57,6 @@ pub trait FormatWithVars<F> {
         self.format_with(f, |f, var| {
             write!(f, "v{}", var.index())
         })
-    }
-}
-
-impl<F> Debug for Constraint<F> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.format_debug(f)
-    }
-}
-
-pub struct Constraint<F> {
-    pub(crate) expression: Expression<F>,
-    /// if is_equality, represents expression == 0, otherwise, expression <= 0
-    pub(crate) is_equality: bool,
-}
-
-impl<F> FormatWithVars<F> for Constraint<F> {
-    fn format_with<FUN>(
-        &self,
-        f: &mut Formatter<'_>,
-        variable_format: FUN,
-    ) -> std::fmt::Result
-        where FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result {
-        self.expression.linear.format_with(f, variable_format)?;
-        write!(f, " {} ", if self.is_equality { "=" } else { "<=" })?;
-        write!(f, "{}", -self.expression.constant)
     }
 }
 

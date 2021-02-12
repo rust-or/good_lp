@@ -1,6 +1,6 @@
 pub mod coin_cbc;
 
-use crate::variable::Constraint;
+use crate::Constraint;
 use crate::Variable;
 
 #[derive(Eq, PartialEq, Clone, Copy)]

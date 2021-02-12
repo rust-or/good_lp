@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::Constraint;
+use crate::constraint;
 use crate::variable::{Variable, FormatWithVars};
 use std::fmt::{Debug, Formatter};
 
@@ -75,22 +76,19 @@ impl<F> Expression<F> {
     /// Creates a constraint indicating that this expression
     /// is lesser than or equal to the right hand side
     pub fn leq<RHS: Into<Expression<F>>>(self, rhs: RHS) -> Constraint<F> {
-        let expression = self - rhs.into();
-        Constraint { expression, is_equality: false }
+        constraint::leq(self, rhs)
     }
 
     /// Creates a constraint indicating that this expression
     /// is greater than or equal to the right hand side
     pub fn geq<RHS: Into<Expression<F>>>(self, rhs: RHS) -> Constraint<F> {
-        let expression = rhs.into() - self;
-        Constraint { expression, is_equality: false }
+        constraint::geq(self, rhs)
     }
 
     /// Creates a constraint indicating that this expression
     /// is greater than or equal to the right hand side
     pub fn eq<RHS: Into<Expression<F>>>(self, rhs: RHS) -> Constraint<F> {
-        let expression = (-self) + rhs.into();
-        Constraint { expression, is_equality: true }
+        constraint::eq(self, rhs)
     }
 
     // Computes self + (a * b)
