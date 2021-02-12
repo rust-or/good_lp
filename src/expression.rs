@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use crate::Constraint;
+use crate::{Constraint, Solution};
 use crate::constraint;
 use crate::variable::{Variable, FormatWithVars};
 use std::fmt::{Debug, Formatter};
@@ -99,6 +99,30 @@ impl<F> Expression<F> {
             *self.linear.coefficients.entry(*var).or_default() += factor * value
         }
         self.constant += factor * b.constant;
+    }
+
+    /// Evaluate the concrete value of the expression, given the values of the variables
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use good_lp::{variables, variable, coin_cbc, SolverModel, Solution};
+    /// let mut vars = variables!();
+    /// let a = vars.add(variable().max(1));
+    /// let b = vars.add(variable().max(4));
+    /// let objective = a + b;
+    /// let solution = vars.maximise(objective.clone()).using(coin_cbc).solve()?;
+    /// assert_eq!(objective.eval(&solution), 5.);
+    /// # use good_lp::ResolutionError;
+    /// # Ok::<_, ResolutionError>(())
+    /// ```
+    pub fn eval<S: Solution<F>>(&self, values: &S) -> f64 {
+        self.constant +
+            self.linear.coefficients
+                .iter()
+                .map(|(&var, coefficient)|
+                    coefficient * values.value(var)
+                ).sum::<f64>()
     }
 }
 
@@ -289,6 +313,7 @@ impl<'a, F, A> std::iter::Sum<A> for Expression<F>
 #[cfg(test)]
 mod tests {
     use crate::variables;
+    use std::collections::HashMap;
 
     #[test]
     fn expression_manipulation() {
@@ -296,5 +321,16 @@ mod tests {
         let v0 = vars.add_variable();
         let v1 = vars.add_variable();
         assert_eq!((3. - v0) - v1, (-1.) * v0 + (-1.) * v1 + 3.)
+    }
+
+    #[test]
+    fn eval() {
+        let mut vars = variables!();
+        let a = vars.add_variable();
+        let b = vars.add_variable();
+        let mut values = HashMap::new();
+        values.insert(a, 100);
+        values.insert(b, -1);
+        assert_eq!((a + 3 * (b + 3)).eval(&values), 106.)
     }
 }
