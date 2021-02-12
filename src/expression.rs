@@ -38,6 +38,7 @@ impl<F> FormatWithVars<F> for LinearExpression<F> {
     }
 }
 
+/// Represents an affine expression, such as `2x + 3` or `x + y + z`
 pub struct Expression<F> {
     pub(crate) linear: LinearExpression<F>,
     pub(crate) constant: f64,
@@ -91,7 +92,7 @@ impl<F> Expression<F> {
         constraint::eq(self, rhs)
     }
 
-    // Computes self + (a * b)
+    /// Performs self = self + (a * b)
     #[inline]
     pub fn add_mul<N: Into<f64>>(&mut self, a: N, b: &Expression<F>) {
         let factor = a.into();

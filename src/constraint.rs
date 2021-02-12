@@ -1,8 +1,10 @@
+//! Constraints define the inequalities that must hold in the solution.
 use core::fmt::{Debug, Formatter};
 use crate::expression::Expression;
 use crate::variable::{FormatWithVars, Variable};
 use std::ops::{Shl, Shr};
 
+/// A constraint represents a single (in)equality that must hold in the solution.
 pub struct Constraint<F> {
     pub(crate) expression: Expression<F>,
     /// if is_equality, represents expression == 0, otherwise, expression <= 0
@@ -34,14 +36,17 @@ impl<F> Debug for Constraint<F> {
     }
 }
 
+/// equals
 pub fn eq<F, A: Into<Expression<F>>, B: Into<Expression<F>>>(a: A, b: B) -> Constraint<F> {
     Constraint::new(a.into() - b.into(), true)
 }
 
+/// less than or equal
 pub fn leq<F, A: Into<Expression<F>>, B: Into<Expression<F>>>(a: A, b: B) -> Constraint<F> {
     Constraint::new(a.into() - b.into(), false)
 }
 
+/// greater than or equal
 pub fn geq<F, A: Into<Expression<F>>, B: Into<Expression<F>>>(a: A, b: B) -> Constraint<F> {
     leq(b, a)
 }

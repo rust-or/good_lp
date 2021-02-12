@@ -1,3 +1,7 @@
+//! A [Variable] is the base element used to create an [Expression].
+//! The goal of the solver is to find optimal values for all variables in a problem.
+//!
+//! Each variable has a [VariableDefinition] that sets its bounds.
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
@@ -7,7 +11,8 @@ use std::ops::{Div, Mul, Neg};
 use crate::expression::{Expression, LinearExpression};
 use crate::solvers::ObjectiveDirection;
 
-/// A variable in a problem
+/// A variable in a problem. Use variables to create [expressions](Expression),
+/// to express the [objective](ProblemVariables::optimise) and the [Constraints](crate::Constraint) of your model.
 #[derive(Debug, Default)]
 pub struct Variable<T> {
     _problem_type: PhantomData<T>,
@@ -21,6 +26,8 @@ impl<T> Variable<T> {
     pub(super) fn index(&self) -> usize { self.index }
 }
 
+/// This checks if two variables are the same (or copies one of another)
+/// This is **not** a check that the two variables have the same [VariableDefinition]
 impl<F> PartialEq for Variable<F> {
     fn eq(&self, other: &Self) -> bool {
         self.index == other.index
@@ -45,7 +52,9 @@ impl<F> Clone for Variable<F> {
 
 impl<F> Copy for Variable<F> {}
 
+/// An element that can be displayed if you give a variable display function
 pub trait FormatWithVars<F> {
+    /// Write the element to the formatter. See [std::fmt::Display]
     fn format_with<FUN>(
         &self,
         f: &mut Formatter<'_>,
@@ -53,6 +62,7 @@ pub trait FormatWithVars<F> {
     ) -> std::fmt::Result
         where FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result;
 
+    /// Write the elements, naming the variables v0, v1, ... vn
     fn format_debug(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.format_with(f, |f, var| {
             write!(f, "v{}", var.index())
@@ -60,6 +70,7 @@ pub trait FormatWithVars<F> {
     }
 }
 
+/// Defines the properties of a variable, such as its lower and upper bounds.
 #[derive(Clone, PartialEq)]
 pub struct VariableDefinition {
     pub(crate) min: f64,
@@ -67,16 +78,19 @@ pub struct VariableDefinition {
 }
 
 impl VariableDefinition {
+    /// Set the lower bound of the variable
     pub fn min<N: Into<f64>>(mut self, min: N) -> Self {
         self.min = min.into();
         self
     }
+    /// Set the higher bound of the variable
     pub fn max<N: Into<f64>>(mut self, max: N) -> Self {
         self.max = max.into();
         self
     }
 }
 
+/// Creates an unbounded continuous linear variable
 impl Default for VariableDefinition {
     fn default() -> Self {
         VariableDefinition {
@@ -91,7 +105,7 @@ pub fn variable() -> VariableDefinition {
     VariableDefinition::default()
 }
 
-/// Represents the variable for a given problem.
+/// Represents the variables for a given problem.
 /// Each problem has a unique type, which prevents using the variables
 /// from one problem inside an other one.
 /// Instances of this type should be created exclusively using the [variables!] macro.
@@ -160,6 +174,7 @@ impl<F> IntoIterator for ProblemVariables<F>{
     }
 }
 
+/// A problem without constraints
 pub struct UnsolvedProblem<F> {
     pub(crate) objective: Expression<F>,
     pub(crate) direction: ObjectiveDirection,
@@ -167,6 +182,7 @@ pub struct UnsolvedProblem<F> {
 }
 
 impl<F> UnsolvedProblem<F> {
+    /// Create a solver instance and feed it with this problem
     pub fn using<S, G>(self, solver: S) -> G
         where S: FnOnce(UnsolvedProblem<F>) -> G {
         solver(self)

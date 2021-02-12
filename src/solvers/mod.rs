@@ -4,26 +4,41 @@ use crate::{Constraint, Expression};
 use crate::Variable;
 use std::collections::HashMap;
 
+/// Whether to search for the variable values that give the highest
+/// or the lowest value of the objective function.
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum ObjectiveDirection { Maximisation, Minimisation }
 
+/// Represents an error that occurred when solving a problem
 #[derive(Debug, PartialEq, Clone)]
 pub enum ResolutionError {
+    /// The problem is [unbounded](https://www.matem.unam.mx/~omar/math340/unbounded.html).
+    /// It doesn't have a finite optimal values for its variables.
+    /// The objective can be made infinitely large without violating any constraints.
     Unbounded,
+    ///  There exists no solution that satisfies all of the constraints
     Infeasible,
+    /// Another error occurred
     Other(&'static str),
 }
 
+/// A solver's own representation of a model, to which constraints can be added.
 pub trait SolverModel<F> {
+    /// The type of the solution to the problem
     type Solution: Solution<F>;
+    /// The error that can occur while solving the problem
     type Error;
 
+    /// Takes a model and adds a constraint to it
     fn with(self, constraint: Constraint<F>) -> Self;
 
+    /// Find the solution for the problem being modeled
     fn solve(self) -> Result<Self::Solution, Self::Error>;
 }
 
+/// A problem solution
 pub trait Solution<F> {
+    /// Get the optimal value of a variable of the problem
     fn value(&self, variable: Variable<F>) -> f64;
 
     /// ## Example

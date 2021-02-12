@@ -5,6 +5,7 @@ use coin_cbc::{raw::Status, Model, Sense, Col, Solution as CbcSolution};
 use std::marker::PhantomData;
 
 
+/// The Cbc [COIN-OR](https://www.coin-or.org/) solver library
 pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
     let UnsolvedProblem { objective, direction, variables } = to_solve;
     let mut model = Model::default();
