@@ -1,8 +1,8 @@
-error[E0277]: the trait bound `f64: std::convert::From<good_lp::Variable<[closure@$DIR/src/variable.rs:141:60: 141:64]>>` is not satisfied
+error[E0277]: the trait bound `f64: std::convert::From<good_lp::Variable<[closure@$DIR/src/variable.rs:120:60: 120:64]>>` is not satisfied
  --> $DIR/adding_incompatible_variables.rs:8:21
   |
 8 |     let _result = a + b;
-  |                     ^ the trait `std::convert::From<good_lp::Variable<[closure@$DIR/src/variable.rs:141:60: 141:64]>>` is not implemented for `f64`
+  |                     ^ the trait `std::convert::From<good_lp::Variable<[closure@$DIR/src/variable.rs:120:60: 120:64]>>` is not implemented for `f64`
   |
   = help: the following implementations were found:
             <f64 as std::convert::From<f32>>
@@ -10,5 +10,7 @@ error[E0277]: the trait bound `f64: std::convert::From<good_lp::Variable<[closur
             <f64 as std::convert::From<i32>>
             <f64 as std::convert::From<i8>>
           and 3 others
-  = note: required because of the requirements on the impl of `std::convert::Into<f64>` for `good_lp::Variable<[closure@$DIR/src/variable.rs:141:60: 141:64]>`
-  = note: required because of the requirements on the impl of `std::ops::Add<good_lp::Variable<[closure@$DIR/src/variable.rs:141:60: 141:64]>>` for `good_lp::Variable<[closure@$DIR/src/variable.rs:141:60: 141:64]>`
+  = note: required because of the requirements on the impl of `std::convert::Into<f64>` for `good_lp::Variable<[closure@$DIR/src/variable.rs:120:60: 120:64]>`
+  = note: required because of the requirements on the impl of `std::convert::From<good_lp::Variable<[closure@$DIR/src/variable.rs:120:60: 120:64]>>` for `good_lp::Expression<[closure@$DIR/src/variable.rs:120:60: 120:64]>`
+  = note: required because of the requirements on the impl of `std::convert::Into<good_lp::Expression<[closure@$DIR/src/variable.rs:120:60: 120:64]>>` for `good_lp::Variable<[closure@$DIR/src/variable.rs:120:60: 120:64]>`
+  = note: required because of the requirements on the impl of `std::ops::Add<good_lp::Variable<[closure@$DIR/src/variable.rs:120:60: 120:64]>>` for `good_lp::Variable<[closure@$DIR/src/variable.rs:120:60: 120:64]>`
