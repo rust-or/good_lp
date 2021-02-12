@@ -22,6 +22,7 @@ jobs:
           sudo apt-get install coinor-cbc coinor-libcbc-dev
           rustup toolchain install 1.50.0
           rustup default 1.50.0
+          rustup component add rustfmt
       - name: Build
         run: cargo build --verbose --all-features --tests
       - name: Run tests
