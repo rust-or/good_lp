@@ -2,6 +2,7 @@
 //!  A Linear Programming modeler that is easy to use, performant with large problems, and well-typed.
 //!
 //!  ```rust
+//!  # #[cfg(feature = "coin_cbc")] {
 //!  use good_lp::{variables, variable, coin_cbc, SolverModel, Solution};
 //!
 //!  let mut vars = variables!();
@@ -15,6 +16,7 @@
 //!
 //!  assert_eq!(solution.value(a), 1.);
 //!  assert_eq!(solution.value(b), 3.);
+//!  # }
 //!  # use good_lp::ResolutionError;
 //!  # Ok::<_, ResolutionError>(())
 //!  ```
@@ -23,6 +25,8 @@ pub use expression::Expression;
 pub use variable::{Variable, variable};
 pub use constraint::Constraint;
 pub use solvers::{ResolutionError, Solution, SolverModel};
+
+#[cfg(feature = "coin_cbc")]
 pub use solvers::coin_cbc::coin_cbc;
 
 mod expression;

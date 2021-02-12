@@ -107,6 +107,7 @@ impl<F> Expression<F> {
     /// ## Example
     ///
     /// ```rust
+    /// # #[cfg(feature = "coin_cbc")] {
     /// use good_lp::{variables, variable, coin_cbc, SolverModel, Solution};
     /// let mut vars = variables!();
     /// let a = vars.add(variable().max(1));
@@ -114,6 +115,7 @@ impl<F> Expression<F> {
     /// let objective = a + b;
     /// let solution = vars.maximise(objective.clone()).using(coin_cbc).solve()?;
     /// assert_eq!(objective.eval_with(&solution), 5.);
+    /// # }
     /// # use good_lp::ResolutionError;
     /// # Ok::<_, ResolutionError>(())
     /// ```

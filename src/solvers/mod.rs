@@ -1,3 +1,4 @@
+#[cfg(feature = "coin_cbc")]
 pub mod coin_cbc;
 
 use crate::{Constraint, Expression};
@@ -44,6 +45,7 @@ pub trait Solution<F> {
     /// ## Example
     ///
     /// ```rust
+    /// # #[cfg(feature = "coin_cbc")] {
     /// use good_lp::{variables, variable, coin_cbc, SolverModel, Solution};
     /// let mut vars = variables!();
     /// let a = vars.add(variable().max(1));
@@ -51,6 +53,7 @@ pub trait Solution<F> {
     /// let objective = a + b;
     /// let solution = vars.maximise(objective.clone()).using(coin_cbc).solve().unwrap();
     /// assert_eq!(solution.eval(&objective), 5.);
+    /// # }
     /// ```
     fn eval(&self, expr: &Expression<F>) -> f64 where Self: Sized {
         expr.eval_with(self)

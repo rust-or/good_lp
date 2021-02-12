@@ -1,3 +1,5 @@
+//! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc)
+
 use crate::solvers::{ObjectiveDirection, Solution, ResolutionError, SolverModel};
 use crate::{Constraint, Variable};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
