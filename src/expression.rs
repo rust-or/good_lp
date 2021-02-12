@@ -102,6 +102,21 @@ impl<F> Expression<F> {
     }
 }
 
+pub fn add_mul<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(lhs: LHS, rhs: RHS, factor: f64) -> Expression<F> {
+    let mut result = lhs.into();
+    result.add_mul(factor, &rhs.into());
+    result
+}
+
+pub fn sub<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(lhs: LHS, rhs: RHS) -> Expression<F> {
+    add_mul(lhs, rhs, -1.)
+}
+
+
+pub fn add<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(lhs: LHS, rhs: RHS) -> Expression<F> {
+    add_mul(lhs, rhs, 1.)
+}
+
 impl<F> FormatWithVars<F> for Expression<F> {
     fn format_with<FUN>(
         &self,
@@ -153,16 +168,6 @@ impl<F, RHS: Into<Expression<F>>> SubAssign<RHS> for Expression<F> {
     fn sub_assign(&mut self, rhs: RHS) {
         self.sub_assign(&rhs.into());
     }
-}
-
-impl<F, RHS: Into<Expression<F>>> Add<RHS> for Expression<F> {
-    type Output = Expression<F>;
-    fn add(self, rhs: RHS) -> Self::Output { self.add(&rhs.into()) }
-}
-
-impl<F, RHS: Into<Expression<F>>> Sub<RHS> for Expression<F> {
-    type Output = Expression<F>;
-    fn sub(self, rhs: RHS) -> Self::Output { self.sub(&rhs.into()) }
 }
 
 impl<T> Neg for Expression<T> {
@@ -242,13 +247,32 @@ impl<F> Mul<Expression<F>> for i32 {
     }
 }
 
-impl<F> Sub<Expression<F>> for f64 {
-    type Output = Expression<F>;
+macro_rules! impl_ops_local {
+    ($($typename:ident $(< $param:ident >)? : $other:ident $(< $other_param:ident >)?),*) => {$(
+        impl<F $(, $other: Into<Expression<$param>>)?>
+            Sub<$other $(< $other_param >)?>
+        for $typename$(< $param >)? {
+            type Output = Expression<F>;
+            fn sub(self, rhs: $other $(< $other_param >)?) -> Self::Output { sub(self, rhs) }
+        }
 
-    fn sub(self, rhs: Expression<F>) -> Self::Output {
-        rhs + (-self)
-    }
+        impl<F $(, $other: Into<Expression<$param>>)?>
+            Add<$other $(< $other_param >)?>
+        for $typename$(< $param >)? {
+            type Output = Expression<F>;
+            fn add(self, rhs: $other $(< $other_param >)?) -> Self::Output { add(self, rhs) }
+        }
+    )*}
 }
+
+impl_ops_local!(
+    Expression<F> : RHS,
+    Variable<F> : RHS,
+    f64: Expression<F>,
+    f64: Variable<F>,
+    i32: Expression<F>,
+    i32: Variable<F>
+);
 
 impl<'a, F, A> std::iter::Sum<A> for Expression<F>
     where Expression<F>: From<A> {
@@ -259,5 +283,18 @@ impl<'a, F, A> std::iter::Sum<A> for Expression<F>
             res.add_assign(expr)
         }
         res
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::variables;
+
+    #[test]
+    fn expression_manipulation() {
+        let mut vars = variables!();
+        let v0 = vars.add_variable();
+        let v1 = vars.add_variable();
+        assert_eq!((3. - v0) - v1, (-1.) * v0 + (-1.) * v1 + 3.)
     }
 }

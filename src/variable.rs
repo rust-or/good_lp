@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Div, Mul};
 
 use crate::expression::{Expression, LinearExpression};
 use crate::solvers::ObjectiveDirection;
@@ -163,16 +163,6 @@ impl<F> Mul<Variable<F>> for i32 {
     }
 }
 
-impl<F> Add<Variable<F>> for f64 {
-    type Output = Expression<F>;
-    fn add(self, rhs: Variable<F>) -> Self::Output { rhs + self }
-}
-
-impl<F> Add<Variable<F>> for i32 {
-    type Output = Expression<F>;
-    fn add(self, rhs: Variable<F>) -> Self::Output { rhs + self }
-}
-
 impl<F> Div<f64> for Variable<F> {
     type Output = Expression<F>;
     fn div(self, rhs: f64) -> Self::Output { self * (1. / rhs) }
@@ -181,58 +171,4 @@ impl<F> Div<f64> for Variable<F> {
 impl<F> Div<i32> for Variable<F> {
     type Output = Expression<F>;
     fn div(self, rhs: i32) -> Self::Output { self * (1. / f64::from(rhs)) }
-}
-
-impl<F, N: Into<f64>> Add<N> for Variable<F> {
-    type Output = Expression<F>;
-
-    fn add(self, rhs: N) -> Self::Output {
-        let mut expr = Expression::from(self);
-        expr += rhs;
-        expr
-    }
-}
-
-impl<F> Add<Variable<F>> for Variable<F> {
-    type Output = Expression<F>;
-
-    fn add(self, rhs: Variable<F>) -> Self::Output {
-        if rhs == self {
-            self * 2
-        } else {
-            Expression::from(self) + rhs
-        }
-    }
-}
-
-impl<F> Add<Expression<F>> for Variable<F> {
-    type Output = Expression<F>;
-
-    fn add(self, rhs: Expression<F>) -> Self::Output {
-        rhs + Expression::from(self)
-    }
-}
-
-impl<F> Sub<Expression<F>> for Variable<F> {
-    type Output = Expression<F>;
-
-    fn sub(self, rhs: Expression<F>) -> Self::Output {
-        Expression::from(self) - rhs
-    }
-}
-
-impl<F> Sub<Variable<F>> for Variable<F> {
-    type Output = Expression<F>;
-
-    fn sub(self, rhs: Variable<F>) -> Self::Output {
-        Expression::from(self) - rhs
-    }
-}
-
-impl<F> Sub<Variable<F>> for f64 {
-    type Output = Expression<F>;
-
-    fn sub(self, rhs: Variable<F>) -> Self::Output {
-        self - Expression::from(rhs)
-    }
 }
