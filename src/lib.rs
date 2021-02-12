@@ -8,8 +8,8 @@
 /// let b = vars.add_variable();
 /// let solution = vars.maximise(9. * (a * 2 + b / 3))
 ///     .using(coin_cbc)
-///     .with((a + 2.) << b)
-///     .with((3. - a) >> b)
+///     .with(a + 2. << b)
+///     .with(3. - a >> b)
 ///     .solve()?;
 ///
 /// assert_eq!(solution.value(a), 0.5);
