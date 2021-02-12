@@ -12,7 +12,8 @@ use crate::expression::{Expression, LinearExpression};
 use crate::solvers::ObjectiveDirection;
 
 /// A variable in a problem. Use variables to create [expressions](Expression),
-/// to express the [objective](ProblemVariables::optimise) and the [Constraints](crate::Constraint) of your model.
+/// to express the [objective](ProblemVariables::optimise)
+/// and the [Constraints](crate::Constraint) of your model.
 #[derive(Debug, Default)]
 pub struct Variable<T> {
     _problem_type: PhantomData<T>,
@@ -23,7 +24,9 @@ pub struct Variable<T> {
 }
 
 impl<T> Variable<T> {
-    pub(super) fn index(&self) -> usize { self.index }
+    pub(super) fn index(&self) -> usize {
+        self.index
+    }
 }
 
 /// This checks if two variables are the same (or copies one of another)
@@ -34,7 +37,6 @@ impl<F> PartialEq for Variable<F> {
     }
 }
 
-
 impl<F> Eq for Variable<F> {}
 
 impl<F> Hash for Variable<F> {
@@ -43,10 +45,12 @@ impl<F> Hash for Variable<F> {
     }
 }
 
-
 impl<F> Clone for Variable<F> {
     fn clone(&self) -> Self {
-        Self { _problem_type: PhantomData, index: self.index }
+        Self {
+            _problem_type: PhantomData,
+            index: self.index,
+        }
     }
 }
 
@@ -55,18 +59,13 @@ impl<F> Copy for Variable<F> {}
 /// An element that can be displayed if you give a variable display function
 pub trait FormatWithVars<F> {
     /// Write the element to the formatter. See [std::fmt::Display]
-    fn format_with<FUN>(
-        &self,
-        f: &mut Formatter<'_>,
-        variable_format: FUN,
-    ) -> std::fmt::Result
-        where FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result;
+    fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
+    where
+        FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result;
 
     /// Write the elements, naming the variables v0, v1, ... vn
     fn format_debug(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.format_with(f, |f, var| {
-            write!(f, "v{}", var.index())
-        })
+        self.format_with(f, |f, var| write!(f, "v{}", var.index()))
     }
 }
 
@@ -119,7 +118,10 @@ impl<F: Fn()> ProblemVariables<F> {
     /// but it should **never** be called directly
     #[doc(hidden)]
     pub fn __new_internal(_type_signature: F) -> Self {
-        ProblemVariables { _type_signature, variables: vec![] }
+        ProblemVariables {
+            _type_signature,
+            variables: vec![],
+        }
     }
 
     /// Add a anonymous unbounded continuous variable to the problem
@@ -131,14 +133,15 @@ impl<F: Fn()> ProblemVariables<F> {
     pub fn add(&mut self, var_def: VariableDefinition) -> Variable<F> {
         let index = self.variables.len();
         self.variables.push(var_def);
-        Variable { _problem_type: PhantomData, index }
+        Variable {
+            _problem_type: PhantomData,
+            index,
+        }
     }
 
     /// Adds a list of variables with the given definition
     pub fn add_vector(&mut self, var_def: VariableDefinition, len: usize) -> Vec<Variable<F>> {
-        (0..len).map(|_i| {
-            self.add(var_def.clone())
-        }).collect()
+        (0..len).map(|_i| self.add(var_def.clone())).collect()
     }
 
     /// Creates an optimization problem with the given objective. Don't solve it immediately
@@ -165,7 +168,7 @@ impl<F: Fn()> ProblemVariables<F> {
     }
 }
 
-impl<F> IntoIterator for ProblemVariables<F>{
+impl<F> IntoIterator for ProblemVariables<F> {
     type Item = VariableDefinition;
     type IntoIter = std::vec::IntoIter<VariableDefinition>;
 
@@ -184,7 +187,9 @@ pub struct UnsolvedProblem<F> {
 impl<F> UnsolvedProblem<F> {
     /// Create a solver instance and feed it with this problem
     pub fn using<S, G>(self, solver: S) -> G
-        where S: FnOnce(UnsolvedProblem<F>) -> G {
+    where
+        S: FnOnce(UnsolvedProblem<F>) -> G,
+    {
         solver(self)
     }
 }
@@ -195,10 +200,12 @@ impl<F, N: Into<f64>> Mul<N> for Variable<F> {
     fn mul(self, rhs: N) -> Self::Output {
         let mut coefficients = HashMap::with_capacity(1);
         coefficients.insert(self, rhs.into());
-        Expression { linear: LinearExpression { coefficients }, constant: 0.0 }
+        Expression {
+            linear: LinearExpression { coefficients },
+            constant: 0.0,
+        }
     }
 }
-
 
 impl<F> Mul<Variable<F>> for f64 {
     type Output = Expression<F>;
@@ -206,7 +213,10 @@ impl<F> Mul<Variable<F>> for f64 {
     fn mul(self, rhs: Variable<F>) -> Self::Output {
         let mut coefficients = HashMap::with_capacity(1);
         coefficients.insert(rhs, self);
-        Expression { linear: LinearExpression { coefficients }, constant: 0.0 }
+        Expression {
+            linear: LinearExpression { coefficients },
+            constant: 0.0,
+        }
     }
 }
 
@@ -220,12 +230,16 @@ impl<F> Mul<Variable<F>> for i32 {
 
 impl<F> Div<f64> for Variable<F> {
     type Output = Expression<F>;
-    fn div(self, rhs: f64) -> Self::Output { self * (1. / rhs) }
+    fn div(self, rhs: f64) -> Self::Output {
+        self * (1. / rhs)
+    }
 }
 
 impl<F> Div<i32> for Variable<F> {
     type Output = Expression<F>;
-    fn div(self, rhs: i32) -> Self::Output { self * (1. / f64::from(rhs)) }
+    fn div(self, rhs: i32) -> Self::Output {
+        self * (1. / f64::from(rhs))
+    }
 }
 
 impl<T> Neg for Variable<T> {

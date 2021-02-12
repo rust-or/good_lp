@@ -1,22 +1,20 @@
 use std::collections::HashMap;
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use crate::{Constraint, Solution};
 use crate::constraint;
-use crate::variable::{Variable, FormatWithVars};
+use crate::variable::{FormatWithVars, Variable};
+use crate::{Constraint, Solution};
 use std::fmt::{Debug, Formatter};
 
 pub(crate) struct LinearExpression<F> {
-    pub(crate) coefficients: HashMap<Variable<F>, f64>
+    pub(crate) coefficients: HashMap<Variable<F>, f64>,
 }
 
 impl<F> FormatWithVars<F> for LinearExpression<F> {
-    fn format_with<FUN>(
-        &self,
-        f: &mut Formatter<'_>,
-        variable_format: FUN,
-    ) -> std::fmt::Result
-        where FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result {
+    fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
+    where
+        FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result,
+    {
         let mut first = true;
         for (&var, &coeff) in &self.coefficients {
             if coeff != 0f64 {
@@ -46,15 +44,16 @@ pub struct Expression<F> {
 
 impl<F> PartialEq for Expression<F> {
     fn eq(&self, other: &Self) -> bool {
-        self.constant.eq(&other.constant) &&
-            self.linear.coefficients.eq(&other.linear.coefficients)
+        self.constant.eq(&other.constant) && self.linear.coefficients.eq(&other.linear.coefficients)
     }
 }
 
 impl<F> Clone for Expression<F> {
     fn clone(&self) -> Self {
         Expression {
-            linear: LinearExpression { coefficients: self.linear.coefficients.clone() },
+            linear: LinearExpression {
+                coefficients: self.linear.coefficients.clone(),
+            },
             constant: self.constant,
         }
     }
@@ -69,7 +68,10 @@ impl<T> Debug for Expression<T> {
 impl<F> Default for Expression<F> {
     fn default() -> Self {
         let coefficients = HashMap::with_capacity(0);
-        Expression { linear: LinearExpression { coefficients }, constant: 0. }
+        Expression {
+            linear: LinearExpression { coefficients },
+            constant: 0.,
+        }
     }
 }
 
@@ -120,36 +122,45 @@ impl<F> Expression<F> {
     /// # Ok::<_, ResolutionError>(())
     /// ```
     pub fn eval_with<S: Solution<F>>(&self, values: &S) -> f64 {
-        self.constant +
-            self.linear.coefficients
+        self.constant
+            + self
+                .linear
+                .coefficients
                 .iter()
-                .map(|(&var, coefficient)|
-                    coefficient * values.value(var)
-                ).sum::<f64>()
+                .map(|(&var, coefficient)| coefficient * values.value(var))
+                .sum::<f64>()
     }
 }
 
-pub fn add_mul<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(lhs: LHS, rhs: RHS, factor: f64) -> Expression<F> {
+pub fn add_mul<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(
+    lhs: LHS,
+    rhs: RHS,
+    factor: f64,
+) -> Expression<F> {
     let mut result = lhs.into();
     result.add_mul(factor, &rhs.into());
     result
 }
 
-pub fn sub<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(lhs: LHS, rhs: RHS) -> Expression<F> {
+pub fn sub<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(
+    lhs: LHS,
+    rhs: RHS,
+) -> Expression<F> {
     add_mul(lhs, rhs, -1.)
 }
 
-
-pub fn add<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(lhs: LHS, rhs: RHS) -> Expression<F> {
+pub fn add<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(
+    lhs: LHS,
+    rhs: RHS,
+) -> Expression<F> {
     add_mul(lhs, rhs, 1.)
 }
 
 impl<F> FormatWithVars<F> for Expression<F> {
-    fn format_with<FUN>(
-        &self,
-        f: &mut Formatter<'_>, variable_format: FUN,
-    ) -> std::fmt::Result
-        where FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result {
+    fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
+    where
+        FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result,
+    {
         self.linear.format_with(f, variable_format)?;
         write!(f, " + {}", self.constant)
     }
@@ -244,7 +255,10 @@ impl<'a, F> From<&'a Variable<F>> for Expression<F> {
     fn from(var: &'a Variable<F>) -> Self {
         let mut coefficients = HashMap::with_capacity(1);
         coefficients.insert(*var, 1.);
-        Expression { linear: LinearExpression { coefficients }, constant: 0.0 }
+        Expression {
+            linear: LinearExpression { coefficients },
+            constant: 0.0,
+        }
     }
 }
 
@@ -252,7 +266,10 @@ impl<F, N: Into<f64>> From<N> for Expression<F> {
     fn from(constant: N) -> Self {
         let coefficients = HashMap::with_capacity(0);
         let constant = constant.into();
-        Expression { linear: LinearExpression { coefficients }, constant }
+        Expression {
+            linear: LinearExpression { coefficients },
+            constant,
+        }
     }
 }
 
@@ -302,8 +319,10 @@ impl_ops_local!(
 );
 
 impl<'a, F, A> std::iter::Sum<A> for Expression<F>
-    where Expression<F>: From<A> {
-    fn sum<I: Iterator<Item=A>>(iter: I) -> Self {
+where
+    Expression<F>: From<A>,
+{
+    fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         let mut res = Expression::default();
         for i in iter {
             let expr = Expression::from(i);

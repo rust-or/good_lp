@@ -1,18 +1,22 @@
 //! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc)
 
-use crate::solvers::{ObjectiveDirection, Solution, ResolutionError, SolverModel};
-use crate::{Constraint, Variable};
+use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
-use coin_cbc::{raw::Status, Model, Sense, Col, Solution as CbcSolution};
+use crate::{Constraint, Variable};
+use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 use std::marker::PhantomData;
-
 
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library
 pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
-    let UnsolvedProblem { objective, direction, variables } = to_solve;
+    let UnsolvedProblem {
+        objective,
+        direction,
+        variables,
+    } = to_solve;
     let mut model = Model::default();
-    let columns: Vec<Col> = variables.into_iter().map(
-        |VariableDefinition { min, max, .. }| {
+    let columns: Vec<Col> = variables
+        .into_iter()
+        .map(|VariableDefinition { min, max, .. }| {
             let col = model.add_col();
             if min > f64::NEG_INFINITY {
                 model.set_col_lower(col, min)
@@ -21,8 +25,8 @@ pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
                 model.set_col_upper(col, max)
             }
             col
-        }
-    ).collect();
+        })
+        .collect();
     for (var, coeff) in objective.linear.coefficients.into_iter() {
         model.set_obj_coeff(columns[var.index()], coeff);
     }
@@ -30,7 +34,11 @@ pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
         ObjectiveDirection::Maximisation => Sense::Maximize,
         ObjectiveDirection::Minimisation => Sense::Minimize,
     });
-    CoinCbcProblem { model, columns, variable_type: PhantomData }
+    CoinCbcProblem {
+        model,
+        columns,
+        variable_type: PhantomData,
+    }
 }
 
 pub struct CoinCbcProblem<F> {

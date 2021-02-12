@@ -3,4 +3,8 @@
 
 /// Instantiates [crate::variable::ProblemVariables], to create a set of related variables.
 #[macro_export]
-macro_rules! variables { () => { $crate::variable::ProblemVariables::__new_internal(||()) } }
+macro_rules! variables {
+    () => {
+        $crate::variable::ProblemVariables::__new_internal(|| ())
+    };
+}

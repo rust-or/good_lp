@@ -16,13 +16,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: install deps
-      run: |
-        sudo apt-get install coinor-cbc coinor-libcbc-dev
-        rustup toolchain install 1.50.0
-        rustup default 1.50.0
-    - name: Build
-      run: cargo build --verbose --all-features --tests
-    - name: Run tests
-      run: cargo test --verbose --all-features
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: |
+          sudo apt-get install coinor-cbc coinor-libcbc-dev
+          rustup toolchain install 1.50.0
+          rustup default 1.50.0
+      - name: Build
+        run: cargo build --verbose --all-features --tests
+      - name: Run tests
+        run: cargo test --verbose --all-features
+      - name: Check formatting
+        run: cargo fmt -- --check

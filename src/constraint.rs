@@ -1,7 +1,7 @@
 //! Constraints define the inequalities that must hold in the solution.
-use core::fmt::{Debug, Formatter};
 use crate::expression::Expression;
 use crate::variable::{FormatWithVars, Variable};
+use core::fmt::{Debug, Formatter};
 use std::ops::{Shl, Shr};
 
 /// A constraint represents a single (in)equality that must hold in the solution.
@@ -13,17 +13,18 @@ pub struct Constraint<F> {
 
 impl<F> Constraint<F> {
     fn new(expression: Expression<F>, is_equality: bool) -> Constraint<F> {
-        Constraint { expression, is_equality }
+        Constraint {
+            expression,
+            is_equality,
+        }
     }
 }
 
 impl<F> FormatWithVars<F> for Constraint<F> {
-    fn format_with<FUN>(
-        &self,
-        f: &mut Formatter<'_>,
-        variable_format: FUN,
-    ) -> std::fmt::Result
-        where FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result {
+    fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
+    where
+        FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result,
+    {
         self.expression.linear.format_with(f, variable_format)?;
         write!(f, " {} ", if self.is_equality { "=" } else { "<=" })?;
         write!(f, "{}", -self.expression.constant)
@@ -77,14 +78,11 @@ impl_shifts!(Expression<F> Variable<F>);
 mod tests {
     use crate::variables;
     #[test]
-    fn test_leq(){
+    fn test_leq() {
         let mut vars = variables!();
         let v0 = vars.add_variable();
         let v1 = vars.add_variable();
         let f = format!("{:?}", (3. - v0) >> v1);
-        assert!(vec![
-            "v0 + v1 <= 3",
-            "v1 + v0 <= 3"
-        ].contains(&&*f), "{}", f)
+        assert!(vec!["v0 + v1 <= 3", "v1 + v0 <= 3"].contains(&&*f), "{}", f)
     }
 }

@@ -1,14 +1,17 @@
 #[cfg(feature = "coin_cbc")]
 pub mod coin_cbc;
 
-use crate::{Constraint, Expression};
 use crate::Variable;
+use crate::{Constraint, Expression};
 use std::collections::HashMap;
 
 /// Whether to search for the variable values that give the highest
 /// or the lowest value of the objective function.
 #[derive(Eq, PartialEq, Clone, Copy)]
-pub enum ObjectiveDirection { Maximisation, Minimisation }
+pub enum ObjectiveDirection {
+    Maximisation,
+    Minimisation,
+}
 
 /// Represents an error that occurred when solving a problem
 #[derive(Debug, PartialEq, Clone)]
@@ -55,7 +58,10 @@ pub trait Solution<F> {
     /// assert_eq!(solution.eval(&objective), 5.);
     /// # }
     /// ```
-    fn eval(&self, expr: &Expression<F>) -> f64 where Self: Sized {
+    fn eval(&self, expr: &Expression<F>) -> f64
+    where
+        Self: Sized,
+    {
         expr.eval_with(self)
     }
 }

@@ -1,6 +1,5 @@
 use good_lp::{variables, Expression};
 
-
 #[test]
 fn complex_expression() {
     let mut var1 = variables!();
@@ -17,9 +16,7 @@ fn complex_expression() {
 #[test]
 fn large_sum() {
     let mut var1 = variables!();
-    let var_vec: Vec<_> = (0..100_000)
-        .map(|_i| var1.add_variable())
-        .collect();
+    let var_vec: Vec<_> = (0..100_000).map(|_i| var1.add_variable()).collect();
     let sum_right: Expression<_> = var_vec.iter().sum();
     let sum_reverse: Expression<_> = var_vec.iter().rev().sum();
     assert_eq!(sum_right, sum_reverse)
@@ -29,9 +26,10 @@ fn large_sum() {
 fn complete() {
     let mut var1 = variables!();
     let mut var2 = variables!();
-    assert_eq!( // variables iss the size of an empty vector
-                std::mem::size_of_val(&Vec::<u8>::new()),
-                std::mem::size_of_val(&var1)
+    assert_eq!(
+        // variables iss the size of an empty vector
+        std::mem::size_of_val(&Vec::<u8>::new()),
+        std::mem::size_of_val(&var1)
     );
     let a = var1.add_variable();
     let b = var2.add_variable();
@@ -46,8 +44,11 @@ fn debug_format() {
     let b = vars.add_variable();
     let expr_str = format!("{:?}", (9 * (1. + a + b / 3)).leq(a + 1));
     let possibilities = vec!["3 v1 + 8 v0 <= -8", "8 v0 + 3 v1 <= -8"];
-    assert!(possibilities.contains(&expr_str.as_str()),
-            "expected one of {:?}, got {}", possibilities, expr_str
+    assert!(
+        possibilities.contains(&expr_str.as_str()),
+        "expected one of {:?}, got {}",
+        possibilities,
+        expr_str
     )
 }
 
