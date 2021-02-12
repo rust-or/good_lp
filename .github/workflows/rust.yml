@@ -3,7 +3,7 @@ name: Rust
 on:
   push:
     branches: [ main ]
-    paths: ["**.rs", "Cargo.toml", ".github/workflows/rust.yml"]
+    paths: ["**.rs", "Cargo.toml", ".github/workflows/rust.yml", "tests/**.stderr"]
   pull_request:
     branches: [ main ]
 
