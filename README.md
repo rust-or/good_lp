@@ -11,8 +11,8 @@ fn main() {
     let b = vars.add_variable();
     let solution = vars.maximise(9. * (a * 2 + b / 3))
         .using(coin_cbc)
-        .with((a + 2.).leq(b))
-        .with((3. - a).geq(b))
+        .with(a + 2. << b)
+        .with(3. - a >> b)
         .solve()?;
     println!("a={}   b={}", solution.value(a), solution.value(b));
 }
