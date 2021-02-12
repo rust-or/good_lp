@@ -47,19 +47,26 @@ impl<T> SolverModel<T> for CoinCbcProblem<T> {
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let solution = self.model.solve();
-        if self.model.to_raw().is_continuous_unbounded() {
-            return Err(ResolutionError::Unbounded);
-        }
-        match solution.raw().status() {
-            Status::Unlaunched => Err(ResolutionError::Other("Unlaunched")),
+        let raw = solution.raw();
+        match raw.status() {
             Status::Stopped => Err(ResolutionError::Other("Stopped")),
             Status::Abandoned => Err(ResolutionError::Other("Abandoned")),
             Status::UserEvent => Err(ResolutionError::Other("UserEvent")),
-            Status::Finished => Ok(CoinCbcSolution {
-                columns: self.columns,
-                solution,
-                variable_type: PhantomData,
-            }),
+            Status::Finished // The optimization finished, but may not have found a solution
+            | Status::Unlaunched // The solver didn't have to be launched, presolve handled it
+            => {
+                if raw.is_continuous_unbounded() {
+                    Err(ResolutionError::Unbounded)
+                } else if raw.is_proven_infeasible() {
+                    Err(ResolutionError::Infeasible)
+                } else {
+                    Ok(CoinCbcSolution {
+                        columns: self.columns,
+                        solution,
+                        variable_type: PhantomData,
+                    })
+                }
+            },
         }
     }
 }

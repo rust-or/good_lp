@@ -12,7 +12,8 @@
 ///     .with((3. - a) >> b)
 ///     .solve()?;
 ///
-/// println!("a={}   b={}", solution.value(a), solution.value(b));
+/// assert_eq!(solution.value(a), 0.5);
+/// assert_eq!(solution.value(b), 2.5);
 /// # use good_lp::ResolutionError;
 /// # Ok::<_, ResolutionError>(())
 /// ```

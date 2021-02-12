@@ -9,6 +9,7 @@ pub enum ObjectiveDirection { Maximisation, Minimisation }
 #[derive(Debug, PartialEq, Clone)]
 pub enum ResolutionError {
     Unbounded,
+    Infeasible,
     Other(&'static str),
 }
 
