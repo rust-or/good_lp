@@ -3,7 +3,7 @@ name: Rust
 on:
   push:
     branches: [ main ]
-    paths: ["**.rs", "Cargo.toml"]
+    paths: ["**.rs", "Cargo.toml", ".github/workflows/rust.yml"]
   pull_request:
     branches: [ main ]
 
@@ -17,6 +17,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: install deps
+      run: sudo apt-get install coinor-cbc
     - name: Build
       run: cargo build --verbose --all-features
     - name: Run tests
