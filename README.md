@@ -2,6 +2,9 @@
 
 A Linear Programming modeler that is easy to use, performant with large problems, and well-typed.
 
+[![documentation](https://docs.rs/good_lp/badge.svg)](https://docs.rs/good_lp)
+[![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
+
 ```rust
 use good_lp::{variables, variable, coin_cbc, SolverModel, Solution};
 
