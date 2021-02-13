@@ -7,7 +7,8 @@ repository = "https://github.com/lovasoa/good_lp"
 documentation = "https://docs.rs/good_lp"
 description = " Linear Programming for Rust, with an user-friendly API. This crate allows modeling LP problems, and let's you solve them with various solvers."
 license-file = "LICENSE"
-
+keywords = ["solver", "linear-models", "formulation", "linear-programming", "optimization", "symbolic", "math"]
+categories = ["mathematics", "algorithms", "science", "api-bindings", "data-structures"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 
