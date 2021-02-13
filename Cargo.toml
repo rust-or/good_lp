@@ -1,6 +1,6 @@
 [package]
 name = "good_lp"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
 repository = "https://github.com/lovasoa/good_lp"
