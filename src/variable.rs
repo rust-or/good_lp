@@ -2,11 +2,11 @@
 //! The goal of the solver is to find optimal values for all variables in a problem.
 //!
 //! Each variable has a [VariableDefinition] that sets its bounds.
-use std::collections::HashMap;
+use std::collections::{Bound, HashMap};
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::ops::{Div, Mul, Neg};
+use std::ops::{Div, Mul, Neg, RangeBounds};
 
 use crate::expression::{Expression, LinearExpression};
 use crate::solvers::ObjectiveDirection;
@@ -14,6 +14,8 @@ use crate::solvers::ObjectiveDirection;
 /// A variable in a problem. Use variables to create [expressions](Expression),
 /// to express the [objective](ProblemVariables::optimise)
 /// and the [Constraints](crate::Constraint) of your model.
+///
+/// Variables are created using [ProblemVariables::add]
 #[derive(Debug, Default)]
 pub struct Variable<T> {
     _problem_type: PhantomData<T>,
@@ -80,13 +82,56 @@ pub trait FormatWithVars<F> {
 }
 
 /// Defines the properties of a variable, such as its lower and upper bounds.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct VariableDefinition {
     pub(crate) min: f64,
     pub(crate) max: f64,
 }
 
 impl VariableDefinition {
+    /// Creates an unbounded continuous linear variable
+    pub fn new() -> Self {
+        VariableDefinition {
+            min: f64::NEG_INFINITY,
+            max: f64::INFINITY,
+        }
+    }
+
+    /// Set the lower and/or higher bounds of the variable
+    ///
+    /// ## Examples
+    /// ```
+    /// # use good_lp::variable;
+    /// assert_eq!(
+    ///     variable().bounds(1..2),
+    ///     variable().min(1).max(2)
+    /// );
+    ///
+    /// assert_eq!(
+    ///     variable().bounds(1..),
+    ///     variable().min(1)
+    /// );
+    ///
+    /// assert_eq!(
+    ///     variable().bounds(..=2),
+    ///     variable().max(2)
+    /// );
+    ///
+    /// # assert_eq!(variable().bounds::<f64, _>(..), variable());
+    /// ```
+    pub fn bounds<N: Into<f64> + Copy, B: RangeBounds<N>>(self, bounds: B) -> Self {
+        self.min(match bounds.start_bound() {
+            Bound::Included(&x) => x.into(),
+            Bound::Excluded(&x) => x.into(),
+            Bound::Unbounded => f64::NEG_INFINITY,
+        })
+        .max(match bounds.end_bound() {
+            Bound::Included(&x) => x.into(),
+            Bound::Excluded(&x) => x.into(),
+            Bound::Unbounded => f64::INFINITY,
+        })
+    }
+
     /// Set the lower bound of the variable
     pub fn min<N: Into<f64>>(mut self, min: N) -> Self {
         self.min = min.into();
@@ -107,10 +152,7 @@ impl VariableDefinition {
 /// Creates an unbounded continuous linear variable
 impl Default for VariableDefinition {
     fn default() -> Self {
-        VariableDefinition {
-            min: f64::NEG_INFINITY,
-            max: f64::INFINITY,
-        }
+        VariableDefinition::new()
     }
 }
 
