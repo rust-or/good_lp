@@ -18,6 +18,3 @@ default = ["coin_cbc"]
 [dependencies]
 coin_cbc = { version = "0.1", optional = true }
 minilp = { version = "0.2", optional = true }
-
-[dev-dependencies]
-trybuild = "1"

@@ -51,9 +51,3 @@ fn debug_format() {
         expr_str
     )
 }
-
-#[test]
-fn expected_failures() {
-    let t = trybuild::TestCases::new();
-    t.compile_fail("tests/failures/*.rs");
-}
