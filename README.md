@@ -22,6 +22,11 @@ fn main() {
 }
 ```
 
+### Usage examples
+
+You can find a resource allocation problem example in
+[`resource_allocation_problem.rs`](./tests/resource_allocation_problem.rs).
+
 ## Solvers
 
 This library offers an abstraction over multiple solvers. By default, it uses [cbc](https://www.coin-or.org/Cbc/), but
