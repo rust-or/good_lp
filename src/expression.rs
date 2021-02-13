@@ -106,7 +106,8 @@ impl<F> Expression<F> {
 
     /// Evaluate the concrete value of the expression, given the values of the variables
     ///
-    /// ## Example
+    /// ## Examples
+    /// ### Evaluate an expression using a solution
     ///
     /// ```rust
     /// # #[cfg(feature = "coin_cbc")] {
@@ -120,6 +121,21 @@ impl<F> Expression<F> {
     /// # }
     /// # use good_lp::ResolutionError;
     /// # Ok::<_, ResolutionError>(())
+    /// ```
+    ///
+    /// ### Evaluate an expression with a HashMap
+    /// A [HashMap] is a valid [Solution]
+    ///
+    /// ```rust
+    /// use std::collections::HashMap;
+    /// use good_lp::{variables, Variable};
+    /// let mut vars = variables!();
+    /// let a = vars.add_variable();
+    /// let b = vars.add_variable();
+    /// let expr = a + b / 2;
+    /// let var_mapping: HashMap<_, _> = vec![(a, 3), (b, 10)].into_iter().collect();
+    /// let value = expr.eval_with(&var_mapping);
+    /// assert_eq!(value, 8.);
     /// ```
     pub fn eval_with<S: Solution<F>>(&self, values: &S) -> f64 {
         self.constant

@@ -68,6 +68,9 @@ pub trait Solution<F> {
     }
 }
 
+/// All `HashMap<Variable<_>, {number}>` implement [Solution].
+/// If a HashMap doesn't contain the value for a variable,
+/// then [Solution::value] will panic if you try to access it.
 impl<F, N: Into<f64> + Clone> Solution<F> for HashMap<Variable<F>, N> {
     fn value(&self, variable: Variable<F>) -> f64 {
         self[&variable].clone().into()

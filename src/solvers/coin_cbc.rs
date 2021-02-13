@@ -1,5 +1,6 @@
 //! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc)
-
+//! This solver is activated using the default `coin_cbc` feature.
+//! You can disable it an enable another solver instead using cargo features.
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{Constraint, Variable};
