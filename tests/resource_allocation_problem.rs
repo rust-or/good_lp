@@ -4,9 +4,7 @@
 //! and the value of each product, how much we should produce of each.
 
 use good_lp::variable::ProblemVariables;
-use good_lp::{
-    coin_cbc, variable, variables, Expression, Solution, SolverModel, Variable,
-};
+use good_lp::{coin_cbc, variable, variables, Expression, Solution, SolverModel, Variable};
 
 struct ResourceAllocationProblem<F> {
     vars: ProblemVariables<F>,
