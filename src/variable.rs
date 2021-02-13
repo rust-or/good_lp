@@ -128,7 +128,7 @@ pub struct ProblemVariables<F> {
     variables: Vec<VariableDefinition>,
 }
 
-impl<F: Fn()> ProblemVariables<F> {
+impl<F> ProblemVariables<F> {
     /// This method has to be exposed for the variables! macro to work,
     /// but it should **never** be called directly
     #[doc(hidden)]
