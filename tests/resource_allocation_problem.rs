@@ -1,3 +1,8 @@
+//! In this example, we have multiple products,
+//! and each consumes a set amount of fuel, and of time to produce.
+//! The goal is to find, knowing the available fuel and time,
+//! and the value of each product, how much we should produce of each.
+
 use good_lp::variable::ProblemVariables;
 use good_lp::{
     coin_cbc, variable, variables, Expression, Solution, SolverModel, Variable,
