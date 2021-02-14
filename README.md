@@ -36,6 +36,18 @@ you can also activate other solvers using cargo features.
 
 Used by default, performant, but requires to have a C compiler and the cbc C library installed.
 
+In ubuntu, you can install it with:
+
+```
+sudo apt-get install coinor-cbc coinor-libcbc-dev
+```
+
+In MacOS, using [homebrew](https://brew.sh/) :
+
+```
+brew install cbc
+```
+
 #### [minilp](https://docs.rs/minilp)
 
 minilp is a pure rust solver, which means it works out of the box without installing anything else.
