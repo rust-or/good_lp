@@ -78,19 +78,25 @@ impl<F> Default for Expression<F> {
 impl<F> Expression<F> {
     /// Creates a constraint indicating that this expression
     /// is lesser than or equal to the right hand side
-    pub fn leq<RHS: Into<Expression<F>>>(self, rhs: RHS) -> Constraint<F> {
+    pub fn leq<RHS>(self, rhs: RHS) -> Constraint<F>
+    where
+        Expression<F>: Sub<RHS, Output = Expression<F>>,
+    {
         constraint::leq(self, rhs)
     }
 
     /// Creates a constraint indicating that this expression
     /// is greater than or equal to the right hand side
-    pub fn geq<RHS: Into<Expression<F>>>(self, rhs: RHS) -> Constraint<F> {
+    pub fn geq<RHS: Sub<Expression<F>, Output = Expression<F>>>(self, rhs: RHS) -> Constraint<F> {
         constraint::geq(self, rhs)
     }
 
     /// Creates a constraint indicating that this expression
     /// is greater than or equal to the right hand side
-    pub fn eq<RHS: Into<Expression<F>>>(self, rhs: RHS) -> Constraint<F> {
+    pub fn eq<RHS>(self, rhs: RHS) -> Constraint<F>
+    where
+        Expression<F>: Sub<RHS, Output = Expression<F>>,
+    {
         constraint::eq(self, rhs)
     }
 

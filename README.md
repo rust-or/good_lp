@@ -50,4 +50,10 @@ features = ["minilp"]
 ```
 
 Then use `minilp` instead of `coin_cbc` in your code:
-`use good_lp::minilp` and then `vars.maximise(objective).using(minilp)`.
+```rust
+use good_lp::minilp;
+
+fn optimize<V>(vars: ProblemVariables<V>) {
+    vars.maximise(objective).using(minilp);
+}
+```

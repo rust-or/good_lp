@@ -1,4 +1,4 @@
-//! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc)
+//! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc).
 //! This solver is activated using the default `coin_cbc` feature.
 //! You can disable it an enable another solver instead using cargo features.
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
@@ -7,7 +7,8 @@ use crate::{Constraint, Variable};
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 use std::marker::PhantomData;
 
-/// The Cbc [COIN-OR](https://www.coin-or.org/) solver library
+/// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
+/// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)
 pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
     let UnsolvedProblem {
         objective,
@@ -42,6 +43,7 @@ pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
     }
 }
 
+/// A coin-cbc model
 pub struct CoinCbcProblem<F> {
     model: Model,
     columns: Vec<Col>,
@@ -92,10 +94,18 @@ impl<T> SolverModel<T> for CoinCbcProblem<T> {
     }
 }
 
+/// A coin-cbc problem solution
 pub struct CoinCbcSolution<F> {
     columns: Vec<Col>,
     solution: CbcSolution,
     variable_type: PhantomData<F>,
+}
+
+impl<F> CoinCbcSolution<F> {
+    /// Returns the inner Coin-Cbc model
+    pub fn model(&self) -> &coin_cbc::raw::Model {
+        self.solution.raw()
+    }
 }
 
 impl<F> Solution<F> for CoinCbcSolution<F> {

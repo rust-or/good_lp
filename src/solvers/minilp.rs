@@ -31,6 +31,7 @@ pub fn minilp<F: Fn()>(to_solve: UnsolvedProblem<F>) -> MiniLpProblem<F> {
     }
 }
 
+/// A minilp model
 pub struct MiniLpProblem<F> {
     problem: minilp::Problem,
     variables: Vec<minilp::Variable>,
@@ -71,10 +72,18 @@ impl<T> SolverModel<T> for MiniLpProblem<T> {
     }
 }
 
+/// The solution to a minilp problem
 pub struct MiniLpSolution<F> {
     solution: minilp::Solution,
     variables: Vec<minilp::Variable>,
     _variable_type: PhantomData<F>,
+}
+
+impl<F> MiniLpSolution<F> {
+    /// Returns the MiniLP solution object. You can use it to dynamically add new constraints
+    pub fn into_inner(self) -> minilp::Solution {
+        self.solution
+    }
 }
 
 impl<F> Solution<F> for MiniLpSolution<F> {

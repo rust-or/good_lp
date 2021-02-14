@@ -2,7 +2,7 @@
 use crate::expression::Expression;
 use crate::variable::{FormatWithVars, Variable};
 use core::fmt::{Debug, Formatter};
-use std::ops::{Shl, Shr};
+use std::ops::{Shl, Shr, Sub};
 
 /// A constraint represents a single (in)equality that must hold in the solution.
 pub struct Constraint<F> {
@@ -39,23 +39,23 @@ impl<F> Debug for Constraint<F> {
 }
 
 /// equals
-pub fn eq<F, A: Into<Expression<F>>, B: Into<Expression<F>>>(a: A, b: B) -> Constraint<F> {
-    Constraint::new(a.into() - b.into(), true)
+pub fn eq<F, B, A: Sub<B, Output = Expression<F>>>(a: A, b: B) -> Constraint<F> {
+    Constraint::new(a - b, true)
 }
 
 /// less than or equal
-pub fn leq<F, A: Into<Expression<F>>, B: Into<Expression<F>>>(a: A, b: B) -> Constraint<F> {
-    Constraint::new(a.into() - b.into(), false)
+pub fn leq<F, B, A: Sub<B, Output = Expression<F>>>(a: A, b: B) -> Constraint<F> {
+    Constraint::new(a - b, false)
 }
 
 /// greater than or equal
-pub fn geq<F, A: Into<Expression<F>>, B: Into<Expression<F>>>(a: A, b: B) -> Constraint<F> {
+pub fn geq<F, A, B: Sub<A, Output = Expression<F>>>(a: A, b: B) -> Constraint<F> {
     leq(b, a)
 }
 
 macro_rules! impl_shifts {
     ($($t:ty)*) => {$(
-        impl<F, RHS: Into<Expression<F>>> Shl<RHS> for $t {
+        impl<F, RHS> Shl<RHS> for $t where Self: Sub<RHS, Output=Expression<F>> {
             type Output = Constraint<F>;
 
             fn shl(self, rhs: RHS) -> Self::Output {
@@ -63,7 +63,7 @@ macro_rules! impl_shifts {
             }
         }
 
-        impl<F, RHS: Into<Expression<F>>> Shr<RHS> for $t {
+        impl<F, RHS: Sub<Self, Output=Expression<F>>> Shr<RHS> for $t {
             type Output = Constraint<F>;
 
             fn shr(self, rhs: RHS) -> Self::Output {

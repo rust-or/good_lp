@@ -1,3 +1,6 @@
+//! Included solvers that find the actual solution to linear problems.
+//!The number of solvers available in this module depends on which cargo features you have activated.
+
 #[cfg(feature = "coin_cbc")]
 pub mod coin_cbc;
 #[cfg(feature = "minilp")]
@@ -11,7 +14,9 @@ use std::collections::HashMap;
 /// or the lowest value of the objective function.
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum ObjectiveDirection {
+    /// Find the highest possible value of the objective
     Maximisation,
+    /// Find the lowest possible value of the objective
     Minimisation,
 }
 
