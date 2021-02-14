@@ -41,7 +41,7 @@ Also, do not hesitate to open issues to discuss the implementation.
 ## Usage examples
 
 You can find a resource allocation problem example in
-[`resource_allocation_problem.rs`](./tests/resource_allocation_problem.rs).
+[`resource_allocation_problem.rs`](https://github.com/lovasoa/good_lp/blob/main/tests/resource_allocation_problem.rs).
 
 ## Solvers
 
