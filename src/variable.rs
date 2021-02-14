@@ -241,7 +241,8 @@ impl<F> IntoIterator for ProblemVariables<F> {
     }
 }
 
-/// A problem without constraints
+/// A problem without constraints.
+/// Created with [ProblemVariables::optimise].
 pub struct UnsolvedProblem<F> {
     pub(crate) objective: Expression<F>,
     pub(crate) direction: ObjectiveDirection,

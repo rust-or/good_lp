@@ -6,7 +6,7 @@ use crate::{Constraint, Variable};
 use std::marker::PhantomData;
 
 /// The [minilp](https://docs.rs/minilp) solver,
-/// to be used with [UnresolvedProblem::using](crate::variable::UnresolvedProblem::using).
+/// to be used with [UnsolvedProblem::using].
 pub fn minilp<F: Fn()>(to_solve: UnsolvedProblem<F>) -> MiniLpProblem<F> {
     let UnsolvedProblem {
         objective,

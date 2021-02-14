@@ -2,8 +2,11 @@
 //!The number of solvers available in this module depends on which cargo features you have activated.
 
 #[cfg(feature = "coin_cbc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
 pub mod coin_cbc;
+
 #[cfg(feature = "minilp")]
+#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
 pub mod minilp;
 
 use crate::Variable;

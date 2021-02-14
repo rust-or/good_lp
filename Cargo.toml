@@ -1,6 +1,6 @@
 [package]
 name = "good_lp"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
 repository = "https://github.com/lovasoa/good_lp"
@@ -25,3 +25,11 @@ criterion = "0.3"
 [[bench]]
 name = "benchmark"
 harness = false
+
+
+[package.metadata.docs.rs]
+# Display the documentation for all solvers on docs.rs
+all-features = true
+default-target = "x86_64-unknown-linux-gnu"
+targets = ["x86_64-unknown-linux-gnu"]
+rustc-args = ["--cfg", "docsrs"]

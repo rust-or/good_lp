@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 //!  A Linear Programming modeler that is easy to use, performant with large problems, and well-typed.
 //!
 //!  ```rust
@@ -63,9 +64,11 @@ pub use solvers::{ResolutionError, Solution, SolverModel};
 pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 
 #[cfg(feature = "coin_cbc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
 pub use solvers::coin_cbc::coin_cbc;
 
 #[cfg(feature = "minilp")]
+#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
 pub use solvers::minilp::minilp;
 
 mod expression;
