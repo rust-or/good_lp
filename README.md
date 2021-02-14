@@ -22,7 +22,23 @@ fn main() {
 }
 ```
 
-### Usage examples
+## Features and limitations
+
+ - **Linear programming**. This crate currently supports only the definition
+   of linear programs. You cannot use it with quadratic functions, for instance.
+ - **Continuous variables**. Currently, only continuous variables are supported.
+   Mixed-integer linear programming (MILP) is not supported.
+ - **Not a solver**. This crate uses other rust crates to provide the solvers.
+   There is no solving algorithm in good_lp itself. If you have an issue with a solver,
+   report it to the solver directly. See below for the list of supported solvers.
+
+### Contributing
+
+Pull requests are welcome !
+If you need any of the features mentioned above, get in touch.
+Also, do not hesitate to open issues to discuss the implementation.
+
+## Usage examples
 
 You can find a resource allocation problem example in
 [`resource_allocation_problem.rs`](./tests/resource_allocation_problem.rs).
@@ -69,3 +85,7 @@ fn optimize<V>(vars: ProblemVariables<V>) {
     vars.maximise(objective).using(minilp);
 }
 ```
+
+### License
+
+This library is published under the MIT license.
