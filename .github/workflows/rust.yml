@@ -22,9 +22,11 @@ jobs:
           sudo apt-get install coinor-cbc coinor-libcbc-dev
           rustup component add rustfmt
       - name: Build
-        run: cargo build --verbose --all-features --tests
+        run: cargo build --all-features --tests
       - name: Run tests
-        run: cargo test --verbose --all-features
+        run: cargo test --all-features
+      - name: Run tests with minilp
+        run: cargo test --no-default-features --features minilp
       - name: Check formatting
         run: cargo fmt -- --check
       - run: cargo bench

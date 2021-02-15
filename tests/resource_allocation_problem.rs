@@ -11,7 +11,7 @@
 //! and then use SolverModel::with to add constraints dynamically.
 
 use good_lp::variable::ProblemVariables;
-use good_lp::{coin_cbc, variable, variables, Expression, Solution, SolverModel, Variable};
+use good_lp::{default_solver, variable, variables, Expression, Solution, SolverModel, Variable};
 
 struct Product {
     // amount of fuel producing 1 unit takes
@@ -58,7 +58,7 @@ impl<F> ResourceAllocationProblem<F> {
     fn best_product_quantities(self) -> impl Solution<F> {
         self.vars
             .maximise(self.total_value)
-            .using(coin_cbc)
+            .using(default_solver)
             .with(self.consumed_fuel.leq(self.available_fuel))
             .with(self.consumed_time.leq(self.available_time))
             .solve()

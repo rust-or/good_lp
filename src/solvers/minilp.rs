@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 
 /// The [minilp](https://docs.rs/minilp) solver,
 /// to be used with [UnsolvedProblem::using].
-pub fn minilp<F: Fn()>(to_solve: UnsolvedProblem<F>) -> MiniLpProblem<F> {
+pub fn minilp<F>(to_solve: UnsolvedProblem<F>) -> MiniLpProblem<F> {
     let UnsolvedProblem {
         objective,
         direction,
