@@ -38,6 +38,18 @@ Pull requests are welcome !
 If you need any of the features mentioned above, get in touch.
 Also, do not hesitate to open issues to discuss the implementation.
 
+### Alternatives
+
+If you need non-linear programming or integer variables, you can use 
+[lp-modeler](https://crates.io/crates/lp-modeler).
+However, it is currently very slow with large problems.
+
+You can also directly use the underlying solver libraries, such as
+[coin_cbc](https://docs.rs/coin_cbc/) or
+[minilp](https://crates.io/crates/minilp)
+if you don't need a way to express your objective function and
+constraints using an idiomatic rust syntax.
+
 ## Usage examples
 
 You can find a resource allocation problem example in
