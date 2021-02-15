@@ -38,6 +38,13 @@ pub struct MiniLpProblem<F> {
     variable_type: PhantomData<F>,
 }
 
+impl<T> MiniLpProblem<T> {
+    /// Get the inner minilp model
+    pub fn as_inner(&self) -> &minilp::Problem {
+        &self.problem
+    }
+}
+
 impl<T> SolverModel<T> for MiniLpProblem<T> {
     type Solution = MiniLpSolution<T>;
     type Error = ResolutionError;

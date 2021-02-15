@@ -50,6 +50,13 @@ pub struct CoinCbcProblem<F> {
     variable_type: PhantomData<F>,
 }
 
+impl<T> CoinCbcProblem<T> {
+    /// Get the inner coin_cbc model
+    pub fn as_inner(&self) -> &Model {
+        &self.model
+    }
+}
+
 impl<T> SolverModel<T> for CoinCbcProblem<T> {
     type Solution = CoinCbcSolution<T>;
     type Error = ResolutionError;
