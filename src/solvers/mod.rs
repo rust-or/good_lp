@@ -101,21 +101,3 @@ impl<F, N: Into<f64> + Clone> Solution<F> for HashMap<Variable<F>, N> {
         self[&variable].clone().into()
     }
 }
-
-/*
-struct SolverWithVariables<T, M, V> {
-    model: M,
-    variables: HashMap<Variable<T>, V>,
-}
-
-impl<T, M, V: Default> SolverWithVariables<T, M, V> {
-    fn create_variable(&mut self) -> V {
-        V::default()
-    }
-    fn get_or_insert_variable(&mut self, v: Variable<T>) -> &V {
-        self.variables
-            .entry(v)
-            .or_insert_with(|| self.create_variable())
-    }
-}
-*/
