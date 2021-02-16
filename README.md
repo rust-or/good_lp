@@ -83,10 +83,7 @@ minilp is a pure rust solver, which means it works out of the box without instal
 You can activate it with :
 
 ```toml
-[dependencies.good_lp]
-version = "0.1.0"
-default-features = false
-features = ["minilp"]
+good_lp = { version = "0.3", features = ["minilp"], default-features = false }
 ```
 
 Then use `minilp` instead of `coin_cbc` in your code:
