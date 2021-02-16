@@ -4,8 +4,7 @@
 //! Each variable has a [VariableDefinition] that sets its bounds.
 use std::collections::{Bound, HashMap};
 use std::fmt::{Debug, Formatter};
-use std::hash::{Hash, Hasher};
-use std::marker::PhantomData;
+use std::hash::Hash;
 use std::ops::{Div, Mul, Neg, RangeBounds};
 
 use crate::expression::{Expression, LinearExpression};
@@ -16,64 +15,49 @@ use crate::solvers::ObjectiveDirection;
 /// and the [Constraints](crate::Constraint) of your model.
 ///
 /// Variables are created using [ProblemVariables::add]
-#[derive(Debug, Default)]
-pub struct Variable<T> {
-    _problem_type: PhantomData<T>,
+///
+/// ## Warning
+/// `Eq` is implemented on this type, but
+/// `v1 == v2` is true only if the two variables represent the same object,
+/// not if they have the same definition.
+///
+/// ```
+/// # use good_lp::{variable, variables};
+/// let mut vars = variables!();
+/// let v1 = vars.add(variable().min(1).max(8));
+/// let v2 = vars.add(variable().min(1).max(8));
+/// assert_ne!(v1, v2);
+///
+/// let v1_copy = v1;
+/// assert_eq!(v1, v1_copy);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Variable {
     /// A variable is nothing more than an index into the `variables` field of a ProblemVariables
     /// That's why it can be `Copy`.
     /// All the actual information about the variable (name, type, bounds, ...) is stored in ProblemVariables
     index: usize,
 }
 
-impl<T> Variable<T> {
+impl Variable {
     /// No one should use this method outside of [VariableDefinition]
     fn at(index: usize) -> Self {
-        Self {
-            _problem_type: PhantomData,
-            index,
-        }
+        Self { index }
     }
 }
 
-impl<T> Variable<T> {
+impl Variable {
     pub(super) fn index(&self) -> usize {
         self.index
     }
 }
 
-/// This checks if two variables are the same (or copies one of another)
-/// This is **not** a check that the two variables have the same [VariableDefinition]
-impl<F> PartialEq for Variable<F> {
-    fn eq(&self, other: &Self) -> bool {
-        self.index == other.index
-    }
-}
-
-impl<F> Eq for Variable<F> {}
-
-impl<F> Hash for Variable<F> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.index.hash(state)
-    }
-}
-
-impl<F> Clone for Variable<F> {
-    fn clone(&self) -> Self {
-        Self {
-            _problem_type: PhantomData,
-            index: self.index,
-        }
-    }
-}
-
-impl<F> Copy for Variable<F> {}
-
 /// An element that can be displayed if you give a variable display function
-pub trait FormatWithVars<F> {
+pub trait FormatWithVars {
     /// Write the element to the formatter. See [std::fmt::Display]
     fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
     where
-        FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result;
+        FUN: Fn(&mut Formatter<'_>, Variable) -> std::fmt::Result;
 
     /// Write the elements, naming the variables v0, v1, ... vn
     fn format_debug(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -165,45 +149,40 @@ pub fn variable() -> VariableDefinition {
 /// Each problem has a unique type, which prevents using the variables
 /// from one problem inside an other one.
 /// Instances of this type should be created exclusively using the [variables!] macro.
-pub struct ProblemVariables<F> {
-    _type_signature: F,
+#[derive(Default)]
+pub struct ProblemVariables {
     variables: Vec<VariableDefinition>,
 }
 
-impl<F> ProblemVariables<F> {
-    /// This method has to be exposed for the variables! macro to work,
-    /// but it should **never** be called directly
-    #[doc(hidden)]
-    pub fn __new_internal(_type_signature: F) -> Self {
-        ProblemVariables {
-            _type_signature,
-            variables: vec![],
-        }
+impl ProblemVariables {
+    /// Create an empty list of variables
+    pub fn new() -> Self {
+        ProblemVariables { variables: vec![] }
     }
 
     /// Add a anonymous unbounded continuous variable to the problem
-    pub fn add_variable(&mut self) -> Variable<F> {
+    pub fn add_variable(&mut self) -> Variable {
         self.add(variable())
     }
 
     /// Add a variable with the given definition
-    pub fn add(&mut self, var_def: VariableDefinition) -> Variable<F> {
+    pub fn add(&mut self, var_def: VariableDefinition) -> Variable {
         let index = self.variables.len();
         self.variables.push(var_def);
         Variable::at(index)
     }
 
     /// Adds a list of variables with the given definition
-    pub fn add_vector(&mut self, var_def: VariableDefinition, len: usize) -> Vec<Variable<F>> {
+    pub fn add_vector(&mut self, var_def: VariableDefinition, len: usize) -> Vec<Variable> {
         (0..len).map(|_i| self.add(var_def.clone())).collect()
     }
 
     /// Creates an optimization problem with the given objective. Don't solve it immediately
-    pub fn optimise<E: Into<Expression<F>>>(
+    pub fn optimise<E: Into<Expression>>(
         self,
         direction: ObjectiveDirection,
         objective: E,
-    ) -> UnsolvedProblem<F> {
+    ) -> UnsolvedProblem {
         UnsolvedProblem {
             objective: objective.into(),
             direction,
@@ -212,19 +191,17 @@ impl<F> ProblemVariables<F> {
     }
 
     /// Creates an maximization problem with the given objective. Don't solve it immediately
-    pub fn maximise<E: Into<Expression<F>>>(self, objective: E) -> UnsolvedProblem<F> {
+    pub fn maximise<E: Into<Expression>>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Maximisation, objective)
     }
 
     /// Creates an minimization problem with the given objective. Don't solve it immediately
-    pub fn minimise<E: Into<Expression<F>>>(self, objective: E) -> UnsolvedProblem<F> {
+    pub fn minimise<E: Into<Expression>>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Minimisation, objective)
     }
 
     /// Iterates over the couples of variables with their properties
-    pub fn iter_variables_with_def(
-        &self,
-    ) -> impl Iterator<Item = (Variable<F>, &VariableDefinition)> {
+    pub fn iter_variables_with_def(&self) -> impl Iterator<Item = (Variable, &VariableDefinition)> {
         self.variables
             .iter()
             .enumerate()
@@ -232,7 +209,7 @@ impl<F> ProblemVariables<F> {
     }
 }
 
-impl<F> IntoIterator for ProblemVariables<F> {
+impl IntoIterator for ProblemVariables {
     type Item = VariableDefinition;
     type IntoIter = std::vec::IntoIter<VariableDefinition>;
 
@@ -243,24 +220,24 @@ impl<F> IntoIterator for ProblemVariables<F> {
 
 /// A problem without constraints.
 /// Created with [ProblemVariables::optimise].
-pub struct UnsolvedProblem<F> {
-    pub(crate) objective: Expression<F>,
+pub struct UnsolvedProblem {
+    pub(crate) objective: Expression,
     pub(crate) direction: ObjectiveDirection,
-    pub(crate) variables: ProblemVariables<F>,
+    pub(crate) variables: ProblemVariables,
 }
 
-impl<F> UnsolvedProblem<F> {
+impl UnsolvedProblem {
     /// Create a solver instance and feed it with this problem
     pub fn using<S, G>(self, solver: S) -> G
     where
-        S: FnOnce(UnsolvedProblem<F>) -> G,
+        S: FnOnce(UnsolvedProblem) -> G,
     {
         solver(self)
     }
 }
 
-impl<F, N: Into<f64>> Mul<N> for Variable<F> {
-    type Output = Expression<F>;
+impl<N: Into<f64>> Mul<N> for Variable {
+    type Output = Expression;
 
     fn mul(self, rhs: N) -> Self::Output {
         let mut coefficients = HashMap::with_capacity(1);
@@ -272,10 +249,10 @@ impl<F, N: Into<f64>> Mul<N> for Variable<F> {
     }
 }
 
-impl<F> Mul<Variable<F>> for f64 {
-    type Output = Expression<F>;
+impl Mul<Variable> for f64 {
+    type Output = Expression;
 
-    fn mul(self, rhs: Variable<F>) -> Self::Output {
+    fn mul(self, rhs: Variable) -> Self::Output {
         let mut coefficients = HashMap::with_capacity(1);
         coefficients.insert(rhs, self);
         Expression {
@@ -285,30 +262,30 @@ impl<F> Mul<Variable<F>> for f64 {
     }
 }
 
-impl<F> Mul<Variable<F>> for i32 {
-    type Output = Expression<F>;
+impl Mul<Variable> for i32 {
+    type Output = Expression;
 
-    fn mul(self, rhs: Variable<F>) -> Self::Output {
+    fn mul(self, rhs: Variable) -> Self::Output {
         rhs.mul(f64::from(self))
     }
 }
 
-impl<F> Div<f64> for Variable<F> {
-    type Output = Expression<F>;
+impl Div<f64> for Variable {
+    type Output = Expression;
     fn div(self, rhs: f64) -> Self::Output {
         self * (1. / rhs)
     }
 }
 
-impl<F> Div<i32> for Variable<F> {
-    type Output = Expression<F>;
+impl Div<i32> for Variable {
+    type Output = Expression;
     fn div(self, rhs: i32) -> Self::Output {
         self * (1. / f64::from(rhs))
     }
 }
 
-impl<T> Neg for Variable<T> {
-    type Output = Expression<T>;
+impl Neg for Variable {
+    type Output = Expression;
 
     fn neg(self) -> Self::Output {
         -Expression::from(self)

@@ -3,11 +3,10 @@
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{Constraint, Variable};
-use std::marker::PhantomData;
 
 /// The [minilp](https://docs.rs/minilp) solver,
 /// to be used with [UnsolvedProblem::using].
-pub fn minilp<F>(to_solve: UnsolvedProblem<F>) -> MiniLpProblem<F> {
+pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
     let UnsolvedProblem {
         objective,
         direction,
@@ -24,32 +23,27 @@ pub fn minilp<F>(to_solve: UnsolvedProblem<F>) -> MiniLpProblem<F> {
             problem.add_var(coeff, (min, max))
         })
         .collect();
-    MiniLpProblem {
-        problem,
-        variables,
-        variable_type: PhantomData,
-    }
+    MiniLpProblem { problem, variables }
 }
 
 /// A minilp model
-pub struct MiniLpProblem<F> {
+pub struct MiniLpProblem {
     problem: minilp::Problem,
     variables: Vec<minilp::Variable>,
-    variable_type: PhantomData<F>,
 }
 
-impl<T> MiniLpProblem<T> {
+impl MiniLpProblem {
     /// Get the inner minilp model
     pub fn as_inner(&self) -> &minilp::Problem {
         &self.problem
     }
 }
 
-impl<T> SolverModel<T> for MiniLpProblem<T> {
-    type Solution = MiniLpSolution<T>;
+impl SolverModel for MiniLpProblem {
+    type Solution = MiniLpSolution;
     type Error = ResolutionError;
 
-    fn with(mut self, constraint: Constraint<T>) -> Self {
+    fn with(mut self, constraint: Constraint) -> Self {
         let coefficients: Vec<(minilp::Variable, f64)> = constraint
             .expression
             .linear
@@ -73,28 +67,26 @@ impl<T> SolverModel<T> for MiniLpProblem<T> {
             Ok(solution) => Ok(MiniLpSolution {
                 solution,
                 variables: self.variables,
-                _variable_type: PhantomData,
             }),
         }
     }
 }
 
 /// The solution to a minilp problem
-pub struct MiniLpSolution<F> {
+pub struct MiniLpSolution {
     solution: minilp::Solution,
     variables: Vec<minilp::Variable>,
-    _variable_type: PhantomData<F>,
 }
 
-impl<F> MiniLpSolution<F> {
+impl MiniLpSolution {
     /// Returns the MiniLP solution object. You can use it to dynamically add new constraints
     pub fn into_inner(self) -> minilp::Solution {
         self.solution
     }
 }
 
-impl<F> Solution<F> for MiniLpSolution<F> {
-    fn value(&self, variable: Variable<F>) -> f64 {
+impl Solution for MiniLpSolution {
+    fn value(&self, variable: Variable) -> f64 {
         self.solution[self.variables[variable.index()]]
     }
 }

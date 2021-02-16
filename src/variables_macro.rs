@@ -21,22 +21,24 @@
 /// ## Trying to add incompatible variables
 ///
 /// You should never create expressions with variabless that come from different
-/// [ProblemVariables](crate::variable::ProblemVariables) insstances.
+/// [ProblemVariables](crate::variable::ProblemVariables) instances.
 ///
-/// ```compile_fail
-/// use good_lp::variables;
+/// ```should_panic
+/// use good_lp::{variables, default_solver, SolverModel};
 ///
 /// let mut pb1 = variables!();
 /// let mut pb2 = variables!();
-/// let x = pb1.add_variable();
-/// let y = pb2.add_variable();
-/// let objective = x + y / 2;
+/// let x = pb1.add_variable(); // Creating a variable on pb1 ...
+/// pb2.minimise(x) // ... but running the optimization on pb2
+///   .using(default_solver)
+///   .solve();
 /// ```
 /// Since `pb1` and `pb2` have been instanciated at two different places in the code,
 /// they are different problems and their variables are not compatible with one another.
+/// Trying to solve problems with incompatible problems will **panic**.
 #[macro_export]
 macro_rules! variables {
     () => {
-        $crate::variable::ProblemVariables::__new_internal(|| ())
+        $crate::variable::ProblemVariables::new()
     };
 }

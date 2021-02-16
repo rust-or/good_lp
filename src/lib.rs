@@ -16,7 +16,7 @@
 //!
 //!  assert_eq!(solution.value(a), 1.);
 //!  assert_eq!(solution.value(b), 3.);
-//!  Ok::<_, good_lp::ResolutionError>(())
+//!  # Ok::<_, good_lp::ResolutionError>(())
 //!  ```
 //!
 //! ## Solvers
@@ -34,12 +34,12 @@
 //! ```
 //! use good_lp::{Expression, Variable};
 //!
-//! fn total_cost<V>(energy: Variable<V>, time: Variable<V>) -> Expression<V> {
+//! fn total_cost(energy: Variable, time: Variable) -> Expression {
 //! #   let dollars_per_hour = 0;
 //!     energy_cost(energy) + dollars_per_hour * time
 //! }
 //!
-//! fn energy_cost<V>(energy: Variable<V>) -> Expression<V> {
+//! fn energy_cost(energy: Variable) -> Expression {
 //! #   let fetch_energy_price = |_| 0.;
 //!     let price = fetch_energy_price(energy);
 //!     energy * price

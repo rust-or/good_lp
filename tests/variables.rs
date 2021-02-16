@@ -17,8 +17,8 @@ fn complex_expression() {
 fn large_sum() {
     let mut var1 = variables!();
     let var_vec: Vec<_> = (0..100_000).map(|_i| var1.add_variable()).collect();
-    let sum_right: Expression<_> = var_vec.iter().sum();
-    let sum_reverse: Expression<_> = var_vec.iter().rev().sum();
+    let sum_right: Expression = var_vec.iter().sum();
+    let sum_reverse: Expression = var_vec.iter().rev().sum();
     assert_eq!(sum_right, sum_reverse)
 }
 

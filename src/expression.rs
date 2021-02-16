@@ -6,14 +6,14 @@ use crate::variable::{FormatWithVars, Variable};
 use crate::{Constraint, Solution};
 use std::fmt::{Debug, Formatter};
 
-pub(crate) struct LinearExpression<F> {
-    pub(crate) coefficients: HashMap<Variable<F>, f64>,
+pub(crate) struct LinearExpression {
+    pub(crate) coefficients: HashMap<Variable, f64>,
 }
 
-impl<F> FormatWithVars<F> for LinearExpression<F> {
+impl FormatWithVars for LinearExpression {
     fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
     where
-        FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result,
+        FUN: Fn(&mut Formatter<'_>, Variable) -> std::fmt::Result,
     {
         let mut first = true;
         for (&var, &coeff) in &self.coefficients {
@@ -37,18 +37,18 @@ impl<F> FormatWithVars<F> for LinearExpression<F> {
 }
 
 /// Represents an affine expression, such as `2x + 3` or `x + y + z`
-pub struct Expression<F> {
-    pub(crate) linear: LinearExpression<F>,
+pub struct Expression {
+    pub(crate) linear: LinearExpression,
     pub(crate) constant: f64,
 }
 
-impl<F> PartialEq for Expression<F> {
+impl PartialEq for Expression {
     fn eq(&self, other: &Self) -> bool {
         self.constant.eq(&other.constant) && self.linear.coefficients.eq(&other.linear.coefficients)
     }
 }
 
-impl<F> Clone for Expression<F> {
+impl Clone for Expression {
     fn clone(&self) -> Self {
         Expression {
             linear: LinearExpression {
@@ -59,13 +59,13 @@ impl<F> Clone for Expression<F> {
     }
 }
 
-impl<T> Debug for Expression<T> {
+impl Debug for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.format_debug(f)
     }
 }
 
-impl<F> Default for Expression<F> {
+impl Default for Expression {
     fn default() -> Self {
         let coefficients = HashMap::with_capacity(0);
         Expression {
@@ -75,34 +75,34 @@ impl<F> Default for Expression<F> {
     }
 }
 
-impl<F> Expression<F> {
+impl Expression {
     /// Creates a constraint indicating that this expression
     /// is lesser than or equal to the right hand side
-    pub fn leq<RHS>(self, rhs: RHS) -> Constraint<F>
+    pub fn leq<RHS>(self, rhs: RHS) -> Constraint
     where
-        Expression<F>: Sub<RHS, Output = Expression<F>>,
+        Expression: Sub<RHS, Output = Expression>,
     {
         constraint::leq(self, rhs)
     }
 
     /// Creates a constraint indicating that this expression
     /// is greater than or equal to the right hand side
-    pub fn geq<RHS: Sub<Expression<F>, Output = Expression<F>>>(self, rhs: RHS) -> Constraint<F> {
+    pub fn geq<RHS: Sub<Expression, Output = Expression>>(self, rhs: RHS) -> Constraint {
         constraint::geq(self, rhs)
     }
 
     /// Creates a constraint indicating that this expression
     /// is greater than or equal to the right hand side
-    pub fn eq<RHS>(self, rhs: RHS) -> Constraint<F>
+    pub fn eq<RHS>(self, rhs: RHS) -> Constraint
     where
-        Expression<F>: Sub<RHS, Output = Expression<F>>,
+        Expression: Sub<RHS, Output = Expression>,
     {
         constraint::eq(self, rhs)
     }
 
     /// Performs self = self + (a * b)
     #[inline]
-    pub fn add_mul<N: Into<f64>>(&mut self, a: N, b: &Expression<F>) {
+    pub fn add_mul<N: Into<f64>>(&mut self, a: N, b: &Expression) {
         let factor = a.into();
         for (var, value) in &b.linear.coefficients {
             *self.linear.coefficients.entry(*var).or_default() += factor * value
@@ -143,7 +143,7 @@ impl<F> Expression<F> {
     /// let value = expr.eval_with(&var_mapping);
     /// assert_eq!(value, 8.);
     /// ```
-    pub fn eval_with<S: Solution<F>>(&self, values: &S) -> f64 {
+    pub fn eval_with<S: Solution>(&self, values: &S) -> f64 {
         self.constant
             + self
                 .linear
@@ -154,83 +154,77 @@ impl<F> Expression<F> {
     }
 }
 
-pub fn add_mul<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(
+pub fn add_mul<LHS: Into<Expression>, RHS: Into<Expression>>(
     lhs: LHS,
     rhs: RHS,
     factor: f64,
-) -> Expression<F> {
+) -> Expression {
     let mut result = lhs.into();
     result.add_mul(factor, &rhs.into());
     result
 }
 
-pub fn sub<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(
-    lhs: LHS,
-    rhs: RHS,
-) -> Expression<F> {
+pub fn sub<LHS: Into<Expression>, RHS: Into<Expression>>(lhs: LHS, rhs: RHS) -> Expression {
     add_mul(lhs, rhs, -1.)
 }
 
-pub fn add<F, LHS: Into<Expression<F>>, RHS: Into<Expression<F>>>(
-    lhs: LHS,
-    rhs: RHS,
-) -> Expression<F> {
+pub fn add<LHS: Into<Expression>, RHS: Into<Expression>>(lhs: LHS, rhs: RHS) -> Expression {
     add_mul(lhs, rhs, 1.)
 }
 
-impl<F> FormatWithVars<F> for Expression<F> {
+impl FormatWithVars for Expression {
     fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
     where
-        FUN: Fn(&mut Formatter<'_>, Variable<F>) -> std::fmt::Result,
+        FUN: Fn(&mut Formatter<'_>, Variable) -> std::fmt::Result,
     {
         self.linear.format_with(f, variable_format)?;
         write!(f, " + {}", self.constant)
     }
 }
 
-impl<'a, F> AddAssign<&'a Expression<F>> for Expression<F> {
-    fn add_assign(&mut self, rhs: &'a Expression<F>) {
+impl<'a> AddAssign<&'a Expression> for Expression {
+    fn add_assign(&mut self, rhs: &'a Expression) {
         self.add_mul(1., rhs)
     }
 }
 
-impl<'a, F> Add<&'a Expression<F>> for Expression<F> {
-    type Output = Expression<F>;
+impl<'a> Add<&'a Expression> for Expression {
+    type Output = Expression;
 
-    fn add(mut self, rhs: &'a Expression<F>) -> Self::Output {
+    fn add(mut self, rhs: &'a Expression) -> Self::Output {
         self += rhs;
         self
     }
 }
 
-impl<'a, F> SubAssign<&'a Expression<F>> for Expression<F> {
-    fn sub_assign(&mut self, rhs: &'a Expression<F>) {
+impl<'a> SubAssign<&'a Expression> for Expression {
+    fn sub_assign(&mut self, rhs: &'a Expression) {
         self.add_mul(-1., rhs)
     }
 }
 
-impl<'a, F> Sub<&'a Expression<F>> for Expression<F> {
-    type Output = Expression<F>;
+impl<'a> Sub<&'a Expression> for Expression {
+    type Output = Expression;
 
-    fn sub(mut self, rhs: &'a Expression<F>) -> Self::Output {
+    fn sub(mut self, rhs: &'a Expression) -> Self::Output {
         self -= rhs;
         self
     }
 }
 
-impl<F, RHS: Into<Expression<F>>> AddAssign<RHS> for Expression<F> {
+impl<RHS: Into<Expression>> AddAssign<RHS> for Expression {
     fn add_assign(&mut self, rhs: RHS) {
         self.add_assign(&rhs.into());
     }
 }
 
-impl<F, RHS: Into<Expression<F>>> SubAssign<RHS> for Expression<F> {
+impl<RHS: Into<Expression>> SubAssign<RHS> for Expression {
     fn sub_assign(&mut self, rhs: RHS) {
         self.sub_assign(&rhs.into());
     }
 }
 
-impl<T> Neg for Expression<T> {
+impl Neg for Expression {
     type Output = Self;
 
     fn neg(mut self) -> Self::Output {
@@ -239,7 +233,7 @@ impl<T> Neg for Expression<T> {
     }
 }
 
-impl<F, N: Into<f64>> MulAssign<N> for Expression<F> {
+impl<N: Into<f64>> MulAssign<N> for Expression {
     fn mul_assign(&mut self, rhs: N) {
         let factor = rhs.into();
         for value in self.linear.coefficients.values_mut() {
@@ -249,8 +243,8 @@ impl<F, N: Into<f64>> MulAssign<N> for Expression<F> {
     }
 }
 
-impl<F, N: Into<f64>> Mul<N> for Expression<F> {
-    type Output = Expression<F>;
+impl<N: Into<f64>> Mul<N> for Expression {
+    type Output = Expression;
 
     fn mul(mut self, rhs: N) -> Self::Output {
         self.mul_assign(rhs);
@@ -258,8 +252,8 @@ impl<F, N: Into<f64>> Mul<N> for Expression<F> {
     }
 }
 
-impl<F, N: Into<f64>> Div<N> for Expression<F> {
-    type Output = Expression<F>;
+impl<N: Into<f64>> Div<N> for Expression {
+    type Output = Expression;
 
     fn div(mut self, rhs: N) -> Self::Output {
         self.mul_assign(1. / rhs.into());
@@ -267,14 +261,14 @@ impl<F, N: Into<f64>> Div<N> for Expression<F> {
     }
 }
 
-impl<F> From<Variable<F>> for Expression<F> {
-    fn from(var: Variable<F>) -> Self {
+impl From<Variable> for Expression {
+    fn from(var: Variable) -> Self {
         Expression::from(&var)
     }
 }
 
-impl<'a, F> From<&'a Variable<F>> for Expression<F> {
-    fn from(var: &'a Variable<F>) -> Self {
+impl<'a> From<&'a Variable> for Expression {
+    fn from(var: &'a Variable) -> Self {
         let mut coefficients = HashMap::with_capacity(1);
         coefficients.insert(*var, 1.);
         Expression {
@@ -284,7 +278,7 @@ impl<'a, F> From<&'a Variable<F>> for Expression<F> {
     }
 }
 
-impl<F, N: Into<f64>> From<N> for Expression<F> {
+impl<N: Into<f64>> From<N> for Expression {
     fn from(constant: N) -> Self {
         let coefficients = HashMap::with_capacity(0);
         let constant = constant.into();
@@ -295,54 +289,52 @@ impl<F, N: Into<f64>> From<N> for Expression<F> {
     }
 }
 
-impl<F> Mul<Expression<F>> for f64 {
-    type Output = Expression<F>;
+impl Mul<Expression> for f64 {
+    type Output = Expression;
 
-    fn mul(self, mut rhs: Expression<F>) -> Self::Output {
+    fn mul(self, mut rhs: Expression) -> Self::Output {
         rhs *= self;
         rhs
     }
 }
 
-impl<F> Mul<Expression<F>> for i32 {
-    type Output = Expression<F>;
+impl Mul<Expression> for i32 {
+    type Output = Expression;
 
-    fn mul(self, mut rhs: Expression<F>) -> Self::Output {
+    fn mul(self, mut rhs: Expression) -> Self::Output {
         rhs *= self;
         rhs
     }
 }
 
 macro_rules! impl_ops_local {
-    ($($typename:ident $(< $param:ident >)? : $other:ident $(< $other_param:ident >)?),*) => {$(
-        impl<F $(, $other: Into<Expression<$param>>)?>
-            Sub<$other $(< $other_param >)?>
-        for $typename$(< $param >)? {
-            type Output = Expression<F>;
-            fn sub(self, rhs: $other $(< $other_param >)?) -> Self::Output { sub(self, rhs) }
+    ($( $typename:ident : $([generic $generic:ident])? $other:ident),*) => {$(
+        impl<$($generic: Into<Expression>)?> Sub<$other>
+        for $typename {
+            type Output = Expression;
+            fn sub(self, rhs: $other) -> Self::Output { sub(self, rhs) }
         }
 
-        impl<F $(, $other: Into<Expression<$param>>)?>
-            Add<$other $(< $other_param >)?>
-        for $typename$(< $param >)? {
-            type Output = Expression<F>;
-            fn add(self, rhs: $other $(< $other_param >)?) -> Self::Output { add(self, rhs) }
+        impl<$($generic: Into<Expression>)?> Add<$other>
+        for $typename {
+            type Output = Expression;
+            fn add(self, rhs: $other) -> Self::Output { add(self, rhs) }
         }
     )*}
 }
 
 impl_ops_local!(
-    Expression<F> : RHS,
-    Variable<F> : RHS,
-    f64: Expression<F>,
-    f64: Variable<F>,
-    i32: Expression<F>,
-    i32: Variable<F>
+    Expression: [generic RHS] RHS,
+    Variable: [generic RHS] RHS,
+    f64: Expression,
+    f64: Variable,
+    i32: Expression,
+    i32: Variable
 );
 
-impl<'a, F, A> std::iter::Sum<A> for Expression<F>
+impl<'a, A> std::iter::Sum<A> for Expression
 where
-    Expression<F>: From<A>,
+    Expression: From<A>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         let mut res = Expression::default();

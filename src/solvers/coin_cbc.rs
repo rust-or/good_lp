@@ -5,11 +5,10 @@ use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel}
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{Constraint, Variable};
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
-use std::marker::PhantomData;
 
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
 /// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)
-pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
+pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
     let UnsolvedProblem {
         objective,
         direction,
@@ -36,32 +35,27 @@ pub fn coin_cbc<F>(to_solve: UnsolvedProblem<F>) -> CoinCbcProblem<F> {
         ObjectiveDirection::Maximisation => Sense::Maximize,
         ObjectiveDirection::Minimisation => Sense::Minimize,
     });
-    CoinCbcProblem {
-        model,
-        columns,
-        variable_type: PhantomData,
-    }
+    CoinCbcProblem { model, columns }
 }
 
 /// A coin-cbc model
-pub struct CoinCbcProblem<F> {
+pub struct CoinCbcProblem {
     model: Model,
     columns: Vec<Col>,
-    variable_type: PhantomData<F>,
 }
 
-impl<T> CoinCbcProblem<T> {
+impl CoinCbcProblem {
     /// Get the inner coin_cbc model
     pub fn as_inner(&self) -> &Model {
         &self.model
     }
 }
 
-impl<T> SolverModel<T> for CoinCbcProblem<T> {
-    type Solution = CoinCbcSolution<T>;
+impl SolverModel for CoinCbcProblem {
+    type Solution = CoinCbcSolution;
     type Error = ResolutionError;
 
-    fn with(mut self, constraint: Constraint<T>) -> Self {
+    fn with(mut self, constraint: Constraint) -> Self {
         let row = self.model.add_row();
         let constant = -constraint.expression.constant;
         if constraint.is_equality {
@@ -93,7 +87,6 @@ impl<T> SolverModel<T> for CoinCbcProblem<T> {
                     Ok(CoinCbcSolution {
                         columns: self.columns,
                         solution,
-                        variable_type: PhantomData,
                     })
                 }
             },
@@ -102,21 +95,20 @@ impl<T> SolverModel<T> for CoinCbcProblem<T> {
 }
 
 /// A coin-cbc problem solution
-pub struct CoinCbcSolution<F> {
+pub struct CoinCbcSolution {
     columns: Vec<Col>,
     solution: CbcSolution,
-    variable_type: PhantomData<F>,
 }
 
-impl<F> CoinCbcSolution<F> {
+impl CoinCbcSolution {
     /// Returns the inner Coin-Cbc model
     pub fn model(&self) -> &coin_cbc::raw::Model {
         self.solution.raw()
     }
 }
 
-impl<F> Solution<F> for CoinCbcSolution<F> {
-    fn value(&self, variable: Variable<F>) -> f64 {
+impl Solution for CoinCbcSolution {
+    fn value(&self, variable: Variable) -> f64 {
         self.solution.col(self.columns[variable.index()])
     }
 }

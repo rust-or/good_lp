@@ -21,21 +21,21 @@ struct Product {
     value: f64, // The amount of money we can sell an unit of the product for
 }
 
-struct ResourceAllocationProblem<F> {
-    vars: ProblemVariables<F>,
-    total_value: Expression<F>,
-    consumed_fuel: Expression<F>,
-    consumed_time: Expression<F>,
+struct ResourceAllocationProblem {
+    vars: ProblemVariables,
+    total_value: Expression,
+    consumed_fuel: Expression,
+    consumed_time: Expression,
     available_fuel: f64,
     available_time: f64,
 }
 
-impl<F> ResourceAllocationProblem<F> {
+impl ResourceAllocationProblem {
     fn new(
-        variables: ProblemVariables<F>,
+        variables: ProblemVariables,
         available_fuel: f64,
         available_time: f64,
-    ) -> ResourceAllocationProblem<F> {
+    ) -> ResourceAllocationProblem {
         ResourceAllocationProblem {
             vars: variables,
             available_fuel,
@@ -47,7 +47,7 @@ impl<F> ResourceAllocationProblem<F> {
     }
 
     /// Add a new product to take into account in the optimization
-    fn add(&mut self, product: Product) -> Variable<F> {
+    fn add(&mut self, product: Product) -> Variable {
         let amount_to_produce = self.vars.add(variable().min(0));
         self.total_value += amount_to_produce * product.value;
         self.consumed_fuel += amount_to_produce * product.needed_fuel;
@@ -55,7 +55,7 @@ impl<F> ResourceAllocationProblem<F> {
         amount_to_produce
     }
 
-    fn best_product_quantities(self) -> impl Solution<F> {
+    fn best_product_quantities(self) -> impl Solution {
         self.vars
             .maximise(self.total_value)
             .using(default_solver)

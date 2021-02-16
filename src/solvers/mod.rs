@@ -54,23 +54,23 @@ impl Display for ResolutionError {
 impl Error for ResolutionError {}
 
 /// A solver's own representation of a model, to which constraints can be added.
-pub trait SolverModel<F> {
+pub trait SolverModel {
     /// The type of the solution to the problem
-    type Solution: Solution<F>;
+    type Solution: Solution;
     /// The error that can occur while solving the problem
     type Error;
 
     /// Takes a model and adds a constraint to it
-    fn with(self, constraint: Constraint<F>) -> Self;
+    fn with(self, constraint: Constraint) -> Self;
 
     /// Find the solution for the problem being modeled
     fn solve(self) -> Result<Self::Solution, Self::Error>;
 }
 
 /// A problem solution
-pub trait Solution<F> {
+pub trait Solution {
     /// Get the optimal value of a variable of the problem
-    fn value(&self, variable: Variable<F>) -> f64;
+    fn value(&self, variable: Variable) -> f64;
 
     /// ## Example
     ///
@@ -85,7 +85,7 @@ pub trait Solution<F> {
     /// assert_eq!(solution.eval(&objective), 5.);
     /// # }
     /// ```
-    fn eval(&self, expr: &Expression<F>) -> f64
+    fn eval(&self, expr: &Expression) -> f64
     where
         Self: Sized,
     {
@@ -93,11 +93,11 @@ pub trait Solution<F> {
     }
 }
 
-/// All `HashMap<Variable<_>, {number}>` implement [Solution].
+/// All `HashMap<Variable, {number}>` implement [Solution].
 /// If a HashMap doesn't contain the value for a variable,
 /// then [Solution::value] will panic if you try to access it.
-impl<F, N: Into<f64> + Clone> Solution<F> for HashMap<Variable<F>, N> {
-    fn value(&self, variable: Variable<F>) -> f64 {
+impl<N: Into<f64> + Clone> Solution for HashMap<Variable, N> {
+    fn value(&self, variable: Variable) -> f64 {
         self[&variable].clone().into()
     }
 }
