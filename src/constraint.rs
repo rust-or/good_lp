@@ -75,6 +75,63 @@ macro_rules! impl_shifts {
 
 impl_shifts!(Expression Variable);
 
+/// This macro allows defining constraints using `a + b <= c + d`
+/// instead of `(a + b).leq(c + d)` or `a + b << c + d`
+///
+/// # Example
+///
+/// ## Create a constraint
+///
+/// ```
+/// # use good_lp::*;
+/// # let mut vars = variables!();
+/// # let a = vars.add(variable().max(10));
+/// # let b = vars.add(variable());
+/// let my_inequality = constraint!(a + b >= 3 * b - a);
+/// ```
+///
+/// ## Full example
+///
+/// ```
+/// use good_lp::*;
+///
+/// let mut vars = variables!();
+/// let a = vars.add(variable().max(10));
+/// let b = vars.add(variable());
+/// let solution = vars
+///     .maximise(a + b)
+///     .using(default_solver)
+///     .with(constraint!(a - 5 <= b / 2))
+///     .with(constraint!(b == a))
+///     .solve().unwrap();
+/// assert_eq!(10., solution.value(a));
+/// assert_eq!(10., solution.value(b));
+/// ```
+#[macro_export]
+macro_rules! constraint {
+    ([$($left:tt)*] <= $($right:tt)*) => {
+        $crate::constraint::leq($($left)*, $($right)*)
+    };
+    ([$($left:tt)*] >= $($right:tt)*) => {
+        $crate::constraint::geq($($left)*, $($right)*)
+    };
+    ([$($left:tt)*] == $($right:tt)*) => {
+        $crate::constraint::eq($($left)*, $($right)*)
+    };
+    // Stop condition: all token have been processed
+    ([$($left:tt)*]) => {
+        $($left:tt)*
+    };
+    // The next token is not a special one
+    ([$($left:tt)*] $next:tt $($right:tt)*) => {
+        constraint!([$($left)* $next] $($right)*)
+    };
+    // Initial rule: start the recursive calls
+    ($($all:tt)*) => {
+        constraint!([] $($all)*)
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use crate::variables;

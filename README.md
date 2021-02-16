@@ -6,7 +6,7 @@ A Linear Programming modeler that is easy to use, performant with large problems
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
 ```rust
-use good_lp::{variables, variable, coin_cbc, SolverModel, Solution};
+use good_lp::{variables, variable, coin_cbc, SolverModel, Solution, contraint};
 
 fn main() {
     let mut vars = variables!();
@@ -14,8 +14,8 @@ fn main() {
     let b = vars.add(variable().min(2).max(4));
     let solution = vars.maximise(10 * (a - b / 5) - b)
         .using(coin_cbc)
-        .with(a + 2 << b) // or (a + 2).leq(b)
-        .with(1 + a >> 4 - b) // or (1 + a).geq(4 - b)
+        .with(constraint!(a + 2 <= b))
+        .with(constraint!(1 + a >= 4 - b))
         .solve()?;
     println!("a={}   b={}", solution.value(a), solution.value(b));
     println!("a + b = {}", solution.eval(a + b));
