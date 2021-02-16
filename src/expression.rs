@@ -231,6 +231,7 @@ impl Expression {
     }
 }
 
+#[inline]
 pub fn add_mul<LHS: Into<Expression>, RHS: IntoAffineExpression>(
     lhs: LHS,
     rhs: RHS,
@@ -241,10 +242,12 @@ pub fn add_mul<LHS: Into<Expression>, RHS: IntoAffineExpression>(
     result
 }
 
+#[inline]
 pub fn sub<LHS: Into<Expression>, RHS: IntoAffineExpression>(lhs: LHS, rhs: RHS) -> Expression {
     add_mul(lhs, rhs, -1.)
 }
 
+#[inline]
 pub fn add<LHS: Into<Expression>, RHS: IntoAffineExpression>(lhs: LHS, rhs: RHS) -> Expression {
     add_mul(lhs, rhs, 1.)
 }
@@ -276,6 +279,7 @@ impl<RHS: IntoAffineExpression> AddAssign<RHS> for Expression {
 impl Neg for Expression {
     type Output = Self;
 
+    #[inline]
     fn neg(mut self) -> Self::Output {
         self *= -1;
         self
@@ -296,6 +300,7 @@ impl<N: Into<f64>> MulAssign<N> for Expression {
 impl<N: Into<f64>> Mul<N> for Expression {
     type Output = Expression;
 
+    #[inline]
     fn mul(mut self, rhs: N) -> Self::Output {
         self.mul_assign(rhs);
         self
@@ -305,6 +310,7 @@ impl<N: Into<f64>> Mul<N> for Expression {
 impl<N: Into<f64>> Div<N> for Expression {
     type Output = Expression;
 
+    #[inline]
     fn div(mut self, rhs: N) -> Self::Output {
         self.mul_assign(1. / rhs.into());
         self
