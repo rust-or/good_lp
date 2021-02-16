@@ -311,23 +311,6 @@ impl<N: Into<f64>> Div<N> for Expression {
     }
 }
 
-impl From<Variable> for Expression {
-    fn from(var: Variable) -> Self {
-        Expression::from(&var)
-    }
-}
-
-impl<'a> From<&'a Variable> for Expression {
-    fn from(var: &'a Variable) -> Self {
-        let mut coefficients = HashMap::with_capacity(1);
-        coefficients.insert(*var, 1.);
-        Expression {
-            linear: LinearExpression { coefficients },
-            constant: 0.0,
-        }
-    }
-}
-
 macro_rules! impl_mul {
     ($($t:ty),*) =>{$(
         impl Mul<Expression> for $t {
@@ -374,7 +357,7 @@ macro_rules! impl_conv {
         }
     )*}
 }
-impl_conv!(f64, i32);
+impl_conv!(f64, i32, Variable);
 
 impl<E: IntoAffineExpression> std::iter::Sum<E> for Expression {
     fn sum<I: Iterator<Item = E>>(iter: I) -> Self {
