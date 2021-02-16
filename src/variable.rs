@@ -202,8 +202,14 @@ impl ProblemVariables {
         direction: ObjectiveDirection,
         objective: E,
     ) -> UnsolvedProblem {
+        let objective = Expression::from_other_affine(objective);
+        assert!(
+            objective.linear.coefficients.len() <= self.variables.len(),
+            "There should not be more variables in the objective function than in the problem. \
+            You probably used variables from a different problem in this one."
+        );
         UnsolvedProblem {
-            objective: Expression::from_other_affine(objective),
+            objective,
             direction,
             variables: self,
         }
