@@ -91,6 +91,7 @@ good_lp = { version = \"*\", features = [\"minilp\"] }
 mod expression;
 #[macro_use]
 pub mod variable;
+mod affine_expression_trait;
 pub mod constraint;
 pub mod solvers;
 mod variables_macro;

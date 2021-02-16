@@ -1,0 +1,36 @@
+use crate::Variable;
+
+/// An element that can be expressed as a linear combination of variables plus a constant
+pub trait IntoAffineExpression {
+    type Iter: IntoIterator<Item = (Variable, f64)>;
+    /// An iterator over variables and their coefficients.
+    /// For instance `a + 2b - 3a - 7` should yield `[(a, -2), (b, 2)]`
+    fn linear_coefficients(self) -> Self::Iter;
+
+    /// The constant factor in the expression.
+    /// For instance, `a + 2b - 7` will give `-7`
+    #[inline]
+    fn constant(&self) -> f64 {
+        0.
+    }
+}
+
+macro_rules! impl_affine_for_num {
+    ($($num:ty),*) => {$(
+        impl IntoAffineExpression for $num {
+            type Iter = std::iter::Empty<(Variable, f64)>;
+
+            #[inline]
+            fn linear_coefficients(self) -> Self::Iter {
+                std::iter::empty()
+            }
+
+            #[inline]
+            fn constant(&self) -> f64 {
+                f64::from(*self)
+            }
+        }
+    )*};
+}
+
+impl_affine_for_num!(f64, f32, u32, u16, u8, i32, i16, i8);

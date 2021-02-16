@@ -7,6 +7,7 @@ use std::fmt::{Debug, Formatter};
 use std::hash::Hash;
 use std::ops::{Div, Mul, Neg, RangeBounds};
 
+use crate::affine_expression_trait::IntoAffineExpression;
 use crate::expression::{Expression, LinearExpression};
 use crate::solvers::ObjectiveDirection;
 
@@ -37,6 +38,24 @@ pub struct Variable {
     /// That's why it can be `Copy`.
     /// All the actual information about the variable (name, type, bounds, ...) is stored in ProblemVariables
     index: usize,
+}
+
+impl IntoAffineExpression for Variable {
+    type Iter = std::iter::Once<(Self, f64)>;
+
+    #[inline]
+    fn linear_coefficients(self) -> Self::Iter {
+        std::iter::once((self, 1.))
+    }
+}
+
+impl<'a> IntoAffineExpression for &'a Variable {
+    type Iter = std::iter::Once<(Variable, f64)>;
+
+    #[inline]
+    fn linear_coefficients(self) -> Self::Iter {
+        (*self).linear_coefficients()
+    }
 }
 
 impl Variable {
@@ -178,25 +197,25 @@ impl ProblemVariables {
     }
 
     /// Creates an optimization problem with the given objective. Don't solve it immediately
-    pub fn optimise<E: Into<Expression>>(
+    pub fn optimise<E: IntoAffineExpression>(
         self,
         direction: ObjectiveDirection,
         objective: E,
     ) -> UnsolvedProblem {
         UnsolvedProblem {
-            objective: objective.into(),
+            objective: Expression::from_other_affine(objective),
             direction,
             variables: self,
         }
     }
 
     /// Creates an maximization problem with the given objective. Don't solve it immediately
-    pub fn maximise<E: Into<Expression>>(self, objective: E) -> UnsolvedProblem {
+    pub fn maximise<E: IntoAffineExpression>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Maximisation, objective)
     }
 
     /// Creates an minimization problem with the given objective. Don't solve it immediately
-    pub fn minimise<E: Into<Expression>>(self, objective: E) -> UnsolvedProblem {
+    pub fn minimise<E: IntoAffineExpression>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Minimisation, objective)
     }
 

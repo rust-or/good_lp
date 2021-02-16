@@ -1,13 +1,50 @@
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
+use crate::affine_expression_trait::IntoAffineExpression;
 use crate::constraint;
 use crate::variable::{FormatWithVars, Variable};
 use crate::{Constraint, Solution};
-use std::fmt::{Debug, Formatter};
 
-pub(crate) struct LinearExpression {
+/// An linear expression without a constant component
+pub struct LinearExpression {
     pub(crate) coefficients: HashMap<Variable, f64>,
+}
+
+impl IntoAffineExpression for LinearExpression {
+    type Iter = std::collections::hash_map::IntoIter<Variable, f64>;
+
+    #[inline]
+    fn linear_coefficients(self) -> Self::Iter {
+        self.coefficients.into_iter()
+    }
+}
+
+/// Return type for `&'a LinearExpression::linear_coefficients`
+#[doc(hidden)]
+pub struct CopiedCoefficients<'a>(std::collections::hash_map::Iter<'a, Variable, f64>);
+
+impl<'a> Iterator for CopiedCoefficients<'a> {
+    type Item = (Variable, f64);
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|(&var, &c)| (var, c))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl<'a> IntoAffineExpression for &'a LinearExpression {
+    type Iter = CopiedCoefficients<'a>;
+
+    #[inline]
+    fn linear_coefficients(self) -> Self::Iter {
+        CopiedCoefficients(self.coefficients.iter())
+    }
 }
 
 impl FormatWithVars for LinearExpression {
@@ -42,6 +79,34 @@ pub struct Expression {
     pub(crate) constant: f64,
 }
 
+impl IntoAffineExpression for Expression {
+    type Iter = <LinearExpression as IntoAffineExpression>::Iter;
+
+    #[inline]
+    fn linear_coefficients(self) -> Self::Iter {
+        self.linear.linear_coefficients()
+    }
+
+    #[inline]
+    fn constant(&self) -> f64 {
+        self.constant
+    }
+}
+
+impl<'a> IntoAffineExpression for &'a Expression {
+    type Iter = <&'a LinearExpression as IntoAffineExpression>::Iter;
+
+    #[inline]
+    fn linear_coefficients(self) -> Self::Iter {
+        (&self.linear).linear_coefficients()
+    }
+
+    #[inline]
+    fn constant(&self) -> f64 {
+        self.constant
+    }
+}
+
 impl PartialEq for Expression {
     fn eq(&self, other: &Self) -> bool {
         self.constant.eq(&other.constant) && self.linear.coefficients.eq(&other.linear.coefficients)
@@ -67,15 +132,26 @@ impl Debug for Expression {
 
 impl Default for Expression {
     fn default() -> Self {
-        let coefficients = HashMap::with_capacity(0);
-        Expression {
-            linear: LinearExpression { coefficients },
-            constant: 0.,
-        }
+        Expression::from(0.)
     }
 }
 
 impl Expression {
+    /// Create a concrete expression struct from anything that has linear coefficients and a constant
+    ///
+    /// ```
+    /// # use good_lp::Expression;
+    /// Expression::from_other_affine(0.); // A constant expression
+    /// ```
+    pub fn from_other_affine<E: IntoAffineExpression>(source: E) -> Self {
+        let constant = source.constant();
+        let coefficients = source.linear_coefficients().into_iter().collect();
+        Expression {
+            linear: LinearExpression { coefficients },
+            constant,
+        }
+    }
+
     /// Creates a constraint indicating that this expression
     /// is lesser than or equal to the right hand side
     pub fn leq<RHS>(self, rhs: RHS) -> Constraint
@@ -102,12 +178,13 @@ impl Expression {
 
     /// Performs self = self + (a * b)
     #[inline]
-    pub fn add_mul<N: Into<f64>>(&mut self, a: N, b: &Expression) {
+    pub fn add_mul<N: Into<f64>, E: IntoAffineExpression>(&mut self, a: N, b: E) {
         let factor = a.into();
-        for (var, value) in &b.linear.coefficients {
-            *self.linear.coefficients.entry(*var).or_default() += factor * value
+        let constant = b.constant();
+        for (var, value) in b.linear_coefficients().into_iter() {
+            *self.linear.coefficients.entry(var).or_default() += factor * value
         }
-        self.constant += factor * b.constant;
+        self.constant += factor * constant;
     }
 
     /// Evaluate the concrete value of the expression, given the values of the variables
@@ -154,21 +231,21 @@ impl Expression {
     }
 }
 
-pub fn add_mul<LHS: Into<Expression>, RHS: Into<Expression>>(
+pub fn add_mul<LHS: Into<Expression>, RHS: IntoAffineExpression>(
     lhs: LHS,
     rhs: RHS,
     factor: f64,
 ) -> Expression {
     let mut result = lhs.into();
-    result.add_mul(factor, &rhs.into());
+    result.add_mul(factor, rhs);
     result
 }
 
-pub fn sub<LHS: Into<Expression>, RHS: Into<Expression>>(lhs: LHS, rhs: RHS) -> Expression {
+pub fn sub<LHS: Into<Expression>, RHS: IntoAffineExpression>(lhs: LHS, rhs: RHS) -> Expression {
     add_mul(lhs, rhs, -1.)
 }
 
-pub fn add<LHS: Into<Expression>, RHS: Into<Expression>>(lhs: LHS, rhs: RHS) -> Expression {
+pub fn add<LHS: Into<Expression>, RHS: IntoAffineExpression>(lhs: LHS, rhs: RHS) -> Expression {
     add_mul(lhs, rhs, 1.)
 }
 
@@ -182,45 +259,17 @@ impl FormatWithVars for Expression {
     }
 }
 
-impl<'a> AddAssign<&'a Expression> for Expression {
-    fn add_assign(&mut self, rhs: &'a Expression) {
-        self.add_mul(1., rhs)
-    }
-}
-
-impl<'a> Add<&'a Expression> for Expression {
-    type Output = Expression;
-
-    fn add(mut self, rhs: &'a Expression) -> Self::Output {
-        self += rhs;
-        self
-    }
-}
-
-impl<'a> SubAssign<&'a Expression> for Expression {
-    fn sub_assign(&mut self, rhs: &'a Expression) {
+impl<RHS: IntoAffineExpression> SubAssign<RHS> for Expression {
+    #[inline]
+    fn sub_assign(&mut self, rhs: RHS) {
         self.add_mul(-1., rhs)
     }
 }
 
-impl<'a> Sub<&'a Expression> for Expression {
-    type Output = Expression;
-
-    fn sub(mut self, rhs: &'a Expression) -> Self::Output {
-        self -= rhs;
-        self
-    }
-}
-
-impl<RHS: Into<Expression>> AddAssign<RHS> for Expression {
+impl<RHS: IntoAffineExpression> AddAssign<RHS> for Expression {
+    #[inline]
     fn add_assign(&mut self, rhs: RHS) {
-        self.add_assign(&rhs.into());
-    }
-}
-
-impl<RHS: Into<Expression>> SubAssign<RHS> for Expression {
-    fn sub_assign(&mut self, rhs: RHS) {
-        self.sub_assign(&rhs.into());
+        self.add_mul(1, rhs);
     }
 }
 
@@ -234,6 +283,7 @@ impl Neg for Expression {
 }
 
 impl<N: Into<f64>> MulAssign<N> for Expression {
+    #[inline]
     fn mul_assign(&mut self, rhs: N) {
         let factor = rhs.into();
         for value in self.linear.coefficients.values_mut() {
@@ -278,44 +328,29 @@ impl<'a> From<&'a Variable> for Expression {
     }
 }
 
-impl<N: Into<f64>> From<N> for Expression {
-    fn from(constant: N) -> Self {
-        let coefficients = HashMap::with_capacity(0);
-        let constant = constant.into();
-        Expression {
-            linear: LinearExpression { coefficients },
-            constant,
+macro_rules! impl_mul {
+    ($($t:ty),*) =>{$(
+        impl Mul<Expression> for $t {
+            type Output = Expression;
+
+            fn mul(self, mut rhs: Expression) -> Self::Output {
+                rhs *= self;
+                rhs
+            }
         }
-    }
+    )*}
 }
-
-impl Mul<Expression> for f64 {
-    type Output = Expression;
-
-    fn mul(self, mut rhs: Expression) -> Self::Output {
-        rhs *= self;
-        rhs
-    }
-}
-
-impl Mul<Expression> for i32 {
-    type Output = Expression;
-
-    fn mul(self, mut rhs: Expression) -> Self::Output {
-        rhs *= self;
-        rhs
-    }
-}
+impl_mul!(f64, i32);
 
 macro_rules! impl_ops_local {
     ($( $typename:ident : $([generic $generic:ident])? $other:ident),*) => {$(
-        impl<$($generic: Into<Expression>)?> Sub<$other>
+        impl<$($generic: IntoAffineExpression)?> Sub<$other>
         for $typename {
             type Output = Expression;
             fn sub(self, rhs: $other) -> Self::Output { sub(self, rhs) }
         }
 
-        impl<$($generic: Into<Expression>)?> Add<$other>
+        impl<$($generic: IntoAffineExpression)?> Add<$other>
         for $typename {
             type Output = Expression;
             fn add(self, rhs: $other) -> Self::Output { add(self, rhs) }
@@ -332,15 +367,20 @@ impl_ops_local!(
     i32: Variable
 );
 
-impl<'a, A> std::iter::Sum<A> for Expression
-where
-    Expression: From<A>,
-{
-    fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
+macro_rules! impl_conv {
+    ( $( $typename:ident ),* ) => {$(
+        impl From<$typename> for Expression {
+            fn from(x: $typename) -> Expression { Expression::from_other_affine(x) }
+        }
+    )*}
+}
+impl_conv!(f64, i32);
+
+impl<E: IntoAffineExpression> std::iter::Sum<E> for Expression {
+    fn sum<I: Iterator<Item = E>>(iter: I) -> Self {
         let mut res = Expression::default();
         for i in iter {
-            let expr = Expression::from(i);
-            res.add_assign(expr)
+            res.add_assign(i)
         }
         res
     }
@@ -348,8 +388,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::variables;
     use std::collections::HashMap;
+
+    use crate::variables;
 
     #[test]
     fn expression_manipulation() {
