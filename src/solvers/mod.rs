@@ -12,6 +12,8 @@ pub mod minilp;
 use crate::Variable;
 use crate::{Constraint, Expression};
 use std::collections::HashMap;
+use std::error::Error;
+use std::fmt::{Display, Formatter};
 
 /// Whether to search for the variable values that give the highest
 /// or the lowest value of the objective function.
@@ -35,6 +37,21 @@ pub enum ResolutionError {
     /// Another error occurred
     Other(&'static str),
 }
+
+impl Display for ResolutionError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResolutionError::Unbounded =>
+                write!(f, "Unbounded: The objective can be made infinitely large without violating any constraints."),
+            ResolutionError::Infeasible =>
+                write!(f, "Infeasible: The problem contains contradictory constraints. No solution exists."),
+            ResolutionError::Other(s) =>
+                write!(f, "An unexpected error occurred while running the optimizer: {}.", s)
+        }
+    }
+}
+
+impl Error for ResolutionError {}
 
 /// A solver's own representation of a model, to which constraints can be added.
 pub trait SolverModel<F> {
