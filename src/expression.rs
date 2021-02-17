@@ -168,7 +168,7 @@ impl Expression {
     }
 
     /// Creates a constraint indicating that this expression
-    /// is greater than or equal to the right hand side
+    /// is equal to the right hand side
     pub fn eq<RHS>(self, rhs: RHS) -> Constraint
     where
         Expression: Sub<RHS, Output = Expression>,
