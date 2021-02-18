@@ -29,7 +29,21 @@ pub enum ObjectiveDirection {
     Minimisation,
 }
 
-/// Represents an error that occurred when solving a problem
+/// Represents an error that occurred when solving a problem.
+///
+/// # Examples
+/// ## Infeasible
+/// ```
+/// use good_lp::*;
+/// let mut vars = variables!();
+/// let x = vars.add_variable(); // unbounded variable
+/// let result = vars.maximise(x)
+///              .using(default_solver)
+///              .with(constraint!(x <= 9))
+///              .with(constraint!(x >= 10))
+///              .solve(); // x cannot be less than 9 and more than 10 at the same time
+/// assert_eq!(result.err(), Some(ResolutionError::Infeasible));
+/// ```
 #[derive(Debug, PartialEq, Clone)]
 pub enum ResolutionError {
     /// The problem is [unbounded](https://www.matem.unam.mx/~omar/math340/unbounded.html).
