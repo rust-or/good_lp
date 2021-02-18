@@ -19,9 +19,8 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         .into_iter()
         .map(|VariableDefinition { min, max, .. }| {
             let col = model.add_col();
-            if min > f64::NEG_INFINITY {
-                model.set_col_lower(col, min)
-            }
+            // Variables are created with a default min of 0
+            model.set_col_lower(col, min);
             if max < f64::INFINITY {
                 model.set_col_upper(col, max)
             }
