@@ -93,6 +93,8 @@ impl IntoAffineExpression for Expression {
     }
 }
 
+/// This implementation copies all the variables and coefficients from the referenced
+/// Expression into the created iterator
 impl<'a> IntoAffineExpression for &'a Expression {
     type Iter = <&'a LinearExpression as IntoAffineExpression>::Iter;
 

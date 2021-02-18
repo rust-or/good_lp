@@ -57,6 +57,7 @@
 //! Then you add constraints and solve your problem using the methods in [SolverModel].
 //!
 
+pub use affine_expression_trait::IntoAffineExpression;
 pub use constraint::Constraint;
 pub use expression::Expression;
 pub use solvers::{ResolutionError, Solution, SolverModel};

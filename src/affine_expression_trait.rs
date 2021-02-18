@@ -1,8 +1,13 @@
+//! An affine expression is an expression of the form `a + 2b - 3a - 7`
+//! You can implement this trait if you want to implement your own
+//! variant of the [Expression](crate::Expression) type, optimized for your use case.
 use crate::Variable;
 
 /// An element that can be expressed as a linear combination of variables plus a constant
 pub trait IntoAffineExpression {
+    /// The iterator returned by [`linear_coefficients`](IntoAffineExpression::linear_coefficients).
     type Iter: IntoIterator<Item = (Variable, f64)>;
+
     /// An iterator over variables and their coefficients.
     /// For instance `a + 2b - 3a - 7` should yield `[(a, -2), (b, 2)]`
     fn linear_coefficients(self) -> Self::Iter;
