@@ -47,9 +47,14 @@ pub fn lp_solve(to_solve: UnsolvedProblem) -> LpSolveProblem {
     let cols = to_c(variables.len());
     let mut model = Problem::new(0, cols).expect("Unable to create problem");
     let (obj_coefs, obj_idx, _const) = expr_to_scatter_vec(objective);
-    model.scatter_objective_function(&obj_coefs, &obj_idx);
+    assert!(model.scatter_objective_function(&obj_coefs, &obj_idx));
     for (i, v) in variables.into_iter().enumerate() {
-        model.set_bounds(to_c(i + 1), v.min, v.max);
+        let col = to_c(i + 1);
+        if v.min.is_finite() || v.max.is_finite() {
+            assert!(model.set_bounds(col, v.min, v.max));
+        } else {
+            assert!(model.set_unbounded(col));
+        }
     }
     LpSolveProblem(model)
 }
