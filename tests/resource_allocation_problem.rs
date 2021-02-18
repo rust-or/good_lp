@@ -66,6 +66,8 @@ impl ResourceAllocationProblem {
     }
 }
 
+use float_eq::assert_float_eq;
+
 #[test]
 fn resource_allocation() {
     let mut pb = ResourceAllocationProblem::new(variables!(), 5., 3.);
@@ -83,9 +85,9 @@ fn resource_allocation() {
     let solution = pb.best_product_quantities();
 
     // The amount of steel we should produce
-    assert_eq!(1., solution.value(steel));
+    assert_float_eq!(1., solution.value(steel), abs <= 1e-10);
     // The amount of stainless steel we should produce
-    assert_eq!(2., solution.value(stainless_steel));
+    assert_float_eq!(2., solution.value(stainless_steel), abs <= 1e-10);
 }
 
 #[test]
@@ -107,5 +109,6 @@ fn using_a_vector() {
     let variables: Vec<_> = products.into_iter().map(|p| pb.add(p)).collect();
     let solution = pb.best_product_quantities();
     let product_quantities: Vec<_> = variables.iter().map(|&v| solution.value(v)).collect();
-    assert_eq!(vec![1., 2.], product_quantities);
+    assert_float_eq!(1., product_quantities[0], abs <= 1e-10);
+    assert_float_eq!(2., product_quantities[1], abs <= 1e-10);
 }

@@ -232,6 +232,16 @@ impl ProblemVariables {
             .enumerate()
             .map(|(i, def)| (Variable::at(i), def))
     }
+
+    /// The number of variables
+    pub fn len(&self) -> usize {
+        self.variables.len()
+    }
+
+    /// Returns true when no variables have been added
+    pub fn is_empty(&self) -> bool {
+        self.variables.is_empty()
+    }
 }
 
 impl IntoIterator for ProblemVariables {

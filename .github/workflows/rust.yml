@@ -27,6 +27,8 @@ jobs:
         run: cargo test --all-features
       - name: Run tests with minilp
         run: cargo test --no-default-features --features minilp
+      - name: Run tests with lpsolve
+        run: cargo test --no-default-features --features lpsolve
       - name: Check formatting
         run: cargo fmt -- --check
       - run: cargo bench

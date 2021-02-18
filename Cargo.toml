@@ -1,6 +1,6 @@
 [package]
 name = "good_lp"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
 repository = "https://github.com/lovasoa/good_lp"
@@ -18,9 +18,11 @@ default = ["coin_cbc"]
 [dependencies]
 coin_cbc = { version = "0.1", optional = true }
 minilp = { version = "0.2", optional = true }
+lpsolve = { version = "0.1", optional = true }
 
 [dev-dependencies]
 criterion = "0.3"
+float_eq = "0.5"
 
 [[bench]]
 name = "benchmark"

@@ -9,6 +9,10 @@ pub mod coin_cbc;
 #[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
 pub mod minilp;
 
+#[cfg(feature = "lpsolve")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
+pub mod lpsolve;
+
 use crate::Variable;
 use crate::{Constraint, Expression};
 use std::collections::HashMap;

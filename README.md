@@ -24,8 +24,9 @@ fn main() {
 
 ## Features and limitations
 
- - **Linear programming**. This crate currently supports only the definition
-   of linear programs. You cannot use it with quadratic functions, for instance.
+ - **Linear programming**. This crate currently supports only the definition of linear programs. You cannot use it with
+   quadratic functions, for instance:
+   you can maximise `y + 3 * y`, but not `3 * x * y`.
  - **Continuous variables**. Currently, only continuous variables are supported.
    Mixed-integer linear programming (MILP) is not supported.
  - **Not a solver**. This crate uses other rust crates to provide the solvers.
@@ -87,13 +88,29 @@ good_lp = { version = "0.3", features = ["minilp"], default-features = false }
 ```
 
 Then use `minilp` instead of `coin_cbc` in your code:
+
 ```rust
 use good_lp::minilp;
 
 fn optimize<V>(vars: ProblemVariables<V>) {
-    vars.maximise(objective).using(minilp);
+   vars.maximise(objective).using(minilp);
 }
 ```
+
+Minilp is written in pure rust, and performs poorly when compiled in debug mode. Be sure to compile your code
+in `--release` mode when solving large problems.
+
+#### [lpsolve](http://lpsolve.sourceforge.net/5.5/)
+
+lp_solve is a free ([LGPL](http://lpsolve.sourceforge.net/5.5/LGPL.htm)) linear (integer) programming solver
+written in C and based on the revised simplex method.
+
+```toml
+good_lp = { version = "0.3", features = ["lpsolve"], default-features = false }
+```
+
+good_lp uses the [lpsolve crate](https://docs.rs/lpsolve/) to call lpsolve.
+You will need a C compiler, but you won't have to install any additional library. 
 
 ### License
 
