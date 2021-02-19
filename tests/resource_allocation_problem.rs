@@ -31,13 +31,9 @@ struct ResourceAllocationProblem {
 }
 
 impl ResourceAllocationProblem {
-    fn new(
-        variables: ProblemVariables,
-        available_fuel: f64,
-        available_time: f64,
-    ) -> ResourceAllocationProblem {
+    fn new(available_fuel: f64, available_time: f64) -> ResourceAllocationProblem {
         ResourceAllocationProblem {
-            vars: variables,
+            vars: variables!(),
             available_fuel,
             available_time,
             consumed_fuel: 0.into(),
@@ -70,7 +66,7 @@ use float_eq::assert_float_eq;
 
 #[test]
 fn resource_allocation() {
-    let mut pb = ResourceAllocationProblem::new(variables!(), 5., 3.);
+    let mut pb = ResourceAllocationProblem::new(5., 3.);
     let steel = pb.add(Product {
         needed_fuel: 1.,
         needed_time: 1.,
@@ -105,7 +101,7 @@ fn using_a_vector() {
         },
     ];
 
-    let mut pb = ResourceAllocationProblem::new(variables!(), 5., 3.);
+    let mut pb = ResourceAllocationProblem::new(5., 3.);
     let variables: Vec<_> = products.into_iter().map(|p| pb.add(p)).collect();
     let solution = pb.best_product_quantities();
     let product_quantities: Vec<_> = variables.iter().map(|&v| solution.value(v)).collect();
