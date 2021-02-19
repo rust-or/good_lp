@@ -139,6 +139,17 @@ impl Default for Expression {
 }
 
 impl Expression {
+    /// Create an expression that has the value 0, but has memory allocated
+    /// for `capacity` coefficients.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Expression {
+            linear: LinearExpression {
+                coefficients: HashMap::with_capacity(capacity),
+            },
+            constant: 0.0,
+        }
+    }
+
     /// Create a concrete expression struct from anything that has linear coefficients and a constant
     ///
     /// ```
@@ -369,7 +380,8 @@ impl_conv!(f64, i32, Variable);
 
 impl<E: IntoAffineExpression> std::iter::Sum<E> for Expression {
     fn sum<I: Iterator<Item = E>>(iter: I) -> Self {
-        let mut res = Expression::default();
+        let (capacity, _) = iter.size_hint();
+        let mut res = Expression::with_capacity(capacity);
         for i in iter {
             res.add_assign(i)
         }
