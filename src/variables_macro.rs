@@ -4,41 +4,131 @@
 /// Instantiates [ProblemVariables](crate::variable::ProblemVariables),
 /// to create a set of related variables.
 ///
-/// Using a macro allows this crate to give different types to variables that were instantiated
-/// at different places in the code.
+/// Using a macro allows you to create variables with a readable syntax close to
+/// the [LP file format](https://www.gurobi.com/documentation/9.1/refman/lp_format.html).
+/// If you don't need that, you can instanciate your linear program with only
+/// [ProblemVariables::new](crate::variable::ProblemVariables)
 ///
-/// ## Working example
+/// ## Working examples
+/// ### Defining variables in the macro
+///
+/// The most concise way to define variables is to do it directly in the macro.
 ///
 /// ```
-/// use good_lp::variables;
+/// use good_lp::{variables, default_solver, SolverModel};
 ///
+/// variables!{problem:
+///     0 <= x;  // Create a variable x that varies between 0 and +∞
+///     0 <= y <= 10;  // y varies between 0 and 10
+///     z; // z varies between -∞ and +∞
+/// } // x, y, and z are now three rust variables that are in scope
+/// problem.minimise(x + y + z).using(default_solver).solve();
+/// ```
+/// ### Creating a vector of variables
+///
+/// ```
+/// use good_lp::{variable, variables, Expression};
+/// variables!{vars: 0 <= x[3] <= 1; } // x will be a vector of variables
+/// let objective = x[0] + x[1] - x[2];
+/// ```
+///
+/// ### Simply instanciating  [ProblemVariables](crate::variable::ProblemVariables)
+/// ```
+/// use good_lp::{variable, variables, Expression};
 /// let mut vars = variables!();
-/// let x = vars.add_variable();
-/// let y = vars.add_variable();
-/// let objective = x + y / 2;
+/// let x = vars.add(variable().min(0));
+/// let y = vars.add(variable().max(9));
+/// let objective = x + y;
 /// ```
 ///
+/// ### Defining variables programmatically
+///
+/// Sometimes you don't know before run time how many variables you are going to have.
+/// In these cases, you can use the methods in [ProblemVariables](crate::variable::ProblemVariables)
+/// to dynamically add variables to your problem.
+///
+/// ```
+/// use good_lp::{variable, variables, Expression};
+/// # let should_add_y = true;
+/// variables!{vars: 0 <= x; } // The variable x will always be present
+///
+/// let y = if should_add_y { // The variable y will be present only if the condition is true
+///    Some(vars.add(variable().min(0)))
+/// } else {None};
+///
+/// let objective = x + y.map(Expression::from).unwrap_or_default();
+/// // objective is now x + y if should_add_y, and just x otherwise
+/// ```
+///
+/// ### Setting bounds from outside expressions
+///
+/// Because of restrictions on rust macros, this works :
+///
+/// ```
+/// # use good_lp::variables;
+/// let max_x = 10;
+/// variables!{vars: x <= max_x; } // max_x is the upper bound for x
+/// ```
+///
+/// But this doesn't:
+/// ```compile-fail
+/// # use good_lp::variables;
+/// let min_x = 10;
+/// variables!{vars: min_x <= x } // max_x is the upper bound for x
+/// ```
+///
+/// If you want to use a value computed outside of the macro invocation as a lower bound,
+/// use this syntax:
+/// ```
+/// # use good_lp::variables;
+/// let min_x = 10;
+/// variables!{vars: x >= min_x; } // min_x is the lower bound for x
+/// ```
 /// ## Trying to add incompatible variables
 ///
-/// You should never create expressions with variabless that come from different
+/// You should never create expressions with variables that come from different
 /// [ProblemVariables](crate::variable::ProblemVariables) instances.
 ///
 /// ```should_panic
 /// use good_lp::{variables, default_solver, SolverModel};
 ///
-/// let mut pb1 = variables!();
-/// let mut pb2 = variables!();
-/// let x = pb1.add_variable(); // Creating a variable on pb1 ...
-/// pb2.minimise(x) // ... but running the optimization on pb2
+/// variables!{pb1: a;}
+/// variables!{pb2: x; y;} // Creating my variables on pb2 ...
+/// pb1.minimise(x + y) // ... but running the optimization on pb1
 ///   .using(default_solver)
 ///   .solve();
 /// ```
-/// Since `pb1` and `pb2` have been instanciated at two different places in the code,
-/// they are different problems and their variables are not compatible with one another.
-/// Trying to solve problems with incompatible problems will **panic**.
+/// Since `pb1` and `pb2` are different problems, their variables are not compatible with one another.
+/// Trying to solve problems with incompatible variables will **panic**.
 #[macro_export]
 macro_rules! variables {
-    () => {
-        $crate::variable::ProblemVariables::new()
+    () => {$crate::variable::ProblemVariables::new()};
+    (
+    $vars:ident:
+    $(
+        $($min:literal <= )?
+        $var_name:ident
+        $([$length:expr])?
+        $(<= $max:expr;)?
+        $(>= $postfix_min:expr;)?
+        $(;)?
+    )*
+    ) => {
+            let mut $vars = $crate::variable::ProblemVariables::new();
+            $(
+                let $var_name = {
+                    let v = $crate::variable()
+                                $(.min($min))*
+                                $(.max($max))*
+                                $(.min($postfix_min))*;
+                    $crate::variables!(@add_variable, $vars, v, $($length)*)
+                };
+            )*
+        };
+    (@add_variable, $vars:expr, $var:expr, $length:expr) => {
+        $vars.add_vector($var, $length)
+    };
+    (@add_variable, $vars:expr, $var:expr,) => {
+        $vars.add($var)
     };
 }

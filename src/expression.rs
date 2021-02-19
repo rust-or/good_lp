@@ -397,9 +397,7 @@ mod tests {
 
     #[test]
     fn expression_manipulation() {
-        let mut vars = variables!();
-        let v0 = vars.add_variable();
-        let v1 = vars.add_variable();
+        variables! {vars: v0; v1; }
         assert_eq!((3. - v0) - v1, (-1.) * v0 + (-1.) * v1 + 3.)
     }
 

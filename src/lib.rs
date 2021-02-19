@@ -6,9 +6,15 @@
 //!  ```rust
 //!  use good_lp::{variables, variable, default_solver, SolverModel, Solution};
 //!
-//!  let mut vars = variables!();
-//!  let a = vars.add(variable().max(1));
-//!  let b = vars.add(variable().min(2).max(4));
+//! // Create variables in a readable format with a macro...
+//! variables!{
+//!     vars:
+//!         a <= 1;
+//!         2 <= b <= 4;
+//! }
+//! // ... or add variables programmatically
+//! vars.add(variable().min(2).max(9));
+//!
 //!  let solution = vars.maximise(10 * (a - b / 5) - b)
 //!      .using(default_solver)
 //!      .with(a + 2. << b) // or (a + 2).leq(b)
