@@ -1,9 +1,9 @@
 [package]
 name = "good_lp"
-version = "0.3.4"
+version = "0.3.5"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
-repository = "https://github.com/lovasoa/good_lp"
+repository = "https://github.com/rust-or/good_lp"
 documentation = "https://docs.rs/good_lp"
 description = " Linear Programming for Rust, with an user-friendly API. This crate allows modeling LP problems, and lets you solve them with various solvers."
 license-file = "LICENSE"
