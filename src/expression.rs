@@ -206,15 +206,11 @@ impl Expression {
     /// ### Evaluate an expression using a solution
     ///
     /// ```rust
-    /// # #[cfg(feature = "coin_cbc")] {
-    /// use good_lp::{variables, variable, coin_cbc, SolverModel, Solution};
-    /// let mut vars = variables!();
-    /// let a = vars.add(variable().max(1));
-    /// let b = vars.add(variable().max(4));
+    /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
+    /// variables!{ vars: a <= 1; b <= 4; }
     /// let objective = a + b;
-    /// let solution = vars.maximise(objective.clone()).using(coin_cbc).solve()?;
+    /// let solution = vars.maximise(objective.clone()).using(default_solver).solve()?;
     /// assert_eq!(objective.eval_with(&solution), 5.);
-    /// # }
     /// # use good_lp::ResolutionError;
     /// # Ok::<_, ResolutionError>(())
     /// ```

@@ -185,6 +185,17 @@ impl ProblemVariables {
     }
 
     /// Add a variable with the given definition
+    ///
+    /// ```
+    /// # use good_lp::*;
+    /// variables!{problem: 2 <= x <= 3;}
+    /// ```
+    /// is equivalent to
+    /// ```
+    /// # use good_lp::*;
+    /// let mut problem = ProblemVariables::new();
+    /// let y = problem.add(variable().min(0));
+    /// ```
     pub fn add(&mut self, var_def: VariableDefinition) -> Variable {
         let index = self.variables.len();
         self.variables.push(var_def);
@@ -192,11 +203,38 @@ impl ProblemVariables {
     }
 
     /// Adds a list of variables with the given definition
+    ///
+    /// ```
+    /// use good_lp::*;
+    /// // Solve a problem with 11 variables: x, y0, y1, ..., y9
+    /// variables!{problem: 2 <= x <= 3;}
+    /// let y: Vec<Variable> = problem.add_vector(variable().min(0), 10);
+    /// let objective: Expression = y.iter().sum(); // Minimise sum(y_i for i in [0; 9])
+    /// let mut model = problem.minimise(objective).using(default_solver);
+    /// // for all i, we must have y_i >= x
+    /// for y_i in y.iter() {
+    ///   model = model.with(constraint!(y_i >= x));
+    /// }
+    /// let solution = model.solve().unwrap();
+    /// assert_eq!(solution.value(y[3]), 2.);
+    /// ```
     pub fn add_vector(&mut self, var_def: VariableDefinition, len: usize) -> Vec<Variable> {
         (0..len).map(|_i| self.add(var_def.clone())).collect()
     }
 
-    /// Creates an optimization problem with the given objective. Don't solve it immediately
+    /// Creates an optimization problem with the given objective. Don't solve it immediately.
+    ///
+    /// ```
+    /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
+    /// use good_lp::solvers::ObjectiveDirection;
+    /// fn solve(sense: ObjectiveDirection) -> f64 {
+    ///    variables!{problem: 2 <= x <= 3;}
+    ///     let solution = problem.optimise(sense, x).using(default_solver).solve().unwrap();
+    ///     solution.value(x)
+    /// }
+    /// assert_eq!(solve(ObjectiveDirection::Minimisation), 2.);
+    /// assert_eq!(solve(ObjectiveDirection::Maximisation), 3.);
+    /// ```
     pub fn optimise<E: IntoAffineExpression>(
         self,
         direction: ObjectiveDirection,
@@ -219,8 +257,7 @@ impl ProblemVariables {
     ///
     /// ```
     /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
-    /// let mut problem = variables!();
-    /// let x = problem.add(variable().max(7));
+    /// variables!{problem: x <= 7;}
     /// let solution = problem.maximise(x).using(default_solver).solve().unwrap();
     /// assert_eq!(solution.value(x), 7.);
     /// ```
@@ -231,8 +268,7 @@ impl ProblemVariables {
     /// Creates an minimization problem with the given objective. Don't solve it immediately
     /// ```
     /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
-    /// let mut problem = variables!();
-    /// let x = problem.add(variable().min(-8));
+    /// variables!{problem: x >= -8;}
     /// let solution = problem.minimise(x).using(default_solver).solve().unwrap();
     /// assert_eq!(solution.value(x), -8.);
     /// ```

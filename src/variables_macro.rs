@@ -71,7 +71,7 @@
 /// ```compile_fail
 /// # use good_lp::variables;
 /// let min_x = 10;
-/// variables!{vars: min_x <= x } // max_x is the upper bound for x
+/// variables!{vars: min_x <= x; } // trying to set min_x as the lower bound for x, but this fails
 /// ```
 ///
 /// If you want to use a value computed outside of the macro invocation as a lower bound,
