@@ -13,6 +13,10 @@ pub mod minilp;
 #[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
 pub mod lpsolve;
 
+#[cfg(feature = "highs")]
+#[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
+pub mod highs;
+
 use crate::Variable;
 use crate::{Constraint, Expression};
 use std::collections::HashMap;

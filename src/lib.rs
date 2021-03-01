@@ -76,6 +76,10 @@ pub use solvers::minilp::minilp;
 #[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
 pub use solvers::lpsolve::lp_solve;
 
+#[cfg(feature = "highs")]
+#[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
+pub use solvers::highs::highs;
+
 #[cfg(feature = "coin_cbc")]
 /// When the "coin_cbc" cargo feature is present, it is used as the default solver   
 pub use solvers::coin_cbc::coin_cbc as default_solver;
@@ -90,6 +94,11 @@ pub use solvers::minilp::minilp as default_solver;
 pub use solvers::lpsolve::lp_solve as default_solver;
 
 #[cfg(not(any(feature = "coin_cbc", feature = "minilp", feature = "lpsolve")))]
+#[cfg(feature = "highs")]
+/// When the "highs" cargo feature is present, highs is used as the default solver
+pub use solvers::highs::highs as default_solver;
+
+#[cfg(not(any(feature = "coin_cbc", feature = "minilp", feature = "lpsolve", feature = "highs")))]
 compile_error!(
     "No solver available. \
 You need to activate at least one solver feature flag in good_lp. \
