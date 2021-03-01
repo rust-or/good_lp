@@ -6,7 +6,7 @@ use crate::{Constraint, IntoAffineExpression, Variable};
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 
-/// The [minilp](https://docs.rs/minilp) solver,
+/// The [highs](https://docs.rs/highs) solver,
 /// to be used with [UnsolvedProblem::using].
 pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
     let mut highs_problem = highs::RowProblem::default();
@@ -24,7 +24,7 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
     HighsProblem { model, highs_problem, columns }
 }
 
-/// A minilp model
+/// A HiGHS model
 #[derive(Debug)]
 pub struct HighsProblem {
     model: highs::Model,
