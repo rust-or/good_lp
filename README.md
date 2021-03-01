@@ -112,6 +112,23 @@ good_lp = { version = "0.3", features = ["lpsolve"], default-features = false }
 good_lp uses the [lpsolve crate](https://docs.rs/lpsolve/) to call lpsolve.
 You will need a C compiler, but you won't have to install any additional library. 
 
+
+#### [HiGHS](https://highs.dev)
+
+HiGHS is a free ([MIT](https://github.com/ERGO-Code/HiGHS/blob/master/LICENSE)) parallel linear programming solver
+written in C++.
+It is able to leverage [OpenMP](https://en.wikipedia.org/wiki/OpenMP) to fully leverage all the available processor cores
+to solve a problem.
+
+```toml
+good_lp = { version = "0.3", features = ["highs"], default-features = false }
+```
+
+good_lp uses the [highs crate](https://docs.rs/highs) to call HiGHS.
+You will need a C compiler, but you shouldn't have to install any additional library on linux
+(it depends only on OpenMP and the C++ standard library).
+More information in the [highs-sys crate](https://crates.io/crates/highs-sys).
+
 ### License
 
 This library is published under the MIT license.
