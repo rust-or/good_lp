@@ -44,10 +44,7 @@ pub struct HighsProblem {
 impl HighsProblem {
     /// Get a highs model for this problem
     pub fn into_inner(self) -> highs::Model {
-        let mut model = highs::Model::new();
-        model.set_problem(self.highs_problem);
-        model.set_sense(self.sense);
-        model
+        self.highs_problem.optimise(self.sense)
     }
 }
 
