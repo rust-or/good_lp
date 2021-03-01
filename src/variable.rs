@@ -216,11 +216,26 @@ impl ProblemVariables {
     }
 
     /// Creates an maximization problem with the given objective. Don't solve it immediately
+    ///
+    /// ```
+    /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
+    /// let mut problem = variables!();
+    /// let x = problem.add(variable().max(7));
+    /// let solution = problem.maximise(x).using(default_solver).solve().unwrap();
+    /// assert_eq!(solution.value(x), 7.);
+    /// ```
     pub fn maximise<E: IntoAffineExpression>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Maximisation, objective)
     }
 
     /// Creates an minimization problem with the given objective. Don't solve it immediately
+    /// ```
+    /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
+    /// let mut problem = variables!();
+    /// let x = problem.add(variable().min(-8));
+    /// let solution = problem.minimise(x).using(default_solver).solve().unwrap();
+    /// assert_eq!(solution.value(x), -8.);
+    /// ```
     pub fn minimise<E: IntoAffineExpression>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Minimisation, objective)
     }

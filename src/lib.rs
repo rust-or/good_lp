@@ -98,7 +98,12 @@ pub use solvers::lpsolve::lp_solve as default_solver;
 /// When the "highs" cargo feature is present, highs is used as the default solver
 pub use solvers::highs::highs as default_solver;
 
-#[cfg(not(any(feature = "coin_cbc", feature = "minilp", feature = "lpsolve", feature = "highs")))]
+#[cfg(not(any(
+    feature = "coin_cbc",
+    feature = "minilp",
+    feature = "lpsolve",
+    feature = "highs"
+)))]
 compile_error!(
     "No solver available. \
 You need to activate at least one solver feature flag in good_lp. \

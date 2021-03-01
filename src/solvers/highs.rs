@@ -2,9 +2,9 @@
 
 use highs::HighsModelStatus;
 
-use crate::{Constraint, IntoAffineExpression, Variable};
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{Constraint, IntoAffineExpression, Variable};
 
 /// The [highs](https://docs.rs/highs) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -15,12 +15,22 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         ObjectiveDirection::Minimisation => highs::Sense::Minimise,
     };
     let mut columns = Vec::with_capacity(to_solve.variables.len());
-    for (var, &VariableDefinition { min, max, .. }) in to_solve.variables.iter_variables_with_def() {
-        let &col_factor = to_solve.objective.linear.coefficients.get(&var).unwrap_or(&0.);
+    for (var, &VariableDefinition { min, max, .. }) in to_solve.variables.iter_variables_with_def()
+    {
+        let &col_factor = to_solve
+            .objective
+            .linear
+            .coefficients
+            .get(&var)
+            .unwrap_or(&0.);
         let col = highs_problem.add_column(col_factor, min..max);
         columns.push(col);
     }
-    HighsProblem { sense, highs_problem, columns }
+    HighsProblem {
+        sense,
+        highs_problem,
+        columns,
+    }
 }
 
 /// A HiGHS model
@@ -48,20 +58,22 @@ impl SolverModel for HighsProblem {
     fn with(mut self, constraint: Constraint) -> Self {
         let upper_bound = -constraint.expression.constant();
         let columns = &self.columns;
-        let factors = constraint.expression.linear_coefficients().into_iter()
-            .map(|(variable, factor)| {
-                (columns[variable.index()], factor)
-            });
+        let factors = constraint
+            .expression
+            .linear_coefficients()
+            .into_iter()
+            .map(|(variable, factor)| (columns[variable.index()], factor));
         if constraint.is_equality {
-            self.highs_problem.add_row(upper_bound..=upper_bound, factors);
+            self.highs_problem
+                .add_row(upper_bound..=upper_bound, factors);
         } else {
             self.highs_problem.add_row(..=upper_bound, factors);
         }
         self
     }
 
-    fn solve(mut self) -> Result<Self::Solution, Self::Error> {
-        let mut model = self.into_inner();
+    fn solve(self) -> Result<Self::Solution, Self::Error> {
+        let model = self.into_inner();
         let solved = model.solve();
         match solved.status() {
             HighsModelStatus::NotSet => Err(ResolutionError::Other("NotSet")),
@@ -73,11 +85,9 @@ impl SolverModel for HighsProblem {
             HighsModelStatus::ModelEmpty => Err(ResolutionError::Other("ModelEmpty")),
             HighsModelStatus::PrimalInfeasible => Err(ResolutionError::Infeasible),
             HighsModelStatus::PrimalUnbounded => Err(ResolutionError::Unbounded),
-            _ok_status => {
-                Ok(HighsSolution {
-                    solution: solved.get_solution()
-                })
-            }
+            _ok_status => Ok(HighsSolution {
+                solution: solved.get_solution(),
+            }),
         }
     }
 }
