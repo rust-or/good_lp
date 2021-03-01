@@ -1,6 +1,3 @@
-// The line number of the closure is inserted into error messages.
-// Do not change the line number of the __new_internal call to not break the compilation tests
-
 /// Instantiates [ProblemVariables](crate::variable::ProblemVariables),
 /// to create a set of related variables.
 ///
@@ -71,7 +68,7 @@
 /// ```
 ///
 /// But this doesn't:
-/// ```compile-fail
+/// ```compile_fail
 /// # use good_lp::variables;
 /// let min_x = 10;
 /// variables!{vars: min_x <= x } // max_x is the upper bound for x
