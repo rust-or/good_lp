@@ -10,33 +10,34 @@ use crate::variable::{UnsolvedProblem, VariableDefinition};
 /// to be used with [UnsolvedProblem::using].
 pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
     let mut highs_problem = highs::RowProblem::default();
-    let mut model = highs::Model::new();
-    model.set_sense(match to_solve.direction {
+    let sense = match to_solve.direction {
         ObjectiveDirection::Maximisation => highs::Sense::Maximise,
         ObjectiveDirection::Minimisation => highs::Sense::Minimise,
-    });
+    };
     let mut columns = Vec::with_capacity(to_solve.variables.len());
     for (var, &VariableDefinition { min, max, .. }) in to_solve.variables.iter_variables_with_def() {
         let &col_factor = to_solve.objective.linear.coefficients.get(&var).unwrap_or(&0.);
         let col = highs_problem.add_column(col_factor, min..max);
         columns.push(col);
     }
-    HighsProblem { model, highs_problem, columns }
+    HighsProblem { sense, highs_problem, columns }
 }
 
 /// A HiGHS model
 #[derive(Debug)]
 pub struct HighsProblem {
-    model: highs::Model,
+    sense: highs::Sense,
     highs_problem: highs::RowProblem,
     columns: Vec<highs::Col>,
 }
 
 impl HighsProblem {
     /// Get a highs model for this problem
-    pub fn into_inner(mut self) -> highs::Model {
-        self.model.set_problem(self.highs_problem);
-        self.model
+    pub fn into_inner(self) -> highs::Model {
+        let mut model = highs::Model::new();
+        model.set_problem(self.highs_problem);
+        model.set_sense(self.sense);
+        model
     }
 }
 
@@ -60,8 +61,8 @@ impl SolverModel for HighsProblem {
     }
 
     fn solve(mut self) -> Result<Self::Solution, Self::Error> {
-        self.model.set_problem(self.highs_problem);
-        let solved = self.model.solve();
+        let mut model = self.into_inner();
+        let solved = model.solve();
         match solved.status() {
             HighsModelStatus::NotSet => Err(ResolutionError::Other("NotSet")),
             HighsModelStatus::LoadError => Err(ResolutionError::Other("LoadError")),
