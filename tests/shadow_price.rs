@@ -21,7 +21,6 @@ mod tests {
 
         // Objective
         let objective = 3 * x1 + 2.5 * x2;
-
         let solution: HighsSolution = vars
             .maximise(objective.clone())
             .using(highs)
@@ -35,6 +34,7 @@ mod tests {
         assert_eq!(solution.eval(&objective), 77.30220492866408);
         assert_eq!(solution.value(x1), 20.363164721141374);
         assert_eq!(solution.value(x2), 6.485084306095981);
+        assert_eq!(solution.get_dual_values()[3], solution.get_dual_value(3));
         assert_eq!(
             solution.get_dual_values(),
             vec![-0.0, -0.0, -0.6809338521400778, -0.09208819714656294]
