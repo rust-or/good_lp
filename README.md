@@ -24,14 +24,14 @@ fn main() {
 
 ## Features and limitations
 
- - **Linear programming**. This crate currently supports only the definition of linear programs. You cannot use it with
-   quadratic functions, for instance:
-   you can maximise `y + 3 * y`, but not `3 * x * y`.
- - **Continuous variables**. Currently, only continuous variables are supported.
-   Mixed-integer linear programming (MILP) is not supported.
- - **Not a solver**. This crate uses other rust crates to provide the solvers.
-   There is no solving algorithm in good_lp itself. If you have an issue with a solver,
-   report it to the solver directly. See below for the list of supported solvers.
+- **Linear programming**. This crate currently supports only the definition of linear programs. You cannot use it with
+  quadratic functions, for instance:
+  you can maximise `y + 3 * y`, but not `3 * x * y`.
+- **Continuous variables**. Currently, only continuous variables are supported.
+  Mixed-integer linear programming (MILP) is not supported.
+- **Not a solver**. This crate uses other rust crates to provide the solvers.
+  There is no solving algorithm in good_lp itself. If you have an issue with a solver,
+  report it to the solver directly. See below for the list of supported solvers.
 
 ### Contributing
 
@@ -41,7 +41,7 @@ Also, do not hesitate to open issues to discuss the implementation.
 
 ### Alternatives
 
-If you need non-linear programming or integer variables, you can use 
+If you need non-linear programming or integer variables, you can use
 [lp-modeler](https://crates.io/crates/lp-modeler).
 However, it is currently very slow with large problems.
 
@@ -61,23 +61,23 @@ You can find a resource allocation problem example in
 This library offers an abstraction over multiple solvers. By default, it uses [cbc](https://www.coin-or.org/Cbc/), but
 you can also activate other solvers using cargo features.
 
-#### [cbc](https://www.coin-or.org/Cbc/)
+### [cbc](https://www.coin-or.org/Cbc/)
 
 Used by default, performant, but requires to have a C compiler and the cbc C library installed.
 
 In ubuntu, you can install it with:
 
-```
+```bash
 sudo apt-get install coinor-cbc coinor-libcbc-dev
 ```
 
 In MacOS, using [homebrew](https://brew.sh/) :
 
-```
+```bash
 brew install cbc
 ```
 
-#### [minilp](https://docs.rs/minilp)
+### [minilp](https://docs.rs/minilp)
 
 minilp is a pure rust solver, which means it works out of the box without installing anything else.
 
@@ -100,7 +100,7 @@ fn optimize<V>(vars: ProblemVariables<V>) {
 Minilp is written in pure rust, and performs poorly when compiled in debug mode. Be sure to compile your code
 in `--release` mode when solving large problems.
 
-#### [lpsolve](http://lpsolve.sourceforge.net/5.5/)
+### [lpsolve](http://lpsolve.sourceforge.net/5.5/)
 
 lp_solve is a free ([LGPL](http://lpsolve.sourceforge.net/5.5/LGPL.htm)) linear (integer) programming solver
 written in C and based on the revised simplex method.
@@ -110,10 +110,9 @@ good_lp = { version = "0.3", features = ["lpsolve"], default-features = false }
 ```
 
 good_lp uses the [lpsolve crate](https://docs.rs/lpsolve/) to call lpsolve.
-You will need a C compiler, but you won't have to install any additional library. 
+You will need a C compiler, but you won't have to install any additional library.
 
-
-#### [HiGHS](https://highs.dev)
+### [HiGHS](https://highs.dev)
 
 HiGHS is a free ([MIT](https://github.com/ERGO-Code/HiGHS/blob/master/LICENSE)) parallel linear programming solver
 written in C++.

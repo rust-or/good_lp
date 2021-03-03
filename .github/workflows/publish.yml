@@ -11,11 +11,10 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
-    - name: install deps
-      run: sudo apt-get install coinor-cbc coinor-libcbc-dev
-    - run: cargo publish
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: sudo apt-get install coinor-cbc coinor-libcbc-dev
+      - run: cargo publish
