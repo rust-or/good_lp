@@ -2,8 +2,11 @@
 
 use highs::HighsModelStatus;
 
-use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{
+    dual::DualValues,
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+};
 use crate::{Constraint, IntoAffineExpression, Variable};
 
 /// The [highs](https://docs.rs/highs) solver,
@@ -105,5 +108,15 @@ impl HighsSolution {
 impl Solution for HighsSolution {
     fn value(&self, variable: Variable) -> f64 {
         self.solution.columns()[variable.index()]
+    }
+}
+
+impl DualValues for HighsSolution {
+    fn get_dual_values(&self) -> &[f64] {
+        self.solution.dual_rows()
+    }
+
+    fn get_dual_value(&self, constraint_index: usize) -> f64 {
+        self.solution.dual_rows()[constraint_index]
     }
 }

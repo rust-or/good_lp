@@ -3,6 +3,7 @@ use good_lp::{constraint, default_solver, variable, variables, Expression, Solut
 
 const BIG_NUM: usize = 1000; // <- Set this higher to test how good_lp and the solvers scale
 
+#[allow(clippy::needless_range_loop)]
 #[test]
 fn solve_large_problem() {
     let mut vars = variables!();

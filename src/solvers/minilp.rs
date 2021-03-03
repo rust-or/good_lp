@@ -102,7 +102,7 @@ mod tests {
         let solution = vars
             .maximise(x + y)
             .using(minilp)
-            .with(2 * x + y << 4)
+            .with((2 * x + y) << 4)
             .solve()
             .unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
