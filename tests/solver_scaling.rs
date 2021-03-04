@@ -3,7 +3,6 @@ use good_lp::{constraint, default_solver, variable, variables, Expression, Solut
 
 const BIG_NUM: usize = 1000; // <- Set this higher to test how good_lp and the solvers scale
 
-#[allow(clippy::needless_range_loop)]
 #[test]
 fn solve_large_problem() {
     let mut vars = variables!();
@@ -16,8 +15,8 @@ fn solve_large_problem() {
         pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
     }
     let sol = pb.solve().unwrap();
-    for i in 0..BIG_NUM {
-        assert_float_eq!(sol.value(v[i]), min + i as f64, abs <= 1e-10);
+    for (i, var) in v.iter().enumerate() {
+        assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-10);
     }
 }
 

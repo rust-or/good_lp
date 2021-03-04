@@ -1,6 +1,7 @@
-#[allow(clippy::float_cmp)]
 #[cfg(feature = "highs")]
 mod tests {
+    use float_eq::assert_float_eq;
+
     use good_lp::{
         constraint, dual::DualValues, highs, solvers::highs::HighsSolution, variable, variables,
         Solution, SolverModel,
@@ -31,13 +32,19 @@ mod tests {
             .solve()
             .expect("Library test");
 
-        assert_eq!(solution.eval(&objective), 77.30220492866408);
-        assert_eq!(solution.value(x1), 20.363164721141374);
-        assert_eq!(solution.value(x2), 6.485084306095981);
-        assert_eq!(solution.get_dual_values()[3], solution.get_dual_value(3));
-        assert_eq!(
-            solution.get_dual_values(),
-            vec![-0.0, -0.0, -0.6809338521400778, -0.09208819714656294]
+        assert_float_eq!(77.30220492866408, solution.eval(&objective), abs <= 1e-10);
+        assert_float_eq!(20.363164721141374, solution.value(x1), abs <= 1e-10);
+        assert_float_eq!(6.485084306095981, solution.value(x2), abs <= 1e-10);
+
+        assert_float_eq!(
+            solution.get_dual_values()[2],
+            solution.get_dual_value(2),
+            abs <= 1e-10
+        );
+        assert_float_eq!(
+            solution.get_dual_values()[3],
+            solution.get_dual_value(3),
+            abs <= 1e-10
         );
     }
 
@@ -63,12 +70,15 @@ mod tests {
             .solve()
             .expect("Library test");
 
-        assert_eq!(solution.eval(&objective) as u32, 4100);
-        assert_eq!(solution.value(n_chairs) as u32, 29);
-        assert_eq!(solution.value(n_tables) as u32, 40);
-        assert_eq!(
-            solution.get_dual_values(),
-            vec![-15.000000000000004, -4.999999999999992]
+        assert_float_eq!(4100.0, solution.eval(&objective), abs <= 1e-10);
+        assert_float_eq!(29.999999999999996, solution.value(n_chairs), abs <= 1e-10);
+        assert_float_eq!(40.00000000000001, solution.value(n_tables), abs <= 1e-10);
+
+        assert_float_eq!(
+            -15.000000000000004,
+            solution.get_dual_value(0),
+            abs <= 1e-10
         );
+        assert_float_eq!(-4.999999999999992, solution.get_dual_value(1), abs <= 1e-10);
     }
 }
