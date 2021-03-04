@@ -17,33 +17,25 @@ mod tests {
         let x2 = vars.add(variable().min(0));
 
         // Define the Problem and Objective
-        let objective = 3 * x1 + 2.5 * x2;
+        let objective = 3 * x1 + 2 * x2;
         let mut p = vars.maximise(objective.clone()).using(highs);
 
         // Subject to
-        let c1 = p.add_constraint(constraint!(4.44 * x1 <= 100.0));
-        let c2 = p.add_constraint(constraint!(6.67 * x2 <= 100.0));
-        let c3 = p.add_constraint(constraint!(4 * x1 + 2.86 * x2 <= 100.0));
+        let c1 = p.add_constraint(constraint!(4 * x1 <= 100.0));
+        let c2 = p.add_constraint(constraint!(7 * x2 <= 100.0));
+        let c3 = p.add_constraint(constraint!(4 * x1 + 3 * x2 <= 100.0));
         let c4 = p.add_constraint(constraint!(3 * x1 + 6 * x2 <= 100.0));
 
         // Solve Problem
         let solution: HighsSolution = p.solve().expect("Library test");
 
-        assert_float_eq!(77.30220492866408, solution.eval(&objective), abs <= 1e-10);
-        assert_float_eq!(20.363164721141374, solution.value(x1), abs <= 1e-10);
-        assert_float_eq!(6.485084306095981, solution.value(x2), abs <= 1e-10);
-        assert_float_eq!(0., solution.get_dual_value(c1), abs <= 1e-10);
-        assert_float_eq!(0., solution.get_dual_value(c2), abs <= 1e-10);
-        assert_float_eq!(
-            -0.6809338521400778,
-            solution.get_dual_value(c3),
-            abs <= 1e-10
-        );
-        assert_float_eq!(
-            -0.09208819714656294,
-            solution.get_dual_value(c4),
-            abs <= 1e-10
-        );
+        assert_float_eq!(75.0, solution.eval(&objective), abs <= 1e-3);
+        assert_float_eq!(25.0, solution.value(x1), abs <= 1e-3);
+        assert_float_eq!(-0.0, solution.value(x2), abs <= 1e-3);
+        assert_float_eq!(0., solution.get_dual_value(c1), abs <= 1e-1);
+        assert_float_eq!(0., solution.get_dual_value(c2), abs <= 1e-1);
+        assert_float_eq!(-0.667, solution.get_dual_value(c3), abs <= 1e-3);
+        assert_float_eq!(-0.0, solution.get_dual_value(c4), abs <= 1e-3);
     }
 
     #[test]
@@ -65,17 +57,9 @@ mod tests {
         let solution: HighsSolution = p.solve().expect("Library test");
 
         assert_float_eq!(4100.0, solution.eval(&objective), abs <= 1e-10);
-        assert_float_eq!(29.999999999999996, solution.value(n_chairs), abs <= 1e-10);
-        assert_float_eq!(40.00000000000001, solution.value(n_tables), abs <= 1e-10);
-        assert_float_eq!(
-            -15.000000000000004,
-            solution.get_dual_value(c1),
-            abs <= 1e-10
-        );
-        assert_float_eq!(
-            -4.999999999999992,
-            solution.get_dual_value(c2),
-            abs <= 1e-10
-        );
+        assert_float_eq!(30.0, solution.value(n_chairs), abs <= 1e-1);
+        assert_float_eq!(40.0, solution.value(n_tables), abs <= 1e-1);
+        assert_float_eq!(-15.0, solution.get_dual_value(c1), abs <= 1e-1);
+        assert_float_eq!(-5.0, solution.get_dual_value(c2), abs <= 1e-1);
     }
 }
