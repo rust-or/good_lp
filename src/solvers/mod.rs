@@ -17,7 +17,7 @@ pub mod lpsolve;
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub mod highs;
 
-use crate::Variable;
+use crate::{constraint::ConstraintReference, Variable};
 use crate::{Constraint, Expression};
 use std::collections::HashMap;
 use std::error::Error;
@@ -87,6 +87,9 @@ pub trait SolverModel {
 
     /// Find the solution for the problem being modeled
     fn solve(self) -> Result<Self::Solution, Self::Error>;
+
+    /// Adds a constraint to the Model and returns a reference to the index
+    fn add_constraint(&mut self, c: Constraint) -> ConstraintReference;
 }
 
 /// A problem solution
@@ -122,4 +125,13 @@ impl<N: Into<f64> + Clone> Solution for HashMap<Variable, N> {
     fn value(&self, variable: Variable) -> f64 {
         self[&variable].clone().into()
     }
+}
+
+/// The dual value measures the increase in the objective function's value per unit
+/// increase in the variable's value. The dual value for a constraint is nonzero only when
+/// the constraint is equal to its bound. Also known as the shadow price
+///
+pub trait SolutionWithDual: Solution {
+    /// Get a dual value of a problem for a given ConstraintReference
+    fn get_dual_value(&self, c: ConstraintReference) -> f64;
 }

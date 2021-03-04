@@ -1,8 +1,11 @@
 //! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc).
 //! This solver is activated using the default `coin_cbc` feature.
 //! You can disable it an enable another solver instead using cargo features.
-use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{
+    constraint::ConstraintReference,
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+};
 use crate::{Constraint, Variable};
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 
@@ -34,13 +37,18 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         ObjectiveDirection::Maximisation => Sense::Maximize,
         ObjectiveDirection::Minimisation => Sense::Minimize,
     });
-    CoinCbcProblem { model, columns }
+    CoinCbcProblem {
+        model,
+        columns,
+        n_constraints: 0,
+    }
 }
 
 /// A coin-cbc model
 pub struct CoinCbcProblem {
     model: Model,
     columns: Vec<Col>,
+    n_constraints: usize,
 }
 
 impl CoinCbcProblem {
@@ -65,6 +73,8 @@ impl SolverModel for CoinCbcProblem {
         for (var, coeff) in constraint.expression.linear.coefficients.into_iter() {
             self.model.set_weight(row, self.columns[var.index()], coeff);
         }
+        self.n_constraints += 1;
+
         self
     }
 
@@ -89,6 +99,24 @@ impl SolverModel for CoinCbcProblem {
                     })
                 }
             },
+        }
+    }
+
+    fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
+        let row = self.model.add_row();
+        let constant = -c.expression.constant;
+        if c.is_equality {
+            self.model.set_row_equal(row, constant);
+        } else {
+            self.model.set_row_upper(row, constant);
+        }
+        for (var, coeff) in c.expression.linear.coefficients.into_iter() {
+            self.model.set_weight(row, self.columns[var.index()], coeff);
+        }
+        self.n_constraints += 1;
+
+        ConstraintReference {
+            index: self.n_constraints - 1,
         }
     }
 }

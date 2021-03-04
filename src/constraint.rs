@@ -135,6 +135,12 @@ macro_rules! constraint {
     };
 }
 
+#[derive(Debug)]
+/// A constraint reference contains the sequence id of the constraint within the problem
+pub struct ConstraintReference {
+    pub(crate) index: usize,
+}
+
 #[cfg(test)]
 mod tests {
     use crate::variables;

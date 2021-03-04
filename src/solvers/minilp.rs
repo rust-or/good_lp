@@ -1,7 +1,10 @@
 //! A solver that uses [minilp](https://docs.rs/minilp), a pure rust solver.
 
-use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{
+    constraint::ConstraintReference,
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+};
 use crate::{Constraint, Variable};
 
 /// The [minilp](https://docs.rs/minilp) solver,
@@ -23,13 +26,18 @@ pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
             problem.add_var(coeff, (min, max))
         })
         .collect();
-    MiniLpProblem { problem, variables }
+    MiniLpProblem {
+        problem,
+        variables,
+        n_constraints: 0,
+    }
 }
 
 /// A minilp model
 pub struct MiniLpProblem {
     problem: minilp::Problem,
     variables: Vec<minilp::Variable>,
+    n_constraints: usize,
 }
 
 impl MiniLpProblem {
@@ -65,6 +73,27 @@ impl SolverModel for MiniLpProblem {
                 solution,
                 variables: self.variables,
             }),
+        }
+    }
+
+    fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
+        let coefficients: Vec<(minilp::Variable, f64)> = c
+            .expression
+            .linear
+            .coefficients
+            .iter()
+            .map(|(var, &coeff)| (self.variables[var.index()], coeff))
+            .collect();
+        let op = match c.is_equality {
+            true => minilp::ComparisonOp::Eq,
+            false => minilp::ComparisonOp::Le,
+        };
+        let constant = -c.expression.constant;
+        self.problem.add_constraint(&coefficients, op, constant);
+        self.n_constraints += 1;
+
+        ConstraintReference {
+            index: self.n_constraints - 1,
         }
     }
 }
