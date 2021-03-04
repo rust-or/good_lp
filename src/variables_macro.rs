@@ -19,6 +19,7 @@
 ///     0 <= y <= 10;  // y varies between 0 and 10
 ///     z; // z varies between -∞ and +∞
 /// } // x, y, and z are now three rust variables that are in scope
+/// # #[cfg(not(feature = "coin_cbc"))] // see: https://github.com/coin-or/Cbc/issues/367
 /// problem.minimise(x + y + z).using(default_solver).solve();
 /// ```
 /// ### Creating a vector of variables
