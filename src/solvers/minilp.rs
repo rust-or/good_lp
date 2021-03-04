@@ -44,19 +44,16 @@ impl SolverModel for MiniLpProblem {
     type Error = ResolutionError;
 
     fn with(mut self, constraint: Constraint) -> Self {
-        let coefficients: Vec<(minilp::Variable, f64)> = constraint
-            .expression
-            .linear
-            .coefficients
-            .iter()
-            .map(|(var, &coeff)| (self.variables[var.index()], coeff))
-            .collect();
         let op = match constraint.is_equality {
             true => minilp::ComparisonOp::Eq,
             false => minilp::ComparisonOp::Le,
         };
         let constant = -constraint.expression.constant;
-        self.problem.add_constraint(&coefficients, op, constant);
+        let mut linear_expr = minilp::LinearExpr::empty();
+        for (var, coefficient) in constraint.expression.linear.coefficients {
+            linear_expr.add(self.variables[var.index()], coefficient);
+        }
+        self.problem.add_constraint(linear_expr, op, constant);
         self
     }
 
@@ -93,8 +90,9 @@ impl Solution for MiniLpSolution {
 
 #[cfg(test)]
 mod tests {
-    use super::minilp;
     use crate::{variable, variables, Solution, SolverModel};
+
+    use super::minilp;
 
     #[test]
     fn can_solve_easy() {
