@@ -23,8 +23,8 @@ jobs:
           rustup component add rustfmt
       - name: Build
         run: cargo build --all-features --tests
-      - name: Run tests
-        run: cargo test --all-features
+      - name: Run tests # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
+        run: cargo test --all-features -- --test-threads=1
       - name: Run tests with minilp
         run: cargo test --no-default-features --features minilp
       - name: Run tests with lpsolve
