@@ -56,13 +56,9 @@ impl CoinCbcProblem {
     pub fn as_inner(&self) -> &Model {
         &self.model
     }
-}
 
-impl SolverModel for CoinCbcProblem {
-    type Solution = CoinCbcSolution;
-    type Error = ResolutionError;
-
-    fn with(mut self, constraint: Constraint) -> Self {
+    /// Default implementation for adding a constraint to the Problem
+    fn put_constraint(&mut self, constraint: Constraint) {
         let row = self.model.add_row();
         let constant = -constraint.expression.constant;
         if constraint.is_equality {
@@ -74,8 +70,17 @@ impl SolverModel for CoinCbcProblem {
             self.model.set_weight(row, self.columns[var.index()], coeff);
         }
         self.n_constraints += 1;
+    }
+}
 
-        self
+impl SolverModel for CoinCbcProblem {
+    type Solution = CoinCbcSolution;
+    type Error = ResolutionError;
+
+    fn with(self, constraint: Constraint) -> Self {
+        let mut solver = self;
+        solver.put_constraint(constraint);
+        solver
     }
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
@@ -103,17 +108,7 @@ impl SolverModel for CoinCbcProblem {
     }
 
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
-        let row = self.model.add_row();
-        let constant = -c.expression.constant;
-        if c.is_equality {
-            self.model.set_row_equal(row, constant);
-        } else {
-            self.model.set_row_upper(row, constant);
-        }
-        for (var, coeff) in c.expression.linear.coefficients.into_iter() {
-            self.model.set_weight(row, self.columns[var.index()], coeff);
-        }
-        self.n_constraints += 1;
+        self.put_constraint(c);
 
         ConstraintReference {
             index: self.n_constraints - 1,

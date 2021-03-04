@@ -1,9 +1,11 @@
 #[cfg(feature = "highs")]
-mod tests {
+mod highs_tests {
     use float_eq::assert_float_eq;
 
     use good_lp::{
-        constraint, highs,
+        constraint,
+        dual::Dual,
+        highs,
         solvers::{highs::HighsSolution, SolutionWithDual},
         variable, variables, Solution, SolverModel,
     };
@@ -27,15 +29,15 @@ mod tests {
         let c4 = p.add_constraint(constraint!(3 * x1 + 6 * x2 <= 100.0));
 
         // Solve Problem
-        let solution: HighsSolution = p.solve().expect("Library test");
+        let mut solution: HighsSolution = p.solve().expect("Library test");
 
         assert_float_eq!(75.0, solution.eval(&objective), abs <= 1e-3);
         assert_float_eq!(25.0, solution.value(x1), abs <= 1e-3);
         assert_float_eq!(-0.0, solution.value(x2), abs <= 1e-3);
-        assert_float_eq!(0., solution.get_dual_value(c1), abs <= 1e-1);
-        assert_float_eq!(0., solution.get_dual_value(c2), abs <= 1e-1);
-        assert_float_eq!(-0.667, solution.get_dual_value(c3), abs <= 1e-3);
-        assert_float_eq!(-0.0, solution.get_dual_value(c4), abs <= 1e-3);
+        assert_float_eq!(0., solution.get_dual().dual(c1), abs <= 1e-1);
+        assert_float_eq!(0., solution.get_dual().dual(c2), abs <= 1e-1);
+        assert_float_eq!(-0.667, solution.dual(c3), abs <= 1e-3);
+        assert_float_eq!(-0.0, solution.dual(c4), abs <= 1e-3);
     }
 
     #[test]
@@ -54,12 +56,12 @@ mod tests {
         let c2 = p.add_constraint(constraint!(2 * n_chairs + n_tables <= 100.0));
 
         // Solve
-        let solution: HighsSolution = p.solve().expect("Library test");
+        let mut solution: HighsSolution = p.solve().expect("Library test");
 
         assert_float_eq!(4100.0, solution.eval(&objective), abs <= 1e-10);
         assert_float_eq!(30.0, solution.value(n_chairs), abs <= 1e-1);
         assert_float_eq!(40.0, solution.value(n_tables), abs <= 1e-1);
-        assert_float_eq!(-15.0, solution.get_dual_value(c1), abs <= 1e-1);
-        assert_float_eq!(-5.0, solution.get_dual_value(c2), abs <= 1e-1);
+        assert_float_eq!(-15.0, solution.get_dual().dual(c1), abs <= 1e-1);
+        assert_float_eq!(-5.0, solution.dual(c2), abs <= 1e-1);
     }
 }

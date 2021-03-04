@@ -5,6 +5,7 @@ use highs::HighsModelStatus;
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::{
     constraint::ConstraintReference,
+    dual::Dual,
     solvers::SolutionWithDual,
     variable::{UnsolvedProblem, VariableDefinition},
 };
@@ -52,13 +53,9 @@ impl HighsProblem {
     pub fn into_inner(self) -> highs::Model {
         self.highs_problem.optimise(self.sense)
     }
-}
 
-impl SolverModel for HighsProblem {
-    type Solution = HighsSolution;
-    type Error = ResolutionError;
-
-    fn with(mut self, constraint: Constraint) -> Self {
+    /// Default implementation for adding a constraint to the Problem
+    fn put_constraint(&mut self, constraint: Constraint) {
         let upper_bound = -constraint.expression.constant();
         let columns = &self.columns;
         let factors = constraint
@@ -73,8 +70,17 @@ impl SolverModel for HighsProblem {
             self.highs_problem.add_row(..=upper_bound, factors);
         }
         self.n_constraints += 1;
+    }
+}
 
-        self
+impl SolverModel for HighsProblem {
+    type Solution = HighsSolution;
+    type Error = ResolutionError;
+
+    fn with(self, constraint: Constraint) -> Self {
+        let mut solver = self;
+        solver.put_constraint(constraint);
+        solver
     }
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
@@ -92,25 +98,14 @@ impl SolverModel for HighsProblem {
             HighsModelStatus::PrimalUnbounded => Err(ResolutionError::Unbounded),
             _ok_status => Ok(HighsSolution {
                 solution: solved.get_solution(),
+                dual_values: vec![],
+                acquired: false,
             }),
         }
     }
 
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
-        let upper_bound = -c.expression.constant();
-        let columns = &self.columns;
-        let factors = c
-            .expression
-            .linear_coefficients()
-            .into_iter()
-            .map(|(variable, factor)| (columns[variable.index()], factor));
-        if c.is_equality {
-            self.highs_problem
-                .add_row(upper_bound..=upper_bound, factors);
-        } else {
-            self.highs_problem.add_row(..=upper_bound, factors);
-        }
-        self.n_constraints += 1;
+        self.put_constraint(c);
 
         ConstraintReference {
             index: self.n_constraints - 1,
@@ -122,6 +117,8 @@ impl SolverModel for HighsProblem {
 #[derive(Debug)]
 pub struct HighsSolution {
     solution: highs::Solution,
+    dual_values: Vec<f64>,
+    acquired: bool,
 }
 
 impl HighsSolution {
@@ -138,17 +135,18 @@ impl Solution for HighsSolution {
 }
 
 impl SolutionWithDual for HighsSolution {
-    fn get_dual_value(&self, c: ConstraintReference) -> f64 {
-        self.solution.dual_rows()[c.index]
+    fn dual(&self, constraint: ConstraintReference) -> f64 {
+        self.dual_values[constraint.index]
     }
 }
 
-// impl DualValues for HighsSolution {
-//     fn get_dual_values(&self) -> &[f64] {
-//         self.solution.dual_rows()
-//     }
+impl<'a> Dual<'_> for HighsSolution {
+    fn get_dual(&mut self) -> &Self {
+        if !self.acquired {
+            self.dual_values = self.solution.dual_rows().to_vec();
+            self.acquired = true;
+        }
 
-//     fn get_dual_value(&self, constraint_index: usize) -> f64 {
-//         self.solution.dual_rows()[constraint_index]
-//     }
-// }
+        self
+    }
+}

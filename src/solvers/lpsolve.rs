@@ -62,11 +62,9 @@ pub fn lp_solve(to_solve: UnsolvedProblem) -> LpSolveProblem {
 /// An lp_solve problem instance
 pub struct LpSolveProblem(Problem, usize);
 
-impl SolverModel for LpSolveProblem {
-    type Solution = LpSolveSolution;
-    type Error = ResolutionError;
-
-    fn with(mut self, constraint: Constraint) -> Self {
+impl LpSolveProblem {
+    /// Default implementation for adding a constraint to the Problem
+    fn put_constraint(&mut self, constraint: Constraint) {
         let mut coeffs: Vec<f64> = vec![0.; self.0.num_cols() as usize + 1];
         let target = -constraint.expression.constant;
         for (var, coeff) in constraint.expression.linear_coefficients() {
@@ -79,7 +77,18 @@ impl SolverModel for LpSolveProblem {
         };
         let success = self.0.add_constraint(&coeffs, target, constraint_type);
         assert!(success, "could not add constraint. memory error.");
-        self
+        self.1 += 1;
+    }
+}
+
+impl SolverModel for LpSolveProblem {
+    type Solution = LpSolveSolution;
+    type Error = ResolutionError;
+
+    fn with(self, constraint: Constraint) -> Self {
+        let mut solver = self;
+        solver.put_constraint(constraint);
+        solver
     }
 
     fn solve(mut self) -> Result<Self::Solution, Self::Error> {
@@ -116,19 +125,7 @@ impl SolverModel for LpSolveProblem {
     }
 
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
-        let mut coeffs: Vec<f64> = vec![0.; self.0.num_cols() as usize + 1];
-        let target = -c.expression.constant;
-        for (var, coeff) in c.expression.linear_coefficients() {
-            coeffs[var.index() + 1] = coeff;
-        }
-        let constraint_type = if c.is_equality {
-            ConstraintType::Eq
-        } else {
-            ConstraintType::Le
-        };
-        let success = self.0.add_constraint(&coeffs, target, constraint_type);
-        assert!(success, "could not add constraint. memory error.");
-        self.1 += 1;
+        self.put_constraint(c);
 
         ConstraintReference { index: self.1 - 1 }
     }

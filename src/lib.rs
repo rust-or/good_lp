@@ -119,6 +119,7 @@ good_lp = { version = \"*\", features = [\"minilp\"] }
 "
 );
 
+pub mod dual;
 mod expression;
 #[macro_use]
 pub mod variable;
