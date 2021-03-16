@@ -1,6 +1,6 @@
 [package]
 name = "good_lp"
-version = "0.3.9"
+version = "0.3.10"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
 repository = "https://github.com/rust-or/good_lp"
