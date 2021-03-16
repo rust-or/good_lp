@@ -1,8 +1,8 @@
 //! An affine expression is an expression of the form `a + 2b - 3a - 7`
 //! You can implement this trait if you want to implement your own
 //! variant of the [Expression](crate::Expression) type, optimized for your use case.
-use crate::{Variable, Expression};
 use crate::expression::LinearExpression;
+use crate::{Expression, Variable};
 
 /// An element that can be expressed as a linear combination of variables plus a constant
 pub trait IntoAffineExpression {
@@ -21,7 +21,10 @@ pub trait IntoAffineExpression {
     }
 
     /// Transform the value into a concrete Expression struct.
-    fn into_expression(self) -> Expression where Self: Sized {
+    fn into_expression(self) -> Expression
+    where
+        Self: Sized,
+    {
         let constant = self.constant();
         let coefficients = self.linear_coefficients().into_iter().collect();
         Expression {
