@@ -157,12 +157,7 @@ impl Expression {
     /// Expression::from_other_affine(0.); // A constant expression
     /// ```
     pub fn from_other_affine<E: IntoAffineExpression>(source: E) -> Self {
-        let constant = source.constant();
-        let coefficients = source.linear_coefficients().into_iter().collect();
-        Expression {
-            linear: LinearExpression { coefficients },
-            constant,
-        }
+        source.into_expression()
     }
 
     /// Creates a constraint indicating that this expression

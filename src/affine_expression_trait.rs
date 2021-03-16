@@ -1,7 +1,8 @@
 //! An affine expression is an expression of the form `a + 2b - 3a - 7`
 //! You can implement this trait if you want to implement your own
 //! variant of the [Expression](crate::Expression) type, optimized for your use case.
-use crate::Variable;
+use crate::{Variable, Expression};
+use crate::expression::LinearExpression;
 
 /// An element that can be expressed as a linear combination of variables plus a constant
 pub trait IntoAffineExpression {
@@ -18,6 +19,16 @@ pub trait IntoAffineExpression {
     fn constant(&self) -> f64 {
         0.
     }
+
+    /// Transform the value into a concrete Expression struct.
+    fn into_expression(self) -> Expression where Self: Sized {
+        let constant = self.constant();
+        let coefficients = self.linear_coefficients().into_iter().collect();
+        Expression {
+            linear: LinearExpression { coefficients },
+            constant,
+        }
+    }
 }
 
 macro_rules! impl_affine_for_num {
@@ -33,6 +44,13 @@ macro_rules! impl_affine_for_num {
             #[inline]
             fn constant(&self) -> f64 {
                 f64::from(*self)
+            }
+
+            fn into_expression(self) -> Expression {
+                Expression {
+                    linear: LinearExpression { coefficients: std::collections::HashMap::new() },
+                    constant: f64::from(self),
+                }
             }
         }
     )*};
