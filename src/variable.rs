@@ -49,6 +49,24 @@ impl IntoAffineExpression for Variable {
     }
 }
 
+/// Use an optional variable as an expression
+///
+/// ```
+/// # use good_lp::variables;
+/// variables! {problem: 0 <= v};
+/// let maybe = Some(v);
+/// problem.minimise(v + maybe);
+/// ```
+impl IntoAffineExpression for Option<Variable> {
+    #[allow(clippy::type_complexity)]
+    type Iter = std::iter::Map<std::option::IntoIter<Variable>, fn(Variable) -> (Variable, f64)>;
+
+    #[inline]
+    fn linear_coefficients(self) -> Self::Iter {
+        self.into_iter().map(|v| (v, 1.))
+    }
+}
+
 impl<'a> IntoAffineExpression for &'a Variable {
     type Iter = std::iter::Once<(Variable, f64)>;
 
