@@ -19,7 +19,7 @@ default = ["coin_cbc"]
 coin_cbc = { version = "0.1", optional = true }
 minilp = { version = "0.2", optional = true }
 lpsolve = { version = "0.1", optional = true }
-highs = { version = "0.3", optional = true }
+highs = { version = "0.4", optional = true }
 
 [dev-dependencies]
 criterion = "0.3"

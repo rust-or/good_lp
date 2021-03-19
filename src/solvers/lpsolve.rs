@@ -56,30 +56,11 @@ pub fn lp_solve(to_solve: UnsolvedProblem) -> LpSolveProblem {
             assert!(model.set_unbounded(col));
         }
     }
-    LpSolveProblem(model, 0)
+    LpSolveProblem(model)
 }
 
 /// An lp_solve problem instance
-pub struct LpSolveProblem(Problem, usize);
-
-impl LpSolveProblem {
-    /// Default implementation for adding a constraint to the Problem
-    fn put_constraint(&mut self, constraint: Constraint) {
-        let mut coeffs: Vec<f64> = vec![0.; self.0.num_cols() as usize + 1];
-        let target = -constraint.expression.constant;
-        for (var, coeff) in constraint.expression.linear_coefficients() {
-            coeffs[var.index() + 1] = coeff;
-        }
-        let constraint_type = if constraint.is_equality {
-            ConstraintType::Eq
-        } else {
-            ConstraintType::Le
-        };
-        let success = self.0.add_constraint(&coeffs, target, constraint_type);
-        assert!(success, "could not add constraint. memory error.");
-        self.1 += 1;
-    }
-}
+pub struct LpSolveProblem(Problem);
 
 impl SolverModel for LpSolveProblem {
     type Solution = LpSolveSolution;
@@ -118,10 +99,21 @@ impl SolverModel for LpSolveProblem {
         }
     }
 
-    fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
-        self.put_constraint(c);
-
-        ConstraintReference { index: self.1 - 1 }
+    fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        let index = self.0.num_rows().try_into().expect("too many rows");
+        let mut coeffs: Vec<f64> = vec![0.; self.0.num_cols() as usize + 1];
+        let target = -constraint.expression.constant;
+        for (var, coeff) in constraint.expression.linear_coefficients() {
+            coeffs[var.index() + 1] = coeff;
+        }
+        let constraint_type = if constraint.is_equality {
+            ConstraintType::Eq
+        } else {
+            ConstraintType::Le
+        };
+        let success = self.0.add_constraint(&coeffs, target, constraint_type);
+        assert!(success, "could not add constraint. memory error.");
+        ConstraintReference { index }
     }
 }
 

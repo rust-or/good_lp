@@ -83,6 +83,7 @@ impl SolverModel for CoinCbcProblem {
     }
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        let index = self.model.num_rows().try_into().unwrap();
         let row = self.model.add_row();
         let constant = -constraint.expression.constant;
         if constraint.is_equality {
@@ -93,9 +94,7 @@ impl SolverModel for CoinCbcProblem {
         for (var, coeff) in constraint.expression.linear.coefficients.into_iter() {
             self.model.set_weight(row, self.columns[var.index()], coeff);
         }
-        ConstraintReference {
-            index: self.model.num_rows().try_into().unwrap(),
-        }
+        ConstraintReference { index }
     }
 }
 

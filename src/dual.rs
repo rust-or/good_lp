@@ -4,7 +4,7 @@
 //!
 
 /// Interface to handle the retrieval of Dual Values from a solver
-pub trait Dual<'a> {
+pub trait Dual {
     /// Extract function to get values
-    fn get_dual(&'a mut self) -> &'a Self;
+    fn get_dual(&mut self) -> &Self;
 }

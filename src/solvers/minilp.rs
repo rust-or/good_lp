@@ -45,21 +45,6 @@ impl MiniLpProblem {
     pub fn as_inner(&self) -> &minilp::Problem {
         &self.problem
     }
-
-    /// Default implementation for adding a constraint to the Problem
-    fn put_constraint(&mut self, constraint: Constraint) {
-        let op = match constraint.is_equality {
-            true => minilp::ComparisonOp::Eq,
-            false => minilp::ComparisonOp::Le,
-        };
-        let constant = -constraint.expression.constant;
-        let mut linear_expr = minilp::LinearExpr::empty();
-        for (var, coefficient) in constraint.expression.linear.coefficients {
-            linear_expr.add(self.variables[var.index()], coefficient);
-        }
-        self.problem.add_constraint(linear_expr, op, constant);
-        self.n_constraints += 1;
-    }
 }
 
 impl SolverModel for MiniLpProblem {
@@ -77,12 +62,20 @@ impl SolverModel for MiniLpProblem {
         }
     }
 
-    fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
-        self.put_constraint(c);
-
-        ConstraintReference {
-            index: self.n_constraints - 1,
+    fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        let index = self.n_constraints;
+        let op = match constraint.is_equality {
+            true => minilp::ComparisonOp::Eq,
+            false => minilp::ComparisonOp::Le,
+        };
+        let constant = -constraint.expression.constant;
+        let mut linear_expr = minilp::LinearExpr::empty();
+        for (var, coefficient) in constraint.expression.linear.coefficients {
+            linear_expr.add(self.variables[var.index()], coefficient);
         }
+        self.problem.add_constraint(linear_expr, op, constant);
+        self.n_constraints += 1;
+        ConstraintReference { index }
     }
 }
 
