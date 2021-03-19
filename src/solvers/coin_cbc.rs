@@ -70,8 +70,17 @@ impl SolverModel for CoinCbcProblem {
         // if the model has at least one integer variable.
         // See: https://github.com/coin-or/Cbc/issues/376
         if self.has_sos {
-            let dummy_col = self.model.add_col();
-            self.model.set_integer(dummy_col);
+            // We need to add two columns to work around yet another bug
+            // See: https://github.com/coin-or/Cbc/issues/376#issuecomment-803057782
+            let dummy_col1 = self.model.add_col();
+            let dummy_col2 = self.model.add_col();
+            self.model.set_obj_coeff(dummy_col1, 1e-6);
+            self.model.set_obj_coeff(dummy_col2, 1e-6);
+            self.model.set_integer(dummy_col1);
+            let dummy_row = self.model.add_row();
+            self.model.set_weight(dummy_row, dummy_col1, 1.);
+            self.model.set_weight(dummy_row, dummy_col2, 1.);
+            self.model.set_row_upper(dummy_row, 1.);
         }
 
         let solution = self.model.solve();
