@@ -183,7 +183,8 @@ pub trait ModelWithSOS1 {
     /// ```
     /// use good_lp::*;
     /// # // Not all solvers support SOS constraints
-    /// # let solver = if cfg!(feature = "lpsolve") {lp_solve} else {return};
+    /// # #[cfg(feature = "lpsolve")] {
+    /// # let solver =  lp_solve;
     /// variables! {problem:
     ///     0 <= x <= 2;
     ///     0 <= y <= 3;
@@ -195,6 +196,7 @@ pub trait ModelWithSOS1 {
     ///     .solve().unwrap();
     /// assert_eq!(solution.value(x), 0.);
     /// assert_eq!(solution.value(y), 3.);
+    /// # }
     /// ```
     fn add_sos1<I: IntoAffineExpression>(&mut self, variables_and_weights: I);
 
