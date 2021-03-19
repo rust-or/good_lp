@@ -17,11 +17,11 @@ pub mod lpsolve;
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub mod highs;
 
-use crate::Variable;
+use crate::{constraint::ConstraintReference, Variable};
 use crate::{Constraint, Expression};
 use std::collections::HashMap;
 use std::error::Error;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 /// Whether to search for the variable values that give the highest
 /// or the lowest value of the objective function.
@@ -80,13 +80,22 @@ pub trait SolverModel {
     /// The type of the solution to the problem
     type Solution: Solution;
     /// The error that can occur while solving the problem
-    type Error;
+    type Error: Debug;
 
     /// Takes a model and adds a constraint to it
-    fn with(self, constraint: Constraint) -> Self;
+    fn with(mut self, constraint: Constraint) -> Self
+    where
+        Self: Sized,
+    {
+        self.add_constraint(constraint);
+        self
+    }
 
     /// Find the solution for the problem being modeled
     fn solve(self) -> Result<Self::Solution, Self::Error>;
+
+    /// Adds a constraint to the Model and returns a reference to the index
+    fn add_constraint(&mut self, c: Constraint) -> ConstraintReference;
 }
 
 /// A problem solution
@@ -122,4 +131,26 @@ impl<N: Into<f64> + Clone> Solution for HashMap<Variable, N> {
     fn value(&self, variable: Variable) -> f64 {
         self[&variable].clone().into()
     }
+}
+
+/// A type that contains the dual values of a solution.
+/// See [SolutionWithDual].
+pub trait DualValues {
+    /// Retrieve a single dual value for a given constraint.
+    /// This returns the value of the solution for the corresponding variable in the dual problem.
+    /// This is also called "shadow price" or "dual price".
+    fn dual(&self, c: ConstraintReference) -> f64;
+}
+
+/// The dual value measures the increase in the objective function's value per unit
+/// increase in the variable's value. The dual value for a constraint is nonzero only when
+/// the constraint is equal to its bound. Also known as the shadow price.
+/// This trait handles the retrieval of dual values from a solver.
+pub trait SolutionWithDual<'a> {
+    /// Type of the object containing the dual values.
+    type Dual: DualValues;
+    /// Get the dual values for a problem.
+    /// If a solver requires running additional computations or allocating additional memory
+    /// to get the dual values, this is performed when running this method.
+    fn compute_dual(&'a mut self) -> Self::Dual;
 }

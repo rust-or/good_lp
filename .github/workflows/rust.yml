@@ -2,17 +2,16 @@ name: Rust
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths: ["**.rs", "Cargo.toml", ".github/workflows/rust.yml"]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:

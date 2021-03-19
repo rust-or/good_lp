@@ -392,6 +392,7 @@ mod tests {
         assert_eq!((3. - v0) - v1, (-1.) * v0 + (-1.) * v1 + 3.)
     }
 
+    #[allow(clippy::float_cmp)]
     #[test]
     fn eval() {
         let mut vars = variables!();

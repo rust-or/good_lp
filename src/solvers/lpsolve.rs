@@ -1,9 +1,9 @@
 //! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc).
 //! This solver is activated using the default `coin_cbc` feature.
 //! You can disable it an enable another solver instead using cargo features.
-use crate::affine_expression_trait::IntoAffineExpression;
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::UnsolvedProblem;
+use crate::{affine_expression_trait::IntoAffineExpression, constraint::ConstraintReference};
 use crate::{Constraint, Variable};
 use lpsolve::{ConstraintType, Problem, SolveStatus};
 use std::convert::TryInto;
@@ -66,22 +66,6 @@ impl SolverModel for LpSolveProblem {
     type Solution = LpSolveSolution;
     type Error = ResolutionError;
 
-    fn with(mut self, constraint: Constraint) -> Self {
-        let mut coeffs: Vec<f64> = vec![0.; self.0.num_cols() as usize + 1];
-        let target = -constraint.expression.constant;
-        for (var, coeff) in constraint.expression.linear_coefficients() {
-            coeffs[var.index() + 1] = coeff;
-        }
-        let constraint_type = if constraint.is_equality {
-            ConstraintType::Eq
-        } else {
-            ConstraintType::Le
-        };
-        let success = self.0.add_constraint(&coeffs, target, constraint_type);
-        assert!(success, "could not add constraint. memory error.");
-        self
-    }
-
     fn solve(mut self) -> Result<Self::Solution, Self::Error> {
         use ResolutionError::*;
         match Problem::solve(&mut self.0) {
@@ -113,6 +97,23 @@ impl SolverModel for LpSolveProblem {
                 })
             }
         }
+    }
+
+    fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        let index = self.0.num_rows().try_into().expect("too many rows");
+        let mut coeffs: Vec<f64> = vec![0.; self.0.num_cols() as usize + 1];
+        let target = -constraint.expression.constant;
+        for (var, coeff) in constraint.expression.linear_coefficients() {
+            coeffs[var.index() + 1] = coeff;
+        }
+        let constraint_type = if constraint.is_equality {
+            ConstraintType::Eq
+        } else {
+            ConstraintType::Le
+        };
+        let success = self.0.add_constraint(&coeffs, target, constraint_type);
+        assert!(success, "could not add constraint. memory error.");
+        ConstraintReference { index }
     }
 }
 

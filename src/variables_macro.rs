@@ -3,7 +3,7 @@
 ///
 /// Using a macro allows you to create variables with a readable syntax close to
 /// the [LP file format](https://www.gurobi.com/documentation/9.1/refman/lp_format.html).
-/// If you don't need that, you can instanciate your linear program with only
+/// If you don't need that, you can instantiate your linear program with only
 /// [ProblemVariables::new](crate::variable::ProblemVariables)
 ///
 /// ## Working examples
@@ -30,7 +30,7 @@
 /// let objective = x[0] + x[1] - x[2];
 /// ```
 ///
-/// ### Simply instanciating  [ProblemVariables](crate::variable::ProblemVariables)
+/// ### Simply instantiating  [ProblemVariables](crate::variable::ProblemVariables)
 /// ```
 /// use good_lp::{variable, variables, Expression};
 /// let mut vars = variables!();

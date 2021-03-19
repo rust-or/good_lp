@@ -1,7 +1,10 @@
 //! A solver that uses [minilp](https://docs.rs/minilp), a pure rust solver.
 
-use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{
+    constraint::ConstraintReference,
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+};
 use crate::{Constraint, Variable};
 
 /// The [minilp](https://docs.rs/minilp) solver,
@@ -23,13 +26,18 @@ pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
             problem.add_var(coeff, (min, max))
         })
         .collect();
-    MiniLpProblem { problem, variables }
+    MiniLpProblem {
+        problem,
+        variables,
+        n_constraints: 0,
+    }
 }
 
 /// A minilp model
 pub struct MiniLpProblem {
     problem: minilp::Problem,
     variables: Vec<minilp::Variable>,
+    n_constraints: usize,
 }
 
 impl MiniLpProblem {
@@ -43,7 +51,19 @@ impl SolverModel for MiniLpProblem {
     type Solution = MiniLpSolution;
     type Error = ResolutionError;
 
-    fn with(mut self, constraint: Constraint) -> Self {
+    fn solve(self) -> Result<Self::Solution, Self::Error> {
+        match self.problem.solve() {
+            Err(minilp::Error::Unbounded) => Err(ResolutionError::Unbounded),
+            Err(minilp::Error::Infeasible) => Err(ResolutionError::Infeasible),
+            Ok(solution) => Ok(MiniLpSolution {
+                solution,
+                variables: self.variables,
+            }),
+        }
+    }
+
+    fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        let index = self.n_constraints;
         let op = match constraint.is_equality {
             true => minilp::ComparisonOp::Eq,
             false => minilp::ComparisonOp::Le,
@@ -54,18 +74,8 @@ impl SolverModel for MiniLpProblem {
             linear_expr.add(self.variables[var.index()], coefficient);
         }
         self.problem.add_constraint(linear_expr, op, constant);
-        self
-    }
-
-    fn solve(self) -> Result<Self::Solution, Self::Error> {
-        match self.problem.solve() {
-            Err(minilp::Error::Unbounded) => Err(ResolutionError::Unbounded),
-            Err(minilp::Error::Infeasible) => Err(ResolutionError::Infeasible),
-            Ok(solution) => Ok(MiniLpSolution {
-                solution,
-                variables: self.variables,
-            }),
-        }
+        self.n_constraints += 1;
+        ConstraintReference { index }
     }
 }
 
@@ -102,7 +112,7 @@ mod tests {
         let solution = vars
             .maximise(x + y)
             .using(minilp)
-            .with(2 * x + y << 4)
+            .with((2 * x + y) << 4)
             .solve()
             .unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))

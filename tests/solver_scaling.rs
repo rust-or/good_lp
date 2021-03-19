@@ -15,8 +15,8 @@ fn solve_large_problem() {
         pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
     }
     let sol = pb.solve().unwrap();
-    for i in 0..BIG_NUM {
-        assert_float_eq!(sol.value(v[i]), min + i as f64, abs <= 1e-10);
+    for (i, var) in v.iter().enumerate() {
+        assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-10);
     }
 }
 

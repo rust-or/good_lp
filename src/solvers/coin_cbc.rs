@@ -1,10 +1,14 @@
 //! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc).
 //! This solver is activated using the default `coin_cbc` feature.
 //! You can disable it an enable another solver instead using cargo features.
-use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{
+    constraint::ConstraintReference,
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+};
 use crate::{Constraint, Variable};
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
+use std::convert::TryInto;
 
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
 /// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)
@@ -54,20 +58,6 @@ impl SolverModel for CoinCbcProblem {
     type Solution = CoinCbcSolution;
     type Error = ResolutionError;
 
-    fn with(mut self, constraint: Constraint) -> Self {
-        let row = self.model.add_row();
-        let constant = -constraint.expression.constant;
-        if constraint.is_equality {
-            self.model.set_row_equal(row, constant);
-        } else {
-            self.model.set_row_upper(row, constant);
-        }
-        for (var, coeff) in constraint.expression.linear.coefficients.into_iter() {
-            self.model.set_weight(row, self.columns[var.index()], coeff);
-        }
-        self
-    }
-
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let solution = self.model.solve();
         let raw = solution.raw();
@@ -90,6 +80,21 @@ impl SolverModel for CoinCbcProblem {
                 }
             },
         }
+    }
+
+    fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        let index = self.model.num_rows().try_into().unwrap();
+        let row = self.model.add_row();
+        let constant = -constraint.expression.constant;
+        if constraint.is_equality {
+            self.model.set_row_equal(row, constant);
+        } else {
+            self.model.set_row_upper(row, constant);
+        }
+        for (var, coeff) in constraint.expression.linear.coefficients.into_iter() {
+            self.model.set_weight(row, self.columns[var.index()], coeff);
+        }
+        ConstraintReference { index }
     }
 }
 
