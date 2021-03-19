@@ -1,12 +1,12 @@
 [package]
 name = "good_lp"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
 repository = "https://github.com/rust-or/good_lp"
 documentation = "https://docs.rs/good_lp"
 description = " Linear Programming for Rust, with an user-friendly API. This crate allows modeling LP problems, and lets you solve them with various solvers."
-license-file = "LICENSE"
+license = "MIT"
 keywords = ["linear-programming", "optimization", "symbolic", "math", "solver"]
 categories = ["mathematics", "algorithms", "science", "api-bindings", "data-structures"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
