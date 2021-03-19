@@ -77,12 +77,6 @@ impl SolverModel for CoinCbcProblem {
     type Solution = CoinCbcSolution;
     type Error = ResolutionError;
 
-    fn with(self, constraint: Constraint) -> Self {
-        let mut solver = self;
-        solver.put_constraint(constraint);
-        solver
-    }
-
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let solution = self.model.solve();
         let raw = solution.raw();

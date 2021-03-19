@@ -85,12 +85,6 @@ impl SolverModel for LpSolveProblem {
     type Solution = LpSolveSolution;
     type Error = ResolutionError;
 
-    fn with(self, constraint: Constraint) -> Self {
-        let mut solver = self;
-        solver.put_constraint(constraint);
-        solver
-    }
-
     fn solve(mut self) -> Result<Self::Solution, Self::Error> {
         use ResolutionError::*;
         match Problem::solve(&mut self.0) {

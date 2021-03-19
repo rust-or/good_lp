@@ -66,11 +66,6 @@ impl SolverModel for MiniLpProblem {
     type Solution = MiniLpSolution;
     type Error = ResolutionError;
 
-    fn with(mut self, constraint: Constraint) -> Self {
-        self.put_constraint(constraint);
-        self
-    }
-
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         match self.problem.solve() {
             Err(minilp::Error::Unbounded) => Err(ResolutionError::Unbounded),

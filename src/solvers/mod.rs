@@ -83,7 +83,13 @@ pub trait SolverModel {
     type Error;
 
     /// Takes a model and adds a constraint to it
-    fn with(self, constraint: Constraint) -> Self;
+    fn with(mut self, constraint: Constraint) -> Self
+    where
+        Self: Sized,
+    {
+        self.add_constraint(constraint);
+        self
+    }
 
     /// Find the solution for the problem being modeled
     fn solve(self) -> Result<Self::Solution, Self::Error>;

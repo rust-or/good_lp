@@ -77,12 +77,6 @@ impl SolverModel for HighsProblem {
     type Solution = HighsSolution;
     type Error = ResolutionError;
 
-    fn with(self, constraint: Constraint) -> Self {
-        let mut solver = self;
-        solver.put_constraint(constraint);
-        solver
-    }
-
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let model = self.into_inner();
         let solved = model.solve();
