@@ -9,7 +9,7 @@ use std::ops::{Div, Mul, Neg, RangeBounds};
 
 use crate::affine_expression_trait::IntoAffineExpression;
 use crate::expression::{Expression, LinearExpression};
-use crate::solvers::ObjectiveDirection;
+use crate::solvers::{ObjectiveDirection, Solver};
 
 /// A variable in a problem. Use variables to create [expressions](Expression),
 /// to express the [objective](ProblemVariables::optimise)
@@ -332,11 +332,8 @@ pub struct UnsolvedProblem {
 
 impl UnsolvedProblem {
     /// Create a solver instance and feed it with this problem
-    pub fn using<S, G>(self, solver: S) -> G
-    where
-        S: FnOnce(UnsolvedProblem) -> G,
-    {
-        solver(self)
+    pub fn using<S: Solver>(self, mut solver: S) -> S::Model {
+        solver.create_model(self)
     }
 }
 

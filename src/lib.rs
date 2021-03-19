@@ -57,7 +57,7 @@
 //! ```
 //! # let my_variables = good_lp::variables!();
 //! # let my_objective = good_lp::Expression::from(0);
-//! # let my_solver = |_|();
+//! # let my_solver = good_lp::default_solver;
 //! let mut model = my_variables.minimise(my_objective).using(my_solver);
 //! ```
 //!
@@ -67,7 +67,7 @@
 pub use affine_expression_trait::IntoAffineExpression;
 pub use constraint::Constraint;
 pub use expression::Expression;
-pub use solvers::{DualValues, ResolutionError, Solution, SolutionWithDual, SolverModel};
+pub use solvers::{DualValues, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel};
 pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 
 #[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]

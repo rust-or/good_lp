@@ -17,11 +17,32 @@ pub mod lpsolve;
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub mod highs;
 
-use crate::{constraint::ConstraintReference, Variable};
+use crate::variable::UnsolvedProblem;
+use crate::{constraint::ConstraintReference, IntoAffineExpression, Variable};
 use crate::{Constraint, Expression};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
+
+/// An entity that is able to solve linear problems
+pub trait Solver {
+    /// The internal model type used by the solver
+    type Model: SolverModel;
+    /// Solve the given problem
+    fn create_model(&mut self, problem: UnsolvedProblem) -> Self::Model;
+}
+
+/// A function that takes an [UnsolvedProblem] and returns a [SolverModel] automatically implements [Solver]
+impl<SOLVER, MODEL> Solver for SOLVER
+where
+    SOLVER: FnMut(UnsolvedProblem) -> MODEL,
+    MODEL: SolverModel,
+{
+    type Model = MODEL;
+    fn create_model(&mut self, pb: UnsolvedProblem) -> Self::Model {
+        self(pb)
+    }
+}
 
 /// Whether to search for the variable values that give the highest
 /// or the lowest value of the objective function.

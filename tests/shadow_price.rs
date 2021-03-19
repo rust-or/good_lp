@@ -1,20 +1,17 @@
 use float_eq::assert_float_eq;
 
-use good_lp::variable::UnsolvedProblem;
 use good_lp::{
     constraint,
     solvers::{DualValues, SolutionWithDual},
-    variable, variables, Solution, SolverModel,
+    variable, variables, Solution, Solver, SolverModel,
 };
 
 // Using a generic function here ensures the dual can be retrieved in a generic,
 // solver-independent manner.
 #[allow(dead_code)]
-fn determine_shadow_prices_for_solver<SOLVER, MODEL>(solver: SOLVER)
+fn determine_shadow_prices_for_solver<S: Solver>(solver: S)
 where
-    SOLVER: FnOnce(UnsolvedProblem) -> MODEL,
-    MODEL: SolverModel,
-    for<'a> <MODEL as SolverModel>::Solution: SolutionWithDual<'a>,
+    for<'a> <<S as Solver>::Model as SolverModel>::Solution: SolutionWithDual<'a>,
 {
     // Instantiate the Variables
     let mut vars = variables!();
@@ -47,11 +44,9 @@ where
 }
 
 #[allow(dead_code)]
-fn furniture_problem_for_solver<SOLVER, MODEL>(solver: SOLVER)
+fn furniture_problem_for_solver<S: Solver>(solver: S)
 where
-    SOLVER: FnOnce(UnsolvedProblem) -> MODEL,
-    MODEL: SolverModel,
-    for<'a> <MODEL as SolverModel>::Solution: SolutionWithDual<'a>,
+    for<'a> <<S as Solver>::Model as SolverModel>::Solution: SolutionWithDual<'a>,
 {
     // Non-negative values
     let mut vars = variables!();
