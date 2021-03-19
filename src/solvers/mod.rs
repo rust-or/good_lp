@@ -21,7 +21,7 @@ use crate::{constraint::ConstraintReference, Variable};
 use crate::{Constraint, Expression};
 use std::collections::HashMap;
 use std::error::Error;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 /// Whether to search for the variable values that give the highest
 /// or the lowest value of the objective function.
@@ -80,7 +80,7 @@ pub trait SolverModel {
     /// The type of the solution to the problem
     type Solution: Solution;
     /// The error that can occur while solving the problem
-    type Error;
+    type Error: Debug;
 
     /// Takes a model and adds a constraint to it
     fn with(mut self, constraint: Constraint) -> Self
