@@ -175,3 +175,35 @@ pub trait SolutionWithDual<'a> {
     /// to get the dual values, this is performed when running this method.
     fn compute_dual(&'a mut self) -> Self::Dual;
 }
+
+/// A model that supports [SOS type 1](https://en.wikipedia.org/wiki/Special_ordered_set) constraints.
+pub trait ModelWithSOS1 {
+    /// Adds a constraint saying that two variables from the given set cannot be non-zero at once.
+    ///
+    /// ```
+    /// use good_lp::*;
+    /// # // Not all solvers support SOS constraints
+    /// # let solver = if cfg!(feature = "lpsolve") {lp_solve} else {return};
+    /// variables! {problem:
+    ///     0 <= x <= 2;
+    ///     0 <= y <= 3;
+    /// }
+    /// let solution = problem
+    ///     .maximise(x + y) // maximise x + y
+    ///     .using(solver)
+    ///     .with_sos1(x + y) // but require that either x or y is zero
+    ///     .solve().unwrap();
+    /// assert_eq!(solution.value(x), 0.);
+    /// assert_eq!(solution.value(y), 3.);
+    /// ```
+    fn add_sos1<I: IntoAffineExpression>(&mut self, variables_and_weights: I);
+
+    /// See [ModelWithSOS1::add_sos1]
+    fn with_sos1<I: IntoAffineExpression>(mut self, variables_and_weights: I) -> Self
+    where
+        Self: Sized,
+    {
+        self.add_sos1(variables_and_weights);
+        self
+    }
+}

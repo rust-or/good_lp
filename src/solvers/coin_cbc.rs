@@ -1,10 +1,12 @@
 //! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc).
 //! This solver is activated using the default `coin_cbc` feature.
 //! You can disable it an enable another solver instead using cargo features.
+use crate::solvers::ModelWithSOS1;
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+    IntoAffineExpression,
 };
 use crate::{Constraint, Variable};
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
@@ -95,6 +97,21 @@ impl SolverModel for CoinCbcProblem {
             self.model.set_weight(row, self.columns[var.index()], coeff);
         }
         ConstraintReference { index }
+    }
+}
+
+/// Unfortunately, the current version of cbc silently ignores
+/// sos constraints on continuous variables.
+/// See <https://github.com/coin-or/Cbc/issues/376>
+impl ModelWithSOS1 for CoinCbcProblem {
+    fn add_sos1<I: IntoAffineExpression>(&mut self, variables: I) {
+        let columns = std::mem::take(&mut self.columns);
+        let cols_and_weights = variables
+            .linear_coefficients()
+            .into_iter()
+            .map(|(var, weight)| (columns[var.index()], weight));
+        self.model.add_sos1(cols_and_weights);
+        self.columns = columns
     }
 }
 

@@ -67,7 +67,9 @@
 pub use affine_expression_trait::IntoAffineExpression;
 pub use constraint::Constraint;
 pub use expression::Expression;
-pub use solvers::{DualValues, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel};
+pub use solvers::{
+    DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel,
+};
 pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 
 #[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]

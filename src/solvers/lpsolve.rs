@@ -3,10 +3,13 @@
 //! You can disable it an enable another solver instead using cargo features.
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::UnsolvedProblem;
-use crate::{affine_expression_trait::IntoAffineExpression, constraint::ConstraintReference};
+use crate::{
+    affine_expression_trait::IntoAffineExpression, constraint::ConstraintReference, ModelWithSOS1,
+};
 use crate::{Constraint, Variable};
-use lpsolve::{ConstraintType, Problem, SolveStatus};
+use lpsolve::{ConstraintType, Problem, SOSType, SolveStatus};
 use std::convert::TryInto;
+use std::ffi::CString;
 use std::os::raw::c_int;
 
 fn expr_to_scatter_vec<E: IntoAffineExpression>(expr: E) -> (Vec<f64>, Vec<c_int>, f64) {
@@ -114,6 +117,22 @@ impl SolverModel for LpSolveProblem {
         let success = self.0.add_constraint(&coeffs, target, constraint_type);
         assert!(success, "could not add constraint. memory error.");
         ConstraintReference { index }
+    }
+}
+
+impl ModelWithSOS1 for LpSolveProblem {
+    fn add_sos1<I: IntoAffineExpression>(&mut self, variables: I) {
+        let iter = variables.linear_coefficients().into_iter();
+        let (len, _) = iter.size_hint();
+        let mut weights = Vec::with_capacity(len);
+        let mut variables = Vec::with_capacity(len);
+        for (var, weight) in iter {
+            weights.push(weight);
+            variables.push(var.index().try_into().expect("too many vars"));
+        }
+        let name = CString::new("sos").unwrap();
+        self.0
+            .add_sos_constraint(&name, SOSType::Type1, 1, &weights, &variables);
     }
 }
 
