@@ -134,7 +134,23 @@ impl<N: Into<f64> + Clone> Solution for HashMap<Variable, N> {
 }
 
 /// A Solution that supports Dual values
-pub trait SolutionWithDual {
-    /// Method to retrieve a single Dual Value for a given constraint
+pub trait DualValues {
+    /// Method to retrieve a single Dual Value for a given constraint.
+    /// The returns the value of the solution for the variable in the dual problem.
+    /// This is also called "shadow price" or "dual price".
     fn dual(&self, c: ConstraintReference) -> f64;
+}
+
+/// The dual value measures the increase in the objective function's value per unit
+/// increase in the variable's value. The dual value for a constraint is nonzero only when
+/// the constraint is equal to its bound. Also known as the shadow price
+///
+/// Interface to handle the retrieval of Dual Values from a solver
+pub trait SolutionWithDual<'a> {
+    /// The type of the dual values
+    type Dual: DualValues;
+    /// Get the dual values for a problem.
+    /// If a solver requires running additional computations or allocating additional memory
+    /// to get the dual values, this is performed when running this method.
+    fn compute_dual(&'a mut self) -> Self::Dual;
 }

@@ -2,11 +2,12 @@
 
 use highs::HighsModelStatus;
 
-use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
+use crate::solvers::{
+    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
+};
 use crate::{
     constraint::ConstraintReference,
-    dual::Dual,
-    solvers::SolutionWithDual,
+    solvers::DualValues,
     variable::{UnsolvedProblem, VariableDefinition},
 };
 use crate::{Constraint, IntoAffineExpression, Variable};
@@ -118,18 +119,16 @@ impl Solution for HighsSolution {
     }
 }
 
-impl SolutionWithDual for HighsSolution {
+impl<'a> DualValues for &'a HighsSolution {
     fn dual(&self, constraint: ConstraintReference) -> f64 {
         self.solution.dual_rows()[constraint.index]
     }
 }
 
-impl Dual for HighsSolution {
-    fn get_dual(&mut self) -> &Self {
-        if !self.acquired {
-            self.dual_values = self.solution.dual_rows().to_vec();
-            self.acquired = true;
-        }
+impl<'a> SolutionWithDual<'a> for HighsSolution {
+    type Dual = &'a HighsSolution;
+
+    fn compute_dual(&'a mut self) -> &'a HighsSolution {
         self
     }
 }
