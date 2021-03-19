@@ -40,13 +40,18 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         ObjectiveDirection::Maximisation => Sense::Maximize,
         ObjectiveDirection::Minimisation => Sense::Minimize,
     });
-    CoinCbcProblem { model, columns }
+    CoinCbcProblem {
+        model,
+        columns,
+        has_sos: false,
+    }
 }
 
 /// A coin-cbc model
 pub struct CoinCbcProblem {
     model: Model,
     columns: Vec<Col>,
+    has_sos: bool,
 }
 
 impl CoinCbcProblem {
@@ -60,7 +65,15 @@ impl SolverModel for CoinCbcProblem {
     type Solution = CoinCbcSolution;
     type Error = ResolutionError;
 
-    fn solve(self) -> Result<Self::Solution, Self::Error> {
+    fn solve(mut self) -> Result<Self::Solution, Self::Error> {
+        // Due to a bug in cbc, SOS constraints are only taken into account
+        // if the model has at least one integer variable.
+        // See: https://github.com/coin-or/Cbc/issues/376
+        if self.has_sos {
+            let dummy_col = self.model.add_col();
+            self.model.set_integer(dummy_col);
+        }
+
         let solution = self.model.solve();
         let raw = solution.raw();
         match raw.status() {
@@ -111,7 +124,8 @@ impl ModelWithSOS1 for CoinCbcProblem {
             .into_iter()
             .map(|(var, weight)| (columns[var.index()], weight));
         self.model.add_sos1(cols_and_weights);
-        self.columns = columns
+        self.columns = columns;
+        self.has_sos = true;
     }
 }
 

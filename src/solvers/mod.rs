@@ -183,8 +183,8 @@ pub trait ModelWithSOS1 {
     /// ```
     /// use good_lp::*;
     /// # // Not all solvers support SOS constraints
-    /// # #[cfg(feature = "lpsolve")] {
-    /// # let solver =  lp_solve;
+    /// # #[cfg(any(feature = "lpsolve", feature = "coin_cbc"))] {
+    /// # let solver = default_solver;
     /// variables! {problem:
     ///     0 <= x <= 2;
     ///     0 <= y <= 3;
