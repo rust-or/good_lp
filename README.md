@@ -84,7 +84,7 @@ minilp is a pure rust solver, which means it works out of the box without instal
 You can activate it with :
 
 ```toml
-good_lp = { version = "0.3", features = ["minilp"], default-features = false }
+good_lp = { version = "0.4", features = ["minilp"], default-features = false }
 ```
 
 Then use `minilp` instead of `coin_cbc` in your code:
@@ -106,7 +106,7 @@ lp_solve is a free ([LGPL](http://lpsolve.sourceforge.net/5.5/LGPL.htm)) linear 
 written in C and based on the revised simplex method.
 
 ```toml
-good_lp = { version = "0.3", features = ["lpsolve"], default-features = false }
+good_lp = { version = "0.4", features = ["lpsolve"], default-features = false }
 ```
 
 good_lp uses the [lpsolve crate](https://docs.rs/lpsolve/) to call lpsolve.
@@ -120,7 +120,7 @@ It is able to leverage [OpenMP](https://en.wikipedia.org/wiki/OpenMP) to fully l
 to solve a problem.
 
 ```toml
-good_lp = { version = "0.3", features = ["highs"], default-features = false }
+good_lp = { version = "0.4", features = ["highs"], default-features = false }
 ```
 
 good_lp uses the [highs crate](https://docs.rs/highs) to call HiGHS.
