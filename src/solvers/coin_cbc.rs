@@ -23,12 +23,15 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
     let mut model = Model::default();
     let columns: Vec<Col> = variables
         .into_iter()
-        .map(|VariableDefinition { min, max, .. }| {
+        .map(|VariableDefinition { min, max, is_integer, .. }| {
             let col = model.add_col();
             // Variables are created with a default min of 0
             model.set_col_lower(col, min);
             if max < f64::INFINITY {
                 model.set_col_upper(col, max)
+            }
+            if is_integer {
+                model.set_integer(col);
             }
             col
         })

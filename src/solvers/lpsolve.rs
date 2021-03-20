@@ -53,6 +53,7 @@ pub fn lp_solve(to_solve: UnsolvedProblem) -> LpSolveProblem {
     assert!(model.scatter_objective_function(&obj_coefs, &obj_idx));
     for (i, v) in variables.into_iter().enumerate() {
         let col = to_c(i + 1);
+        assert!(model.set_integer(col, v.is_integer));
         if v.min.is_finite() || v.max.is_finite() {
             assert!(model.set_bounds(col, v.min, v.max));
         } else {

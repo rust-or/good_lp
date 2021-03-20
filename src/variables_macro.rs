@@ -30,6 +30,22 @@
 /// let objective = x[0] + x[1] - x[2];
 /// ```
 ///
+/// ### Creating integer variables
+///
+/// ```
+/// # use good_lp::{variable, variables};
+/// variables!{vars: 0 <= x[3] (integer)  <= 8; } // x will be a vector of integer variables
+/// ```
+///
+/// ### Creating binary variables
+///
+/// ```
+/// use good_lp::{variable, variables};
+/// variables!{vars: x (binary); }
+/// // equivalent to:
+/// variables!{vars: 0 <= x (integer) <= 1; }
+/// ```
+///
 /// ### Simply instantiating  [ProblemVariables](crate::variable::ProblemVariables)
 /// ```
 /// use good_lp::{variable, variables, Expression};
@@ -107,6 +123,7 @@ macro_rules! variables {
         $($min:literal <= )?
         $var_name:ident
         $([$length:expr])?
+        $(($qualifier:tt))?
         $(<= $max:expr;)?
         $(>= $postfix_min:expr;)?
         $(;)?
@@ -115,12 +132,13 @@ macro_rules! variables {
             let mut $vars = $crate::variable::ProblemVariables::new();
             $(
                 let $var_name = {
-                    let v = $crate::variable()
+                    let var_def = $crate::variable()
                                 .name(stringify!($var_name))
                                 $(.min($min))*
                                 $(.max($max))*
-                                $(.min($postfix_min))*;
-                    $crate::variables!(@add_variable, $vars, v, $($length)*)
+                                $(.min($postfix_min))*
+                                $(.$qualifier())*;
+                    $crate::variables!(@add_variable, $vars, var_def, $($length)*)
                 };
             )*
         };

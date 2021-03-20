@@ -2,11 +2,12 @@
 //! The goal of the solver is to find optimal values for all variables in a problem.
 //!
 //! Each variable has a [VariableDefinition] that sets its bounds.
-use std::collections::{Bound};
-use fnv::FnvHashMap as HashMap;
+use std::collections::Bound;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
-use std::ops::{Div, Mul, Neg, RangeBounds};
+use std::ops::{Div, Mul, Neg, Not, RangeBounds};
+
+use fnv::FnvHashMap as HashMap;
 
 use crate::affine_expression_trait::IntoAffineExpression;
 use crate::expression::{Expression, LinearExpression};
@@ -140,12 +141,37 @@ impl VariableDefinition {
     /// # use good_lp::{ProblemVariables, variable, default_solver, SolverModel, Solution};
     /// let mut problem = ProblemVariables::new();
     /// let x = problem.add(variable().integer().min(0).max(2.5));
-    /// let solution = problem.maximise(x).using(default_solver).solve().unwrap();
-    /// // x is bound to [0; 2.5], but the solution is x=2 because x needs to be an integer
-    /// assert_eq!(solution.value(x), 2.);
+    /// if cfg!(not(any(feature = "minilp", feature = "highs"))) {
+    ///     let solution = problem.maximise(x).using(default_solver).solve().unwrap();
+    ///     // x is bound to [0; 2.5], but the solution is x=2 because x needs to be an integer
+    ///     assert_eq!(solution.value(x), 2.);
+    /// }
     /// ```
     pub fn integer(mut self) -> Self {
         self.is_integer = true;
+        self
+    }
+
+    /// Define the variable as an integer that can only take the value 0 or 1.
+    ///
+    /// **Warning**: not all solvers support integer variables.
+    /// Refer to the documentation of the solver you are using.
+    ///
+    /// ```
+    /// # use good_lp::{ProblemVariables, variable, default_solver, SolverModel, Solution};
+    /// let mut problem = ProblemVariables::new();
+    /// let x = problem.add(variable().binary());
+    /// let y = problem.add(variable().binary());
+    /// if cfg!(not(any(feature = "minilp", feature = "highs"))) {
+    ///     let solution = problem.maximise(x + y).using(default_solver).solve().unwrap();
+    ///     assert_eq!(solution.value(x), 1.);
+    ///     assert_eq!(solution.value(y), 1.);
+    /// }
+    /// ```
+    pub fn binary(mut self) -> Self {
+        self.is_integer = true;
+        self.min = 0.;
+        self.max = 1.;
         self
     }
 
@@ -467,5 +493,25 @@ impl Neg for Variable {
 
     fn neg(self) -> Self::Output {
         -Expression::from(self)
+    }
+}
+
+
+/// Useful for binary variables. `!x` is equivalent to `1-x`.
+///
+/// ```
+/// use good_lp::*;
+/// variables! {pb: x (binary); y (binary); }
+/// let solution = pb.maximise(!x + y)
+///                 .using(coin_cbc)
+///                 .solve().unwrap();
+/// assert_eq!(solution.value(x), 0.);
+/// assert_eq!(solution.value(y), 1.);
+/// ```
+impl Not for Variable {
+    type Output = Expression;
+
+    fn not(self) -> Self::Output {
+        1. - self
     }
 }

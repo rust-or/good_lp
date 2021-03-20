@@ -1,11 +1,15 @@
 //! A solver that uses [minilp](https://docs.rs/minilp), a pure rust solver.
 
-use crate::variable::{UnsolvedProblem, VariableDefinition};
+use std::panic::catch_unwind;
+
+use minilp::Error;
+
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
 };
 use crate::{Constraint, Variable};
+use crate::variable::{UnsolvedProblem, VariableDefinition};
 
 /// The [minilp](https://docs.rs/minilp) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -19,16 +23,22 @@ pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
         ObjectiveDirection::Maximisation => minilp::OptimizationDirection::Maximize,
         ObjectiveDirection::Minimisation => minilp::OptimizationDirection::Minimize,
     });
+    let mut integers: Vec<minilp::Variable> = vec![];
     let variables: Vec<minilp::Variable> = variables
         .iter_variables_with_def()
-        .map(|(var, &VariableDefinition { min, max, .. })| {
+        .map(|(var, &VariableDefinition { min, max, is_integer, .. })| {
             let coeff = *objective.linear.coefficients.get(&var).unwrap_or(&0.);
-            problem.add_var(coeff, (min, max))
+            let var = problem.add_var(coeff, (min, max));
+            if is_integer {
+                integers.push(var);
+            }
+            var
         })
         .collect();
     MiniLpProblem {
         problem,
         variables,
+        integers,
         n_constraints: 0,
     }
 }
@@ -37,6 +47,7 @@ pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
 pub struct MiniLpProblem {
     problem: minilp::Problem,
     variables: Vec<minilp::Variable>,
+    integers: Vec<minilp::Variable>,
     n_constraints: usize,
 }
 
@@ -52,14 +63,16 @@ impl SolverModel for MiniLpProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        match self.problem.solve() {
-            Err(minilp::Error::Unbounded) => Err(ResolutionError::Unbounded),
-            Err(minilp::Error::Infeasible) => Err(ResolutionError::Infeasible),
-            Ok(solution) => Ok(MiniLpSolution {
-                solution,
-                variables: self.variables,
-            }),
+        let mut solution = self.problem.solve()?;
+        for int_var in self.integers {
+            solution = catch_unwind(|| {
+                solution.add_gomory_cut(int_var)
+            }).map_err(|_| ResolutionError::Other("minilp does not support integer variables"))??;
         }
+        Ok(MiniLpSolution {
+            solution,
+            variables: self.variables,
+        })
     }
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
@@ -76,6 +89,15 @@ impl SolverModel for MiniLpProblem {
         self.problem.add_constraint(linear_expr, op, constant);
         self.n_constraints += 1;
         ConstraintReference { index }
+    }
+}
+
+impl From<minilp::Error> for ResolutionError {
+    fn from(minilp_error: Error) -> Self {
+        match minilp_error {
+            minilp::Error::Unbounded => Self::Unbounded,
+            minilp::Error::Infeasible => Self::Infeasible,
+        }
     }
 }
 
@@ -100,7 +122,7 @@ impl Solution for MiniLpSolution {
 
 #[cfg(test)]
 mod tests {
-    use crate::{variable, variables, Solution, SolverModel};
+    use crate::{Solution, SolverModel, variable, variables};
 
     use super::minilp;
 

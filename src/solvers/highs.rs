@@ -2,18 +2,21 @@
 
 use highs::HighsModelStatus;
 
-use crate::solvers::{
-    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
-};
 use crate::{
     constraint::ConstraintReference,
     solvers::DualValues,
     variable::{UnsolvedProblem, VariableDefinition},
 };
 use crate::{Constraint, IntoAffineExpression, Variable};
+use crate::solvers::{
+    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
+};
 
 /// The [highs](https://docs.rs/highs) solver,
 /// to be used with [UnsolvedProblem::using].
+///
+/// This solver does not support integer variables and will panic
+/// if given a problem with integer variables.
 pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
     let mut highs_problem = highs::RowProblem::default();
     let sense = match to_solve.direction {
@@ -21,8 +24,11 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         ObjectiveDirection::Minimisation => highs::Sense::Minimise,
     };
     let mut columns = Vec::with_capacity(to_solve.variables.len());
-    for (var, &VariableDefinition { min, max, .. }) in to_solve.variables.iter_variables_with_def()
+    for (var, &VariableDefinition { min, max, is_integer, .. }) in to_solve.variables.iter_variables_with_def()
     {
+        if is_integer {
+            panic!("HiGHS does not support integer variables, but variable number {} is of type integer.", var.index());
+        }
         let &col_factor = to_solve
             .objective
             .linear
