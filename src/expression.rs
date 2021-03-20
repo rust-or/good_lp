@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
+use crate::{Constraint, Solution};
 use crate::affine_expression_trait::IntoAffineExpression;
 use crate::constraint;
 use crate::variable::{FormatWithVars, Variable};
-use crate::{Constraint, Solution};
 
 /// An linear expression without a constant component
 pub struct LinearExpression {
@@ -48,9 +48,9 @@ impl<'a> IntoAffineExpression for &'a LinearExpression {
 }
 
 impl FormatWithVars for LinearExpression {
-    fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
-    where
-        FUN: Fn(&mut Formatter<'_>, Variable) -> std::fmt::Result,
+    fn format_with<FUN>(&self, f: &mut Formatter<'_>, mut variable_format: FUN) -> std::fmt::Result
+        where
+            FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result,
     {
         let mut first = true;
         for (&var, &coeff) in &self.coefficients {
@@ -258,11 +258,14 @@ pub fn add<LHS: Into<Expression>, RHS: IntoAffineExpression>(lhs: LHS, rhs: RHS)
 
 impl FormatWithVars for Expression {
     fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
-    where
-        FUN: Fn(&mut Formatter<'_>, Variable) -> std::fmt::Result,
+        where
+            FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result,
     {
         self.linear.format_with(f, variable_format)?;
-        write!(f, " + {}", self.constant)
+        if self.constant.abs() >= f64::EPSILON {
+            write!(f, " + {}", self.constant)?;
+        }
+        Ok(())
     }
 }
 

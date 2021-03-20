@@ -24,7 +24,7 @@ impl Constraint {
 impl FormatWithVars for Constraint {
     fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
     where
-        FUN: Fn(&mut Formatter<'_>, Variable) -> std::fmt::Result,
+        FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result,
     {
         self.expression.linear.format_with(f, variable_format)?;
         write!(f, " {} ", if self.is_equality { "=" } else { "<=" })?;

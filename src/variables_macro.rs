@@ -116,6 +116,7 @@ macro_rules! variables {
             $(
                 let $var_name = {
                     let v = $crate::variable()
+                                .name(stringify!($var_name))
                                 $(.min($min))*
                                 $(.max($max))*
                                 $(.min($postfix_min))*;

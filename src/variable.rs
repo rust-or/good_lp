@@ -3,7 +3,7 @@
 //!
 //! Each variable has a [VariableDefinition] that sets its bounds.
 use std::collections::{Bound, HashMap};
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use std::ops::{Div, Mul, Neg, RangeBounds};
 
@@ -93,12 +93,19 @@ impl Variable {
 pub trait FormatWithVars {
     /// Write the element to the formatter. See [std::fmt::Display]
     fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
-    where
-        FUN: Fn(&mut Formatter<'_>, Variable) -> std::fmt::Result;
+        where
+            FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result;
 
     /// Write the elements, naming the variables v0, v1, ... vn
     fn format_debug(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.format_with(f, |f, var| write!(f, "v{}", var.index()))
+    }
+}
+
+impl FormatWithVars for Variable {
+    fn format_with<FUN>(&self, f: &mut Formatter<'_>, mut variable_format: FUN) -> std::fmt::Result where
+        FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result {
+        variable_format(f, *self)
     }
 }
 
@@ -107,6 +114,8 @@ pub trait FormatWithVars {
 pub struct VariableDefinition {
     pub(crate) min: f64,
     pub(crate) max: f64,
+    pub(crate) name: String,
+    pub(crate) is_integer: bool,
 }
 
 impl VariableDefinition {
@@ -115,7 +124,42 @@ impl VariableDefinition {
         VariableDefinition {
             min: f64::NEG_INFINITY,
             max: f64::INFINITY,
+            name: String::new(),
+            is_integer: false,
         }
+    }
+
+    /// Define the variable as an integer.
+    /// The variable will only be able to take an integer value in the solution.
+    ///
+    /// **Warning**: not all solvers support integer variables.
+    /// Refer to the documentation of the solver you are using.
+    ///
+    /// ```
+    /// # use good_lp::{ProblemVariables, variable, default_solver, SolverModel, Solution};
+    /// let mut problem = ProblemVariables::new();
+    /// let x = problem.add(variable().integer().min(0).max(2.5));
+    /// let solution = problem.maximise(x).using(default_solver).solve().unwrap();
+    /// // x is bound to [0; 2.5], but the solution is x=2 because x needs to be an integer
+    /// assert_eq!(solution.value(x), 2.);
+    /// ```
+    pub fn integer(mut self) -> Self {
+        self.is_integer = true;
+        self
+    }
+
+    /// Set the name of the variable. This is useful in particular when displaying the problem
+    /// for debugging purposes.
+    ///
+    /// ```
+    /// # use good_lp::{ProblemVariables, variable};
+    /// let mut pb = ProblemVariables::new();
+    /// let x = pb.add(variable().name("x"));
+    /// assert_eq!("x", pb.display(&x).to_string());
+    /// ```
+    pub fn name<S: Into<String>>(mut self, name: S) -> Self {
+        self.name = name.into();
+        self
     }
 
     /// Set the lower and/or higher bounds of the variable
@@ -310,6 +354,38 @@ impl ProblemVariables {
     /// Returns true when no variables have been added
     pub fn is_empty(&self) -> bool {
         self.variables.is_empty()
+    }
+
+    /// Display the given expression or constraint with the correct variable names
+    ///
+    /// ```
+    /// use good_lp::variables;
+    /// variables! {problem: 0 <= x; 0 <= y;}
+    /// let expression = x + 2*y;
+    /// let str = problem.display(&expression).to_string();
+    /// assert!(str == "x + 2 y" || str == "2 y + x"); // The ordering is not guaranteed
+    /// ```
+    pub fn display<'a, V: FormatWithVars>(&'a self, value: &'a V) -> impl Display + 'a {
+        DisplayExpr { problem: self, value }
+    }
+}
+
+struct DisplayExpr<'a, 'b, V> {
+    problem: &'a ProblemVariables,
+    value: &'b V,
+}
+
+impl<'a, 'b, V: FormatWithVars> Display for DisplayExpr<'a, 'b, V> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.value.format_with(f, |f, var| {
+            let mut name = &self.problem.variables[var.index].name;
+            let alternative_name: String;
+            if name.is_empty() {
+                alternative_name = format!("v{}", var.index);
+                name = &alternative_name;
+            }
+            write!(f, "{}", name)
+        })
     }
 }
 
