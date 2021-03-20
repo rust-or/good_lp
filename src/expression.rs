@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use fnv::FnvHashMap as HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -144,7 +144,7 @@ impl Expression {
     pub fn with_capacity(capacity: usize) -> Self {
         Expression {
             linear: LinearExpression {
-                coefficients: HashMap::with_capacity(capacity),
+                coefficients: HashMap::with_capacity_and_hasher(capacity, Default::default()),
             },
             constant: 0.0,
         }

@@ -2,7 +2,8 @@
 //! The goal of the solver is to find optimal values for all variables in a problem.
 //!
 //! Each variable has a [VariableDefinition] that sets its bounds.
-use std::collections::{Bound, HashMap};
+use std::collections::{Bound};
+use fnv::FnvHashMap as HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use std::ops::{Div, Mul, Neg, RangeBounds};
@@ -417,7 +418,7 @@ impl<N: Into<f64>> Mul<N> for Variable {
     type Output = Expression;
 
     fn mul(self, rhs: N) -> Self::Output {
-        let mut coefficients = HashMap::with_capacity(1);
+        let mut coefficients = HashMap::with_capacity_and_hasher(1, Default::default());
         coefficients.insert(self, rhs.into());
         Expression {
             linear: LinearExpression { coefficients },
@@ -430,7 +431,7 @@ impl Mul<Variable> for f64 {
     type Output = Expression;
 
     fn mul(self, rhs: Variable) -> Self::Output {
-        let mut coefficients = HashMap::with_capacity(1);
+        let mut coefficients = HashMap::with_capacity_and_hasher(1, Default::default());
         coefficients.insert(rhs, self);
         Expression {
             linear: LinearExpression { coefficients },

@@ -51,7 +51,7 @@ macro_rules! impl_affine_for_num {
 
             fn into_expression(self) -> Expression {
                 Expression {
-                    linear: LinearExpression { coefficients: std::collections::HashMap::new() },
+                    linear: LinearExpression { coefficients: std::default::Default::default() },
                     constant: f64::from(self),
                 }
             }
