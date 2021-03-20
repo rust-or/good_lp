@@ -504,13 +504,15 @@ impl Neg for Variable {
 /// Useful for binary variables. `!x` is equivalent to `1-x`.
 ///
 /// ```
+/// #[cfg(any(feature = "coin_cbc", feature = "lpsolve"))] {
 /// use good_lp::*;
 /// variables! {pb: x (binary); y (binary); }
 /// let solution = pb.maximise(!x + y)
-///                 .using(coin_cbc)
+///                 .using(default_solver)
 ///                 .solve().unwrap();
 /// assert_eq!(solution.value(x), 0.);
 /// assert_eq!(solution.value(y), 1.);
+/// # }
 /// ```
 impl Not for Variable {
     type Output = Expression;
