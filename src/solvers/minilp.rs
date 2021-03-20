@@ -4,12 +4,12 @@ use std::panic::catch_unwind;
 
 use minilp::Error;
 
+use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
 };
 use crate::{Constraint, Variable};
-use crate::variable::{UnsolvedProblem, VariableDefinition};
 
 /// The [minilp](https://docs.rs/minilp) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -26,14 +26,24 @@ pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
     let mut integers: Vec<minilp::Variable> = vec![];
     let variables: Vec<minilp::Variable> = variables
         .iter_variables_with_def()
-        .map(|(var, &VariableDefinition { min, max, is_integer, .. })| {
-            let coeff = *objective.linear.coefficients.get(&var).unwrap_or(&0.);
-            let var = problem.add_var(coeff, (min, max));
-            if is_integer {
-                integers.push(var);
-            }
-            var
-        })
+        .map(
+            |(
+                var,
+                &VariableDefinition {
+                    min,
+                    max,
+                    is_integer,
+                    ..
+                },
+            )| {
+                let coeff = *objective.linear.coefficients.get(&var).unwrap_or(&0.);
+                let var = problem.add_var(coeff, (min, max));
+                if is_integer {
+                    integers.push(var);
+                }
+                var
+            },
+        )
         .collect();
     MiniLpProblem {
         problem,
@@ -65,9 +75,9 @@ impl SolverModel for MiniLpProblem {
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let mut solution = self.problem.solve()?;
         for int_var in self.integers {
-            solution = catch_unwind(|| {
-                solution.add_gomory_cut(int_var)
-            }).map_err(|_| ResolutionError::Other("minilp does not support integer variables"))??;
+            solution = catch_unwind(|| solution.add_gomory_cut(int_var)).map_err(|_| {
+                ResolutionError::Other("minilp does not support integer variables")
+            })??;
         }
         Ok(MiniLpSolution {
             solution,
@@ -122,7 +132,7 @@ impl Solution for MiniLpSolution {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Solution, SolverModel, variable, variables};
+    use crate::{variable, variables, Solution, SolverModel};
 
     use super::minilp;
 

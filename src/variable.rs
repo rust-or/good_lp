@@ -95,8 +95,8 @@ impl Variable {
 pub trait FormatWithVars {
     /// Write the element to the formatter. See [std::fmt::Display]
     fn format_with<FUN>(&self, f: &mut Formatter<'_>, variable_format: FUN) -> std::fmt::Result
-        where
-            FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result;
+    where
+        FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result;
 
     /// Write the elements, naming the variables v0, v1, ... vn
     fn format_debug(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -105,8 +105,10 @@ pub trait FormatWithVars {
 }
 
 impl FormatWithVars for Variable {
-    fn format_with<FUN>(&self, f: &mut Formatter<'_>, mut variable_format: FUN) -> std::fmt::Result where
-        FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result {
+    fn format_with<FUN>(&self, f: &mut Formatter<'_>, mut variable_format: FUN) -> std::fmt::Result
+    where
+        FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result,
+    {
         variable_format(f, *self)
     }
 }
@@ -393,7 +395,10 @@ impl ProblemVariables {
     /// assert!(str == "x + 2 y" || str == "2 y + x"); // The ordering is not guaranteed
     /// ```
     pub fn display<'a, V: FormatWithVars>(&'a self, value: &'a V) -> impl Display + 'a {
-        DisplayExpr { problem: self, value }
+        DisplayExpr {
+            problem: self,
+            value,
+        }
     }
 }
 
@@ -495,7 +500,6 @@ impl Neg for Variable {
         -Expression::from(self)
     }
 }
-
 
 /// Useful for binary variables. `!x` is equivalent to `1-x`.
 ///
