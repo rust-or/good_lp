@@ -1,6 +1,14 @@
 //! Included solvers that find the actual solution to linear problems.
 //!The number of solvers available in this module depends on which cargo features you have activated.
 
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt::{Debug, Display, Formatter};
+
+use crate::variable::UnsolvedProblem;
+use crate::Constraint;
+use crate::{constraint::ConstraintReference, IntoAffineExpression, Variable};
+
 #[cfg(feature = "coin_cbc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
 pub mod coin_cbc;
@@ -16,13 +24,6 @@ pub mod lpsolve;
 #[cfg(feature = "highs")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub mod highs;
-
-use crate::variable::UnsolvedProblem;
-use crate::{constraint::ConstraintReference, IntoAffineExpression, Variable};
-use crate::{Constraint, Expression};
-use std::collections::HashMap;
-use std::error::Error;
-use std::fmt::{Debug, Display, Formatter};
 
 /// An entity that is able to solve linear problems
 pub trait Solver {
@@ -137,7 +138,7 @@ pub trait Solution {
     /// assert_eq!(solution.eval(&objective), 5.);
     /// # }
     /// ```
-    fn eval(&self, expr: &Expression) -> f64
+    fn eval<E: IntoAffineExpression>(&self, expr: E) -> f64
     where
         Self: Sized,
     {
