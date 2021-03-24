@@ -101,7 +101,7 @@ pub trait SolverModel {
     /// The type of the solution to the problem
     type Solution: Solution;
     /// The error that can occur while solving the problem
-    type Error: 'static + Debug + std::error::Error;
+    type Error: std::error::Error;
 
     /// Takes a model and adds a constraint to it
     fn with(mut self, constraint: Constraint) -> Self
