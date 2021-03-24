@@ -33,6 +33,11 @@ pub trait Solver {
     fn create_model(&mut self, problem: UnsolvedProblem) -> Self::Model;
 }
 
+/// A solver that is valid for the static lifetime
+pub trait StaticSolver: Solver + 'static {}
+
+impl<T> StaticSolver for T where T: Solver + 'static {}
+
 /// A function that takes an [UnsolvedProblem] and returns a [SolverModel] automatically implements [Solver]
 impl<SOLVER, MODEL> Solver for SOLVER
 where

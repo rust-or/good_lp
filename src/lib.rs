@@ -67,44 +67,38 @@
 pub use affine_expression_trait::IntoAffineExpression;
 pub use constraint::Constraint;
 pub use expression::Expression;
-pub use solvers::{
-    DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel,
-};
-pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
-
 #[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
 #[cfg(feature = "coin_cbc")]
 pub use solvers::coin_cbc::coin_cbc;
-
-#[cfg(feature = "minilp")]
-#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
-pub use solvers::minilp::minilp;
-
-#[cfg(feature = "lpsolve")]
-#[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
-pub use solvers::lpsolve::lp_solve;
-
+#[cfg(feature = "coin_cbc")]
+/// When the "coin_cbc" cargo feature is present, it is used as the default solver
+pub use solvers::coin_cbc::coin_cbc as default_solver;
 #[cfg(feature = "highs")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::highs::highs;
-
-#[cfg(feature = "coin_cbc")]
-/// When the "coin_cbc" cargo feature is present, it is used as the default solver   
-pub use solvers::coin_cbc::coin_cbc as default_solver;
-#[cfg(not(feature = "coin_cbc"))]
-#[cfg(feature = "minilp")]
-/// When the "coin_cbc" cargo feature is absent, minilp is used as the default solver
-pub use solvers::minilp::minilp as default_solver;
-
-#[cfg(not(any(feature = "coin_cbc", feature = "minilp")))]
-#[cfg(feature = "lpsolve")]
-/// When the "lpsolve" cargo feature is present, lpsolve is used as the default solver
-pub use solvers::lpsolve::lp_solve as default_solver;
-
 #[cfg(not(any(feature = "coin_cbc", feature = "minilp", feature = "lpsolve")))]
 #[cfg(feature = "highs")]
 /// When the "highs" cargo feature is present, highs is used as the default solver
 pub use solvers::highs::highs as default_solver;
+#[cfg(feature = "lpsolve")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
+pub use solvers::lpsolve::lp_solve;
+#[cfg(not(any(feature = "coin_cbc", feature = "minilp")))]
+#[cfg(feature = "lpsolve")]
+/// When the "lpsolve" cargo feature is present, lpsolve is used as the default solver
+pub use solvers::lpsolve::lp_solve as default_solver;
+#[cfg(feature = "minilp")]
+#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
+pub use solvers::minilp::minilp;
+#[cfg(not(feature = "coin_cbc"))]
+#[cfg(feature = "minilp")]
+/// When the "coin_cbc" cargo feature is absent, minilp is used as the default solver
+pub use solvers::minilp::minilp as default_solver;
+pub use solvers::{
+    DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel,
+    StaticSolver,
+};
+pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 
 #[cfg(not(any(
     feature = "coin_cbc",
