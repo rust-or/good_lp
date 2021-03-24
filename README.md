@@ -7,21 +7,24 @@ A Linear Programming modeler that is easy to use, performant with large problems
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
 ```rust
-use good_lp::{variables, variable, coin_cbc, SolverModel, Solution, contraint};
+use std::error::Error;
 
-fn main() {
-    variables!{
+use good_lp::{constraint, default_solver, Solution, SolverModel, variables};
+
+fn main() -> Result<(), Box<dyn Error>> {
+    variables! {
         vars:
                a <= 1;
           2 <= b <= 4;
-    };
+    }
     let solution = vars.maximise(10 * (a - b / 5) - b)
-        .using(coin_cbc)
+        .using(default_solver)
         .with(constraint!(a + 2 <= b))
         .with(constraint!(1 + a >= 4 - b))
         .solve()?;
     println!("a={}   b={}", solution.value(a), solution.value(b));
     println!("a + b = {}", solution.eval(a + b));
+    Ok(())
 }
 ```
 
