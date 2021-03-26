@@ -1,6 +1,10 @@
 //! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc).
 //! This solver is activated using the default `coin_cbc` feature.
 //! You can disable it an enable another solver instead using cargo features.
+use std::convert::TryInto;
+
+use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
+
 use crate::solvers::ModelWithSOS1;
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
@@ -9,8 +13,6 @@ use crate::{
     IntoAffineExpression,
 };
 use crate::{Constraint, Variable};
-use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
-use std::convert::TryInto;
 
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
 /// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)
@@ -107,9 +109,10 @@ impl SolverModel for CoinCbcProblem {
                 } else if raw.is_proven_infeasible() {
                     Err(ResolutionError::Infeasible)
                 } else {
+                    let solution_vec = solution.raw().col_solution().into();
                     Ok(CoinCbcSolution {
-                        columns: self.columns,
                         solution,
+                        solution_vec,
                     })
                 }
             },
@@ -150,8 +153,8 @@ impl ModelWithSOS1 for CoinCbcProblem {
 
 /// A coin-cbc problem solution
 pub struct CoinCbcSolution {
-    columns: Vec<Col>,
     solution: CbcSolution,
+    solution_vec: Vec<f64>, // See: rust-or/good_lp#6
 }
 
 impl CoinCbcSolution {
@@ -163,6 +166,7 @@ impl CoinCbcSolution {
 
 impl Solution for CoinCbcSolution {
     fn value(&self, variable: Variable) -> f64 {
-        self.solution.col(self.columns[variable.index()])
+        // Our indices should always match those of cbc
+        self.solution_vec[variable.index()]
     }
 }

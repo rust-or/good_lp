@@ -183,6 +183,7 @@ pub trait SolutionWithDual<'a> {
 }
 
 /// A model that supports [SOS type 1](https://en.wikipedia.org/wiki/Special_ordered_set) constraints.
+#[allow(clippy::upper_case_acronyms)]
 pub trait ModelWithSOS1 {
     /// Adds a constraint saying that two variables from the given set cannot be non-zero at once.
     ///

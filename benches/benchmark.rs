@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use good_lp::{variables, Expression};
+
+use good_lp::{default_solver, variable, variables, Expression, Solution, SolverModel};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("sum((2 x_i + 1) for i in [1..100_000])", |b| {
@@ -14,6 +15,19 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             v
         })
     });
+
+    c.bench_function(
+        "solving empty problem with 1M variables and reading results",
+        |b| {
+            b.iter(|| {
+                let mut vars = variables!();
+                let vs = vars.add_vector(variable().min(0).name("test"), 1_000_000);
+                let obj: Expression = vs.iter().sum();
+                let sol = vars.minimise(&obj).using(default_solver).solve().unwrap();
+                sol.eval(obj)
+            })
+        },
+    );
 }
 
 criterion_group!(benches, criterion_benchmark);
