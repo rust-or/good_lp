@@ -73,6 +73,7 @@ you can also activate other solvers using cargo features.
 | [`highs`][highs]    | ❌                 | ❌             | ✅                    | ✅
 | [`lpsolve`][lpsolve]| ✅                 | ❌             | ✅                    | ❌
 | [`minilp`][minilp]  | ❌                 | ✅             | ✅                    | ❌
+| [`lp-solvers`][lps] | ✅                 | ✅             | ✅                    | ❌
 
  * \* no C compiler: builds with only cargo, without requiring you to install a C compiler
  * \** no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
@@ -135,6 +136,22 @@ You will need a C compiler, but you shouldn't have to install any additional lib
 More information in the [highs-sys crate](https://crates.io/crates/highs-sys).
 
 [highs]: https://highs.dev
+
+### [lp-solvers][lps]
+
+The `lp-solvers` is particular: it doesn't contain any solver.
+Instead, it calls other solvers at runtime.
+It write the given problem to a `.lp` file, and launches an external solver command
+(such as **gurobi**, **cplex**, **cbc**, or **glpk**) to solve it.
+
+There is some overhead associated to this method: it can take a few hundred milliseconds 
+to write the problem to a file, launch the external solver, wait for it to finish, and then parse its solution.
+If you are not solving a few large problems but many small ones (in a web server, for instance),
+then this method may not be appropriate.
+
+Additionally, the end user of your program will have to install the desired solver on his own.
+
+[lps]: https://crates.io/crates/lp-solvers
 
 ### License
 

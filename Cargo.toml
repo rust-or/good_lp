@@ -1,6 +1,6 @@
 [package]
 name = "good_lp"
-version = "1.1.1"
+version = "1.1.2"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
 repository = "https://github.com/rust-or/good_lp"
@@ -20,6 +20,7 @@ coin_cbc = { version = "0.1.4", optional = true }
 minilp = { version = "0.2", optional = true }
 lpsolve = { version = "0.1", optional = true }
 highs = { version = "0.4", optional = true }
+lp-solvers = { version = "0.0.3", optional = true }
 fnv = "1"
 
 [dev-dependencies]

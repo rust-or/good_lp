@@ -25,6 +25,10 @@ pub mod lpsolve;
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub mod highs;
 
+#[cfg(feature = "lp-solvers")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lp-solvers")))]
+pub mod lp_solvers;
+
 /// An entity that is able to solve linear problems
 pub trait Solver {
     /// The internal model type used by the solver
@@ -85,6 +89,8 @@ pub enum ResolutionError {
     Infeasible,
     /// Another error occurred
     Other(&'static str),
+    /// An error string
+    Str(String),
 }
 
 impl Display for ResolutionError {
@@ -95,8 +101,16 @@ impl Display for ResolutionError {
             ResolutionError::Infeasible =>
                 write!(f, "Infeasible: The problem contains contradictory constraints. No solution exists."),
             ResolutionError::Other(s) =>
+                write!(f, "An unexpected error occurred while running the optimizer: {}.", s),
+            ResolutionError::Str(s) =>
                 write!(f, "An unexpected error occurred while running the optimizer: {}.", s)
         }
+    }
+}
+
+impl From<String> for ResolutionError {
+    fn from(s: String) -> Self {
+        ResolutionError::Str(s)
     }
 }
 

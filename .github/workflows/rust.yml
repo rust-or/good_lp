@@ -30,6 +30,8 @@ jobs:
         run: cargo test --no-default-features --features lpsolve
       - name: Run tests with highs
         run: cargo test --no-default-features --features highs
+      - name: Run tests with lp_solvers
+        run: cargo test --no-default-features --features lp-solvers
       - name: Check formatting
         run: cargo fmt -- --check
       - run: cargo bench
