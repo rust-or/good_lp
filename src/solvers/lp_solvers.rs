@@ -9,13 +9,13 @@ use lp_solvers::problem::StrExpression;
 pub use lp_solvers::solvers::*;
 use lp_solvers::util::UniqueNameGenerator;
 
+use crate::constraint::ConstraintReference;
+use crate::solvers::ObjectiveDirection;
+use crate::variable::UnsolvedProblem;
 use crate::{
     Constraint, Expression, IntoAffineExpression, ResolutionError, Solution, Solver, SolverModel,
     Variable,
 };
-use crate::constraint::ConstraintReference;
-use crate::solvers::ObjectiveDirection;
-use crate::variable::UnsolvedProblem;
 
 /// An external solver
 pub struct LpSolver<T: lp_solvers::solvers::SolverTrait>(pub T);
