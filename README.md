@@ -16,9 +16,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         vars:
                a <= 1;
           2 <= b <= 4;
-    }
+    } // variables can also be added dynamically
     let solution = vars.maximise(10 * (a - b / 5) - b)
-        .using(default_solver)
+        .using(default_solver) // multiple solvers available
         .with(constraint!(a + 2 <= b))
         .with(constraint!(1 + a >= 4 - b))
         .solve()?;
@@ -31,9 +31,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 ## Features and limitations
 
 - **Linear programming**. This crate currently supports only the definition of linear programs. You cannot use it with
-  quadratic functions, for instance:
+  quadratic functions. For instance:
   you can maximise `3 * x + y`, but not `3 * x * y`.
-- **Continuous and integer variables**. good_lp supports mixed integer-linear programming (MILP),
+- **Continuous and integer variables**. good_lp itself supports mixed integer-linear programming (MILP),
   but not all underlying solvers support integer variables.
 - **Not a solver**. This crate uses other rust crates to provide the solvers.
   There is no solving algorithm in good_lp itself. If you have an issue with a solver,
@@ -42,12 +42,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 ### Contributing
 
 Pull requests are welcome !
-If you need any of the features mentioned above, get in touch.
+If you need a feature that is not yet implemented, get in touch.
 Also, do not hesitate to open issues to discuss the implementation.
 
 ### Alternatives
 
-If you need non-linear programming or integer variables, you can use
+If you need non-linear programming, you can use
 [lp-modeler](https://crates.io/crates/lp-modeler).
 However, it is currently very slow with large problems.
 
@@ -68,7 +68,7 @@ This library offers an abstraction over multiple solvers. By default, it uses [c
 you can also activate other solvers using cargo features.
 
 | solver feature name | integer variables | no C compiler\*| no additional libs\** | fast |
-|---------------------|---------------|-------------------|------------------------|------|
+|---------------------|-------------------|----------------|-----------------------|------|
 | [`coin_cbc`][cbc]   | ✅                 | ✅             | ❌                    | ✅
 | [`highs`][highs]    | ❌                 | ❌             | ✅                    | ✅
 | [`lpsolve`][lpsolve]| ✅                 | ❌             | ✅                    | ❌
@@ -139,9 +139,9 @@ More information in the [highs-sys crate](https://crates.io/crates/highs-sys).
 
 ### [lp-solvers][lps]
 
-The `lp-solvers` is particular: it doesn't contain any solver.
+The `lp-solvers` feature is particular: it doesn't contain any solver.
 Instead, it calls other solvers at runtime.
-It write the given problem to a `.lp` file, and launches an external solver command
+It writes the given problem to a `.lp` file, and launches an external solver command
 (such as **gurobi**, **cplex**, **cbc**, or **glpk**) to solve it.
 
 There is some overhead associated to this method: it can take a few hundred milliseconds 
