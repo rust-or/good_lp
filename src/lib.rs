@@ -113,7 +113,7 @@ pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 /// Default solvers for the 'lp-solvers' feature: a solver that calls Cbc as an external command
 #[allow(non_upper_case_globals)]
 pub const default_solver: LpSolver<
-    solvers::lp_solvers::StaticSolver<solvers::lp_solvers::CbcSolver>,
+    solvers::lp_solvers::StaticSolver<solvers::lp_solvers::AllSolvers>,
 > = LpSolver(solvers::lp_solvers::StaticSolver::new());
 
 #[cfg(not(any(
