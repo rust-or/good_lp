@@ -29,3 +29,18 @@ fn add_10_000_constraints() {
         pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
     }
 }
+
+#[test]
+fn sum_binaries() {
+    // See: https://github.com/rust-or/good_lp/issues/8
+    let mut vars = variables!();
+    let team1_bools = vars.add_vector(variable().binary(), BIG_NUM);
+    let team1_score: Expression = team1_bools.iter().sum();
+    let sol = vars
+        .maximise(team1_bools[0])
+        .using(default_solver)
+        .with(constraint!(team1_score == 5))
+        .solve()
+        .unwrap();
+    assert_eq!(team1_bools.iter().map(|&v| sol.value(v)).sum::<f64>(), 5.0);
+}
