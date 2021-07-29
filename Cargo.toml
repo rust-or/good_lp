@@ -11,7 +11,6 @@ keywords = ["linear-programming", "optimization", "symbolic", "math", "solver"]
 categories = ["mathematics", "algorithms", "science", "api-bindings", "data-structures"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-
 [features]
 default = ["coin_cbc"]
 
@@ -25,12 +24,11 @@ fnv = "1"
 
 [dev-dependencies]
 criterion = "0.3"
-float_eq = "0.5"
+float_eq = "0.6"
 
 [[bench]]
 name = "benchmark"
 harness = false
-
 
 [package.metadata.docs.rs]
 # Display the documentation for all solvers on docs.rs
