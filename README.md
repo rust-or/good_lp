@@ -67,16 +67,16 @@ You can find a resource allocation problem example in
 This library offers an abstraction over multiple solvers. By default, it uses [cbc][cbc], but
 you can also activate other solvers using cargo features.
 
-| solver feature name | integer variables | no C compiler\*| no additional libs\** | fast |
-|---------------------|-------------------|----------------|-----------------------|------|
-| [`coin_cbc`][cbc]   | ✅                 | ✅             | ❌                    | ✅
-| [`highs`][highs]    | ❌                 | ❌             | ✅                    | ✅
-| [`lpsolve`][lpsolve]| ✅                 | ❌             | ✅                    | ❌
-| [`minilp`][minilp]  | ❌                 | ✅             | ✅                    | ❌
-| [`lp-solvers`][lps] | ✅                 | ✅             | ✅                    | ❌
+| solver feature name  | integer variables | no C compiler\* | no additional libs\*\* | fast |
+| -------------------- | ----------------- | --------------- | ---------------------- | ---- |
+| [`coin_cbc`][cbc]    | ✅                | ✅              | ❌                     | ✅   |
+| [`highs`][highs]     | ❌                | ❌              | ✅                     | ✅   |
+| [`lpsolve`][lpsolve] | ✅                | ❌              | ✅                     | ❌   |
+| [`minilp`][minilp]   | ❌                | ✅              | ✅                     | ❌   |
+| [`lp-solvers`][lps]  | ✅                | ✅              | ✅                     | ❌   |
 
- * \* no C compiler: builds with only cargo, without requiring you to install a C compiler
- * \** no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
+- \* no C compiler: builds with only cargo, without requiring you to install a C compiler
+- \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
 
 To use an alternative solver, put the following in your `Cargo.toml`:
 
@@ -84,8 +84,8 @@ To use an alternative solver, put the following in your `Cargo.toml`:
 good_lp = { version = "*", features = ["your solver feature name"], default-features = false }
 ```
 
-
 ### [cbc][cbc]
+
 Used by default, performant, but requires to have the cbc C library headers available on the build machine,
 and the cbc dynamic library available on any machine where you want to run your program.
 
@@ -102,7 +102,6 @@ brew install cbc
 ```
 
 [cbc]: https://www.coin-or.org/Cbc/
-
 
 ### [minilp](https://docs.rs/minilp)
 
@@ -121,7 +120,7 @@ written in C and based on the revised simplex method.
 good_lp uses the [lpsolve crate](https://docs.rs/lpsolve/) to call lpsolve.
 You will need a C compiler, but you won't have to install any additional library.
 
-[lpsolve]:http://lpsolve.sourceforge.net/5.5/
+[lpsolve]: http://lpsolve.sourceforge.net/5.5/
 
 ### [HiGHS][highs]
 
@@ -144,7 +143,7 @@ Instead, it calls other solvers at runtime.
 It writes the given problem to a `.lp` file, and launches an external solver command
 (such as **gurobi**, **cplex**, **cbc**, or **glpk**) to solve it.
 
-There is some overhead associated to this method: it can take a few hundred milliseconds 
+There is some overhead associated to this method: it can take a few hundred milliseconds
 to write the problem to a file, launch the external solver, wait for it to finish, and then parse its solution.
 If you are not solving a few large problems but many small ones (in a web server, for instance),
 then this method may not be appropriate.
