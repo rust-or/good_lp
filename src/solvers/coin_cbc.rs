@@ -3,16 +3,16 @@
 //! You can disable it an enable another solver instead using cargo features.
 use std::convert::TryInto;
 
-use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
+use coin_cbc::{Col, Model, raw::Status, Sense, Solution as CbcSolution};
 
-use crate::solvers::ModelWithSOS1;
-use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
-    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
     IntoAffineExpression,
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
 };
 use crate::{Constraint, Variable};
+use crate::solvers::ModelWithSOS1;
+use crate::variable::{UnsolvedProblem, VariableDefinition};
 
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
 /// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)
@@ -70,6 +70,26 @@ impl CoinCbcProblem {
     /// Get the inner coin_cbc model
     pub fn as_inner(&self) -> &Model {
         &self.model
+    }
+
+    /// Get a mutable version of the inner Coin CBC model.
+    /// good_lp will crash (but should stay memory-safe) if you change the structure of the problem
+    /// itself using this method.
+    pub fn as_inner_mut(&mut self) -> &mut Model {
+        &mut self.model
+    }
+
+    /// Set an option in cbc. For the list of available options, start the cbc binary and type '?'
+    /// ```
+    /// use good_lp::*;
+    /// variables!{ vars: 0<=x<=1; 0<=y<=1; }
+    /// let mut model = vars.maximise(x + y).using(coin_cbc);
+    /// model.set_parameter("log", "1"); // Pass parameters directly to cbc
+    /// let result = model.with(constraint!(x + y <= 0.5)).solve();
+    /// assert_eq!(result.unwrap().value(x), 0.5);
+    /// ```
+    pub fn set_parameter(&mut self, key: &str, value: &str) {
+        self.model.set_parameter(key, value);
     }
 }
 

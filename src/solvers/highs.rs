@@ -2,15 +2,15 @@
 
 use highs::HighsModelStatus;
 
-use crate::solvers::{
-    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
-};
 use crate::{
     constraint::ConstraintReference,
     solvers::DualValues,
     variable::{UnsolvedProblem, VariableDefinition},
 };
 use crate::{Constraint, IntoAffineExpression, Variable};
+use crate::solvers::{
+    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
+};
 
 /// The [highs](https://docs.rs/highs) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -50,6 +50,7 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         sense,
         highs_problem,
         columns,
+        verbose: false,
     }
 }
 
@@ -59,12 +60,18 @@ pub struct HighsProblem {
     sense: highs::Sense,
     highs_problem: highs::RowProblem,
     columns: Vec<highs::Col>,
+    verbose: bool,
 }
 
 impl HighsProblem {
     /// Get a highs model for this problem
     pub fn into_inner(self) -> highs::Model {
         self.highs_problem.optimise(self.sense)
+    }
+
+    /// Sets whether or not HiGHS should display verbose logging information to the console
+    pub fn set_verbose(&mut self, verbose: bool) {
+        self.verbose = verbose
     }
 }
 
@@ -73,7 +80,13 @@ impl SolverModel for HighsProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        let model = self.into_inner();
+        let verbose = self.verbose;
+        let mut model = self.into_inner();
+        if verbose {
+            model.set_option(&b"output_flag"[..], true);
+            model.set_option(&b"log_to_console"[..], true);
+            model.set_option(&b"log_dev_level"[..], 2);
+        }
         let solved = model.solve();
         match solved.status() {
             HighsModelStatus::NotSet => Err(ResolutionError::Other("NotSet")),
