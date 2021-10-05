@@ -3,16 +3,16 @@
 //! You can disable it an enable another solver instead using cargo features.
 use std::convert::TryInto;
 
-use coin_cbc::{Col, Model, raw::Status, Sense, Solution as CbcSolution};
+use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 
-use crate::{
-    constraint::ConstraintReference,
-    IntoAffineExpression,
-    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
-};
-use crate::{Constraint, Variable};
 use crate::solvers::ModelWithSOS1;
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{
+    constraint::ConstraintReference,
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+    IntoAffineExpression,
+};
+use crate::{Constraint, Variable};
 
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
 /// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)

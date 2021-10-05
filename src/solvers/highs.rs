@@ -2,15 +2,15 @@
 
 use highs::HighsModelStatus;
 
+use crate::solvers::{
+    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
+};
 use crate::{
     constraint::ConstraintReference,
     solvers::DualValues,
     variable::{UnsolvedProblem, VariableDefinition},
 };
 use crate::{Constraint, IntoAffineExpression, Variable};
-use crate::solvers::{
-    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
-};
 
 /// The [highs](https://docs.rs/highs) solver,
 /// to be used with [UnsolvedProblem::using].
