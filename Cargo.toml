@@ -15,16 +15,16 @@ categories = ["mathematics", "algorithms", "science", "api-bindings", "data-stru
 default = ["coin_cbc"]
 
 [dependencies]
-coin_cbc = { version = "0.1.4", optional = true }
+coin_cbc = { version = "0.1.6", optional = true }
 minilp = { version = "0.2", optional = true }
 lpsolve = { version = "0.1", optional = true }
-highs = { version = "0.4", optional = true }
+highs = { version = "0.5", optional = true }
 lp-solvers = { version = "0.0.4", features = ["cplex"], optional = true }
 fnv = "1"
 
 [dev-dependencies]
 criterion = "0.3"
-float_eq = "0.6"
+float_eq = "0.7"
 
 [[bench]]
 name = "benchmark"

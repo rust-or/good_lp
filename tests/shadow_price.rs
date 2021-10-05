@@ -39,8 +39,8 @@ where
     let dual = solution.compute_dual();
     assert_float_eq!(0., dual.dual(c1), abs <= 1e-1);
     assert_float_eq!(0., dual.dual(c2), abs <= 1e-1);
-    assert_float_eq!(-0.667, dual.dual(c3), abs <= 1e-3);
-    assert_float_eq!(-0.0, dual.dual(c4), abs <= 1e-3);
+    assert_float_eq!(0.667, dual.dual(c3), abs <= 1e-3);
+    assert_float_eq!(0.0, dual.dual(c4), abs <= 1e-3);
 }
 
 #[allow(dead_code)]
@@ -68,8 +68,8 @@ where
     assert_float_eq!(40.0, solution.value(n_tables), abs <= 1e-1);
 
     let dual = solution.compute_dual();
-    assert_float_eq!(-15.0, dual.dual(c1), abs <= 1e-1);
-    assert_float_eq!(-5.0, dual.dual(c2), abs <= 1e-1);
+    assert_float_eq!(15.0, dual.dual(c1), abs <= 1e-1);
+    assert_float_eq!(5.0, dual.dual(c2), abs <= 1e-1);
 }
 
 macro_rules! dual_test {
