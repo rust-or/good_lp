@@ -109,8 +109,25 @@ minilp is a pure rust solver, which means it works out of the box without instal
 
 [minilp]: https://docs.rs/minilp
 
-Minilp is written in pure rust, and performs poorly when compiled in debug mode. Be sure to compile your code
+Minilp is written in pure rust, so you can use it without having to install a C compiler on your machine,
+or having to install any external library, but it is slower than other solvers.
+
+It performs very poorly when compiled in debug mode, so be sure to compile your code
 in `--release` mode when solving large problems.
+
+### [HiGHS][highs]
+
+HiGHS is a free ([MIT](https://github.com/ERGO-Code/HiGHS/blob/master/LICENSE)) parallel mixed integer linear programming
+solver written in C++.
+It is able to use [OpenMP](https://en.wikipedia.org/wiki/OpenMP) to fully leverage all the available processor cores
+to solve a problem.
+
+good_lp uses the [highs crate](https://docs.rs/highs) to call HiGHS.
+You will need a C compiler, but you shouldn't have to install any additional library on linux
+(it depends only on OpenMP and the C++ standard library).
+More information in the [highs-sys crate](https://crates.io/crates/highs-sys).
+
+[highs]: https://highs.dev
 
 ### [lpsolve][lpsolve]
 
@@ -121,20 +138,6 @@ good_lp uses the [lpsolve crate](https://docs.rs/lpsolve/) to call lpsolve.
 You will need a C compiler, but you won't have to install any additional library.
 
 [lpsolve]: http://lpsolve.sourceforge.net/5.5/
-
-### [HiGHS][highs]
-
-HiGHS is a free ([MIT](https://github.com/ERGO-Code/HiGHS/blob/master/LICENSE)) parallel linear programming solver
-written in C++. It currently **doesn't support integer variables**.
-It is able to use [OpenMP](https://en.wikipedia.org/wiki/OpenMP) to fully leverage all the available processor cores
-to solve a problem.
-
-good_lp uses the [highs crate](https://docs.rs/highs) to call HiGHS.
-You will need a C compiler, but you shouldn't have to install any additional library on linux
-(it depends only on OpenMP and the C++ standard library).
-More information in the [highs-sys crate](https://crates.io/crates/highs-sys).
-
-[highs]: https://highs.dev
 
 ### [lp-solvers][lps]
 
