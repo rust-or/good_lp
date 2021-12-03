@@ -34,16 +34,13 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         },
     ) in to_solve.variables.iter_variables_with_def()
     {
-        if is_integer {
-            panic!("HiGHS does not support integer variables, but variable number {} is of type integer.", var.index());
-        }
         let &col_factor = to_solve
             .objective
             .linear
             .coefficients
             .get(&var)
             .unwrap_or(&0.);
-        let col = highs_problem.add_column(col_factor, min..max);
+        let col = highs_problem.add_column_with_integrality(col_factor, min..max, is_integer);
         columns.push(col);
     }
     HighsProblem {

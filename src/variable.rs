@@ -143,11 +143,11 @@ impl VariableDefinition {
     /// # use good_lp::{ProblemVariables, variable, default_solver, SolverModel, Solution};
     /// let mut problem = ProblemVariables::new();
     /// let x = problem.add(variable().integer().min(0).max(2.5));
-    /// if cfg!(not(any(feature = "minilp", feature = "highs"))) {
-    ///     let solution = problem.maximise(x).using(default_solver).solve().unwrap();
-    ///     // x is bound to [0; 2.5], but the solution is x=2 because x needs to be an integer
-    ///     assert_eq!(solution.value(x), 2.);
-    /// }
+    /// # if cfg!(not(feature = "minilp")) {
+    /// let solution = problem.maximise(x).using(default_solver).solve().unwrap();
+    /// // x is bound to [0; 2.5], but the solution is x=2 because x needs to be an integer
+    /// assert_eq!(solution.value(x), 2.);
+    /// # }
     /// ```
     pub fn integer(mut self) -> Self {
         self.is_integer = true;
@@ -164,7 +164,7 @@ impl VariableDefinition {
     /// let mut problem = ProblemVariables::new();
     /// let x = problem.add(variable().binary());
     /// let y = problem.add(variable().binary());
-    /// if cfg!(not(any(feature = "minilp", feature = "highs"))) {
+    /// if cfg!(not(any(feature = "minilp"))) {
     ///     let solution = problem.maximise(x + y).using(default_solver).solve().unwrap();
     ///     assert_eq!(solution.value(x), 1.);
     ///     assert_eq!(solution.value(y), 1.);

@@ -1,6 +1,6 @@
 # good_lp
 
-A Linear Programming modeler that is easy to use, performant with large problems, and well-typed.
+A Mixed Integer Linear Programming modeler that is easy to use, performant with large problems, and well-typed.
 
 [![Crates.io](https://img.shields.io/crates/v/good_lp.svg)](https://crates.io/crates/good_lp)
 [![documentation](https://docs.rs/good_lp/badge.svg)](https://docs.rs/good_lp)
@@ -70,7 +70,7 @@ you can also activate other solvers using cargo features.
 | solver feature name  | integer variables | no C compiler\* | no additional libs\*\* | fast |
 | -------------------- | ----------------- | --------------- | ---------------------- | ---- |
 | [`coin_cbc`][cbc]    | ✅                | ✅              | ❌                     | ✅   |
-| [`highs`][highs]     | ❌                | ❌              | ✅                     | ✅   |
+| [`highs`][highs]     | ✅                | ❌              | ✅                     | ✅   |
 | [`lpsolve`][lpsolve] | ✅                | ❌              | ✅                     | ❌   |
 | [`minilp`][minilp]   | ❌                | ✅              | ✅                     | ❌   |
 | [`lp-solvers`][lps]  | ✅                | ✅              | ✅                     | ❌   |
