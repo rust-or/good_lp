@@ -98,8 +98,6 @@ impl SolverModel for HighsProblem {
             HighsModelStatus::UnboundedOrInfeasible => Err(ResolutionError::Infeasible),
             _ok_status => Ok(HighsSolution {
                 solution: solved.get_solution(),
-                dual_values: vec![],
-                acquired: false,
             }),
         }
     }
@@ -127,8 +125,6 @@ impl SolverModel for HighsProblem {
 #[derive(Debug)]
 pub struct HighsSolution {
     solution: highs::Solution,
-    dual_values: Vec<f64>,
-    acquired: bool,
 }
 
 impl HighsSolution {
