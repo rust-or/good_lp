@@ -24,7 +24,7 @@ fnv = "1"
 
 [dev-dependencies]
 criterion = "0.3"
-float_eq = "0.7"
+float_eq = "1.0"
 
 [[bench]]
 name = "benchmark"
