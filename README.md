@@ -101,6 +101,11 @@ In MacOS, using [homebrew](https://brew.sh/) :
 brew install cbc
 ```
 
+Be careful if you disable the default features of this crate and activate the cbc feature manually.
+In this case, you have to also activate `singlethread-cbc`,
+unless you compiled Cbc yourself with the [`CBC_THREAD_SAFE`](https://github.com/coin-or/Cbc/issues/332)
+option. Otherwise, using Cbc from multiple threads would be unsafe.
+
 [cbc]: https://www.coin-or.org/Cbc/
 
 ### [minilp](https://docs.rs/minilp)
