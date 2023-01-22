@@ -12,10 +12,11 @@ categories = ["mathematics", "algorithms", "science", "api-bindings", "data-stru
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["coin_cbc"]
+default = ["coin_cbc", "singlethread-cbc"]
+singlethread-cbc = ["coin_cbc?/singlethread-cbc"]
 
 [dependencies]
-coin_cbc = { version = "0.1", optional = true }
+coin_cbc = { version = "0.1", optional = true, default-features = false }
 minilp = { version = "0.2", optional = true }
 lpsolve = { version = "0.1", optional = true }
 highs = { version = "1.5.0", optional = true }
