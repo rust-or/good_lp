@@ -48,6 +48,91 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         highs_problem,
         columns,
         verbose: false,
+        options: HighsOptions::default(),
+    }
+}
+
+/// Presolve option
+#[derive(Debug, Clone, Copy)]
+pub enum HighsPresolveType {
+    /// off
+    Off,
+    /// choose
+    Choose,
+    /// on
+    On,
+}
+
+impl HighsPresolveType {
+    fn as_str(&self) -> &str {
+        match self {
+            HighsPresolveType::Off => "off",
+            HighsPresolveType::Choose => "choose",
+            HighsPresolveType::On => "on",
+        }
+    }
+}
+
+/// Solver option
+#[derive(Debug, Clone, Copy)]
+pub enum HighsSolverType {
+    /// simplex
+    Simplex,
+    /// choose
+    Choose,
+    /// ipm
+    Ipm,
+}
+
+impl HighsSolverType {
+    fn as_str(&self) -> &str {
+        match self {
+            HighsSolverType::Simplex => "s1implex",
+            HighsSolverType::Choose => "choose",
+            HighsSolverType::Ipm => "ipm",
+        }
+    }
+}
+
+/// Parallel option
+#[derive(Debug, Clone, Copy)]
+pub enum HighsParallelType {
+    /// off
+    Off,
+    /// choose
+    Choose,
+    /// on
+    On,
+}
+
+impl HighsParallelType {
+    fn as_str(&self) -> &str {
+        match self {
+            HighsParallelType::Off => "off",
+            HighsParallelType::Choose => "choose",
+            HighsParallelType::On => "on",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct HighsOptions {
+    presolve: HighsPresolveType,
+    solver: HighsSolverType,
+    parallel: HighsParallelType,
+    time_limit: f64,
+    threads: u32,
+}
+
+impl Default for HighsOptions {
+    fn default() -> Self {
+        Self {
+            presolve: HighsPresolveType::Choose,
+            solver: HighsSolverType::Choose,
+            parallel: HighsParallelType::Choose,
+            time_limit: f64::MAX,
+            threads: 0,
+        }
     }
 }
 
@@ -58,6 +143,7 @@ pub struct HighsProblem {
     highs_problem: highs::RowProblem,
     columns: Vec<highs::Col>,
     verbose: bool,
+    options: HighsOptions,
 }
 
 impl HighsProblem {
@@ -70,6 +156,36 @@ impl HighsProblem {
     pub fn set_verbose(&mut self, verbose: bool) {
         self.verbose = verbose
     }
+
+    /// Sets HiGHS Presolve Option
+    pub fn set_presolve(mut self, presolve: HighsPresolveType) -> HighsProblem {
+        self.options.presolve = presolve;
+        self
+    }
+
+    /// Sets HiGHS Solver Option
+    pub fn set_solver(mut self, solver: HighsSolverType) -> HighsProblem {
+        self.options.solver = solver;
+        self
+    }
+
+    /// Sets HiGHS Parallel Option
+    pub fn set_parallel(mut self, parallel: HighsParallelType) -> HighsProblem {
+        self.options.parallel = parallel;
+        self
+    }
+
+    /// Sets HiGHS Time Limit Option
+    pub fn set_time_limit(mut self, time_limit: f64) -> HighsProblem {
+        self.options.time_limit = time_limit;
+        self
+    }
+
+    /// Sets number of threads used by HiGHS
+    pub fn set_threads(mut self, threads: u32) -> HighsProblem {
+        self.options.threads = threads;
+        self
+    }
 }
 
 impl SolverModel for HighsProblem {
@@ -78,12 +194,19 @@ impl SolverModel for HighsProblem {
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let verbose = self.verbose;
+        let options = self.options;
         let mut model = self.into_inner();
         if verbose {
             model.set_option(&b"output_flag"[..], true);
             model.set_option(&b"log_to_console"[..], true);
             model.set_option(&b"log_dev_level"[..], 2);
         }
+        model.set_option("presolve", options.presolve.as_str());
+        model.set_option("solver", options.solver.as_str());
+        model.set_option("parallel", options.parallel.as_str());
+        model.set_option("time_limit", options.time_limit);
+        model.set_option("threads", options.threads as i32);
+
         let solved = model.solve();
         match solved.status() {
             HighsModelStatus::NotSet => Err(ResolutionError::Other("NotSet")),
