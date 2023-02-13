@@ -55,16 +55,30 @@ impl SolverModel for SCIPProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        let mut vars = self.problem.get_vars();
+        let vars = self.problem.get_vars();
         self.problem.solve();
         let sol = self.problem.get_best_sol();
         let values = vars.iter().map(|var| {
             (var.get_index(), sol.get_var_val(var))
         }).collect();
 
-        Ok(SCIPSolution {
-            values,
-        })
+        let status = self.problem.get_status();
+        match status {
+            russcip::status::Status::OPTIMAL => {
+                Ok(SCIPSolution {
+                    values,
+                })
+            }
+            russcip::status::Status::INFEASIBLE => {
+                return Err(ResolutionError::Infeasible);
+            }
+            russcip::status::Status::UNBOUNDED => {
+                return Err(ResolutionError::Unbounded);
+            }
+            other_status => {
+                return Err(ResolutionError::Str(format!("Unexpected status {:?}", other_status)));
+            }
+        }
     }
 
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
@@ -108,12 +122,12 @@ impl Solution for SCIPSolution {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Solution, SolverModel, variable, variables};
+    use crate::{constraint, Solution, SolverModel, variable, variables};
 
     use super::scip;
 
     #[test]
-    fn can_solve_easy() {
+    fn can_solve_with_inequality() {
         let mut vars = variables!();
         let x = vars.add(variable().clamp(0, 2));
         let y = vars.add(variable().clamp(1, 3));
@@ -124,5 +138,19 @@ mod tests {
             .solve()
             .unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+    }
+
+    fn can_solve_with_equality() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2).integer());
+        let y = vars.add(variable().clamp(1, 3).integer());
+        let solution = vars
+            .maximise(x + y)
+            .using(scip)
+            .with(constraint!(2*x + y == 4))
+            .with(constraint!(x + 2*y <= 5))
+            .solve()
+            .unwrap();
+        assert_eq!((solution.value(x), solution.value(y)), (1., 2.));
     }
 }
