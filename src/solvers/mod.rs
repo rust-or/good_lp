@@ -25,6 +25,10 @@ pub mod lpsolve;
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub mod highs;
 
+#[cfg(feature = "scip")]
+#[cfg_attr(docsrs, doc(cfg(feature = "scip")))]
+pub mod scip;
+
 #[cfg(feature = "lp-solvers")]
 #[cfg_attr(docsrs, doc(cfg(feature = "lp-solvers")))]
 pub mod lp_solvers;

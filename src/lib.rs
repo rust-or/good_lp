@@ -80,6 +80,12 @@ pub use solvers::highs::highs;
 #[cfg(feature = "highs")]
 /// When the "highs" cargo feature is present, highs is used as the default solver
 pub use solvers::highs::highs as default_solver;
+#[cfg(feature = "scip")]
+#[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
+pub use solvers::scip::scip;
+#[cfg(not(any(feature = "coin_cbc", feature = "minilp", feature = "lpsolve", feature = "highs")))]
+#[cfg(feature = "scip")]
+pub use solvers::scip::scip as default_solver;
 #[cfg(feature = "lp-solvers")]
 #[cfg_attr(docsrs, doc(cfg(feature = "lp-solvers")))]
 pub use solvers::lp_solvers::LpSolver;
@@ -107,7 +113,8 @@ pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
     feature = "coin_cbc",
     feature = "minilp",
     feature = "lpsolve",
-    feature = "highs"
+    feature = "highs",
+    feature = "scip",
 )))]
 #[cfg(feature = "lp-solvers")]
 /// Default solvers for the 'lp-solvers' feature: a solver that calls Cbc as an external command
@@ -122,6 +129,7 @@ pub const default_solver: LpSolver<
     feature = "lpsolve",
     feature = "highs",
     feature = "lp-solvers",
+    feature = "scip",
 )))]
 compile_error!(
     "No solver available. \
