@@ -80,12 +80,6 @@ pub use solvers::highs::highs;
 #[cfg(feature = "highs")]
 /// When the "highs" cargo feature is present, highs is used as the default solver
 pub use solvers::highs::highs as default_solver;
-#[cfg(feature = "scip")]
-#[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
-pub use solvers::scip::scip;
-#[cfg(not(any(feature = "coin_cbc", feature = "minilp", feature = "lpsolve", feature = "highs")))]
-#[cfg(feature = "scip")]
-pub use solvers::scip::scip as default_solver;
 #[cfg(feature = "lp-solvers")]
 #[cfg_attr(docsrs, doc(cfg(feature = "lp-solvers")))]
 pub use solvers::lp_solvers::LpSolver;
@@ -103,6 +97,17 @@ pub use solvers::minilp::minilp;
 #[cfg(feature = "minilp")]
 /// When the "coin_cbc" cargo feature is absent, minilp is used as the default solver
 pub use solvers::minilp::minilp as default_solver;
+#[cfg(feature = "scip")]
+#[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
+pub use solvers::scip::scip;
+#[cfg(not(any(
+    feature = "coin_cbc",
+    feature = "minilp",
+    feature = "lpsolve",
+    feature = "highs"
+)))]
+#[cfg(feature = "scip")]
+pub use solvers::scip::scip as default_solver;
 pub use solvers::{
     DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel,
     StaticSolver,

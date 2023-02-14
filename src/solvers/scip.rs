@@ -7,12 +7,12 @@ use russcip::model::Model;
 use russcip::model::ObjSense;
 use russcip::variable::VarType;
 
+use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
 };
 use crate::{Constraint, Variable};
-use crate::variable::{UnsolvedProblem, VariableDefinition};
 
 /// The [SCIP](https://scipopt.org) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -26,23 +26,30 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
         ObjectiveDirection::Minimisation => ObjSense::Minimize,
     });
 
-    for (var, &VariableDefinition {
-        min,
-        max,
-        is_integer,
-        ref name
-    }) in to_solve.variables.iter_variables_with_def() {
-        let coeff = *to_solve.objective.linear.coefficients.get(&var).unwrap_or(&0.);
+    for (
+        var,
+        &VariableDefinition {
+            min,
+            max,
+            is_integer,
+            ref name,
+        },
+    ) in to_solve.variables.iter_variables_with_def()
+    {
+        let coeff = *to_solve
+            .objective
+            .linear
+            .coefficients
+            .get(&var)
+            .unwrap_or(&0.);
         let var_type = match is_integer {
-            true => { VarType::Integer }
-            false => { VarType::Continuous }
+            true => VarType::Integer,
+            false => VarType::Continuous,
         };
         problem.add_var(min, max, coeff, name.as_str().clone(), var_type);
     }
 
-    SCIPProblem {
-        problem
-    }
+    SCIPProblem { problem }
 }
 
 /// A SCIP Model
@@ -58,17 +65,14 @@ impl SolverModel for SCIPProblem {
         let vars = self.problem.get_vars();
         self.problem.solve();
         let sol = self.problem.get_best_sol();
-        let values = vars.iter().map(|var| {
-            (var.get_index(), sol.get_var_val(var))
-        }).collect();
+        let values = vars
+            .iter()
+            .map(|var| (var.get_index(), sol.get_var_val(var)))
+            .collect();
 
         let status = self.problem.get_status();
         match status {
-            russcip::status::Status::OPTIMAL => {
-                Ok(SCIPSolution {
-                    values,
-                })
-            }
+            russcip::status::Status::OPTIMAL => Ok(SCIPSolution { values }),
             russcip::status::Status::INFEASIBLE => {
                 return Err(ResolutionError::Infeasible);
             }
@@ -76,7 +80,10 @@ impl SolverModel for SCIPProblem {
                 return Err(ResolutionError::Unbounded);
             }
             other_status => {
-                return Err(ResolutionError::Str(format!("Unexpected status {:?}", other_status)));
+                return Err(ResolutionError::Str(format!(
+                    "Unexpected status {:?}",
+                    other_status
+                )));
             }
         }
     }
@@ -103,7 +110,13 @@ impl SolverModel for SCIPProblem {
         }
 
         let index = self.problem.get_n_conss() + 1;
-        self.problem.add_cons(&vars_in_cons, &coeffs, lhs, constant, format!("c{}", index).as_str());
+        self.problem.add_cons(
+            &vars_in_cons,
+            &coeffs,
+            lhs,
+            constant,
+            format!("c{}", index).as_str(),
+        );
 
         ConstraintReference { index }
     }
@@ -122,7 +135,7 @@ impl Solution for SCIPSolution {
 
 #[cfg(test)]
 mod tests {
-    use crate::{constraint, Solution, SolverModel, variable, variables};
+    use crate::{constraint, variable, variables, Solution, SolverModel};
 
     use super::scip;
 
@@ -148,8 +161,8 @@ mod tests {
         let solution = vars
             .maximise(x + y)
             .using(scip)
-            .with(constraint!(2*x + y == 4))
-            .with(constraint!(x + 2*y <= 5))
+            .with(constraint!(2 * x + y == 4))
+            .with(constraint!(x + 2 * y <= 5))
             .solve()
             .unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (1., 2.));
