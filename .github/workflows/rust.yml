@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: install deps
         run: |
-          sudo apt-get install coinor-cbc coinor-libcbc-dev
+          sudo apt-get install coinor-cbc coinor-libcbc-dev libgsl-dev
           rustup component add rustfmt
           wget --quiet --no-check-certificate https://scipopt.org/download/release/SCIPOptSuite-8.0.3-Linux-ubuntu.deb
           sudo apt-get update && sudo apt install -y ./SCIPOptSuite-8.0.3-Linux-ubuntu.deb
