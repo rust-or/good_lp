@@ -20,6 +20,8 @@ jobs:
         run: |
           sudo apt-get install coinor-cbc coinor-libcbc-dev
           rustup component add rustfmt
+          wget --quiet --no-check-certificate https://scipopt.org/download/release/SCIPOptSuite-8.0.3-Linux-ubuntu.deb
+          sudo apt-get update && sudo apt install -y ./SCIPOptSuite-8.0.3-Linux-ubuntu.deb
       - name: Build
         run: cargo build --all-features --tests
       - name: Run tests # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
@@ -33,10 +35,7 @@ jobs:
       - name: Run tests with lp_solvers
         run: cargo test --no-default-features --features lp-solvers
       - name: Run tests with SCIP
-        run: |
-          wget --quiet --no-check-certificate https://scipopt.org/download/release/SCIPOptSuite-8.0.3-Linux-ubuntu.deb
-          sudo apt-get update && sudo apt install -y ./SCIPOptSuite-8.0.3-Linux-ubuntu.deb
-          cargo test --no-default-features --features scip
+        run: cargo test --no-default-features --features scip
       - name: Check formatting
         run: cargo fmt -- --check
       - run: cargo bench
