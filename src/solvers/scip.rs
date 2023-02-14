@@ -140,6 +140,7 @@ mod tests {
         assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
     }
 
+    #[test]
     fn can_solve_with_equality() {
         let mut vars = variables!();
         let x = vars.add(variable().clamp(0, 2).integer());
