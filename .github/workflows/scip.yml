@@ -1,0 +1,35 @@
+name: Rust
+
+on:
+  push:
+    branches: [main]
+    paths: ["**.rs", "Cargo.toml", ".github/workflows/rust.yml"]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: install deps
+        run: |
+          sudo apt-get install coinor-cbc coinor-libcbc-dev libgsl-dev
+          rustup component add rustfmt
+          wget --quiet --no-check-certificate https://scipopt.org/download/release/SCIPOptSuite-8.0.3-Linux-ubuntu.deb
+          sudo apt-get update && sudo apt install -y ./SCIPOptSuite-8.0.3-Linux-ubuntu.deb
+      - name: Build
+        run: cargo build --all-features --tests
+      - name: Run tests # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
+        run: cargo test --all-features -- --test-threads=1
+      - name: Run tests with minilp
+        run: cargo test --no-default-features --features minilp
+      - name: Run tests with SCIP
+        run: cargo test --no-default-features --features scip
+      - name: Check formatting
+        run: cargo fmt -- --check
+      - run: cargo bench

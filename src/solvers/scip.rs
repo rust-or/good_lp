@@ -21,6 +21,7 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
 
     problem.include_default_plugins();
     problem.create_prob("problem");
+    problem.hide_output();
     problem.set_obj_sense(match to_solve.direction {
         ObjectiveDirection::Maximisation => ObjSense::Maximize,
         ObjectiveDirection::Minimisation => ObjSense::Minimize,
