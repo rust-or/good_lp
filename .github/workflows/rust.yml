@@ -12,16 +12,24 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
-
+    runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2    steps:
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: test
+          allow-softlinks: true
       - name: install deps
         run: |
           sudo apt-get install coinor-cbc coinor-libcbc-dev libgsl-dev
           rustup component add rustfmt
-          wget --quiet --no-check-certificate https://scipopt.org/download/release/SCIPOptSuite-8.0.3-Linux-ubuntu.deb
-          sudo apt-get update && sudo apt install -y ./SCIPOptSuite-8.0.3-Linux-ubuntu.deb
+          # Install SCIP
+          conda install -y --prefix $CONDA/envs/test --channel conda-forge scip
+          echo "LD_LIBRARY_PATH=$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
+          echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
+          echo "PATH=$CONDA/envs/test/bin:$PATH" >> "${GITHUB_ENV}"
+          echo "CONDA_PREFIX=$CONDA/envs/test" >> "${GITHUB_ENV}"
       - name: Build
         run: cargo build --all-features --tests
       - name: Run tests # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
