@@ -65,15 +65,17 @@ impl SolverModel for SCIPProblem {
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let vars = self.problem.get_vars();
         self.problem.solve();
-        let sol = self.problem.get_best_sol();
-        let values = vars
-            .iter()
-            .map(|var| (var.get_index(), sol.get_var_val(var)))
-            .collect();
 
         let status = self.problem.get_status();
         match status {
-            russcip::status::Status::OPTIMAL => Ok(SCIPSolution { values }),
+            russcip::status::Status::OPTIMAL => {
+                let sol = self.problem.get_best_sol();
+                let values = vars
+                    .iter()
+                    .map(|var| (var.get_index(), sol.get_var_val(var)))
+                    .collect();
+                Ok(SCIPSolution { values })
+            }
             russcip::status::Status::INFEASIBLE => {
                 return Err(ResolutionError::Infeasible);
             }
