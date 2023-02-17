@@ -66,6 +66,12 @@ pub struct SCIPProblem {
     var_for_id: HashMap<usize, russcip::variable::Variable>,
 }
 
+
+impl SCIPProblem {
+    pub fn as_inner(&self) -> &Model { &self.model }
+    pub fn as_inner_mut(&mut self) -> &mut Model { &mut self.model }
+}
+
 impl SolverModel for SCIPProblem {
     type Solution = SCIPSolution;
     type Error = ResolutionError;
