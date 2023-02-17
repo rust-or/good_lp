@@ -7,12 +7,12 @@ use russcip::model::Model;
 use russcip::model::ObjSense;
 use russcip::variable::VarType;
 
+use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
 };
 use crate::{Constraint, Variable};
-use crate::variable::{UnsolvedProblem, VariableDefinition};
 
 /// The [SCIP](https://scipopt.org) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -52,7 +52,10 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
         var_map.insert(var.index(), model.get_var(id).unwrap());
     }
 
-    SCIPProblem { model, var_for_id: var_map }
+    SCIPProblem {
+        model,
+        var_for_id: var_map,
+    }
 }
 
 /// A SCIP Model
@@ -132,7 +135,7 @@ impl Solution for SCIPSolution {
 
 #[cfg(test)]
 mod tests {
-    use crate::{constraint, Solution, SolverModel, variable, variables};
+    use crate::{constraint, variable, variables, Solution, SolverModel};
 
     use super::scip;
 
