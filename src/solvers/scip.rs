@@ -100,7 +100,7 @@ impl SolverModel for SCIPProblem {
         let n_vars_in_cons = c.expression.linear.coefficients.len();
         let mut vars_in_cons = Vec::with_capacity(n_vars_in_cons);
         let mut coeffs = Vec::with_capacity(n_vars_in_cons);
-        for (i, (&var, &coeff)) in c.expression.linear.coefficients.iter().enumerate() {
+        for (&var, &coeff) in c.expression.linear.coefficients.iter() {
             vars_in_cons.push(&self.var_for_id[&var.index()]);
             coeffs.push(coeff);
         }
