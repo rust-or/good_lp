@@ -7,22 +7,23 @@ use russcip::model::Model;
 use russcip::model::ObjSense;
 use russcip::variable::VarType;
 
-use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
 };
 use crate::{Constraint, Variable};
+use crate::variable::{UnsolvedProblem, VariableDefinition};
 
 /// The [SCIP](https://scipopt.org) solver,
 /// to be used with [UnsolvedProblem::using].
 pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
-    let mut problem = Model::new();
+    let mut model = Model::new();
+    let mut var_map = HashMap::new();
 
-    problem.include_default_plugins();
-    problem.create_prob("problem");
-    problem.hide_output();
-    problem.set_obj_sense(match to_solve.direction {
+    model.include_default_plugins();
+    model.create_prob("problem");
+    model.hide_output();
+    model.set_obj_sense(match to_solve.direction {
         ObjectiveDirection::Maximisation => ObjSense::Maximize,
         ObjectiveDirection::Minimisation => ObjSense::Minimize,
     });
@@ -47,15 +48,19 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
             true => VarType::Integer,
             false => VarType::Continuous,
         };
-        problem.add_var(min, max, coeff, name.as_str().clone(), var_type);
+        let id = model.add_var(min, max, coeff, name.as_str().clone(), var_type);
+        var_map.insert(var.index(), model.get_var(id).unwrap());
     }
 
-    SCIPProblem { problem }
+    SCIPProblem { model, var_for_id: var_map }
 }
 
 /// A SCIP Model
 pub struct SCIPProblem {
-    problem: Model,
+    // the underlying SCIP model representing the problem
+    model: Model,
+    // map from good_lp variable indices to SCIP variables
+    var_for_id: HashMap<usize, russcip::variable::Variable>,
 }
 
 impl SolverModel for SCIPProblem {
@@ -63,18 +68,12 @@ impl SolverModel for SCIPProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        let vars = self.problem.get_vars();
-        self.problem.solve();
-
-        let status = self.problem.get_status();
+        self.model.solve();
+        let status = self.model.get_status();
         match status {
             russcip::status::Status::OPTIMAL => {
-                let sol = self.problem.get_best_sol();
-                let values = vars
-                    .iter()
-                    .map(|var| (var.get_index(), sol.get_var_val(var)))
-                    .collect();
-                Ok(SCIPSolution { values })
+                let sol = self.model.get_best_sol();
+                Ok(SCIPSolution { problem: self, sol })
             }
             russcip::status::Status::INFEASIBLE => {
                 return Err(ResolutionError::Infeasible);
@@ -98,22 +97,16 @@ impl SolverModel for SCIPProblem {
             false => -f64::INFINITY,
         };
 
-        let mut vars = HashMap::new();
-        for var in self.problem.get_vars() {
-            let var_index = var.get_index();
-            vars.insert(var_index, var);
-        }
-
-        let mut vars_in_cons = vec![];
-        let mut coeffs = vec![];
-
-        for (&var, &coeff) in c.expression.linear.coefficients.iter() {
-            vars_in_cons.push(&vars[&var.index()]);
+        let n_vars_in_cons = c.expression.linear.coefficients.len();
+        let mut vars_in_cons = Vec::with_capacity(n_vars_in_cons);
+        let mut coeffs = Vec::with_capacity(n_vars_in_cons);
+        for (i, (&var, &coeff)) in c.expression.linear.coefficients.iter().enumerate() {
+            vars_in_cons.push(&self.var_for_id[&var.index()]);
             coeffs.push(coeff);
         }
 
-        let index = self.problem.get_n_conss() + 1;
-        self.problem.add_cons(
+        let index = self.model.get_n_conss() + 1;
+        self.model.add_cons(
             &vars_in_cons,
             &coeffs,
             lhs,
@@ -127,18 +120,19 @@ impl SolverModel for SCIPProblem {
 
 /// A solution to a SCIP problem
 pub struct SCIPSolution {
-    values: HashMap<usize, f64>,
+    problem: SCIPProblem,
+    sol: russcip::solution::Solution,
 }
 
 impl Solution for SCIPSolution {
     fn value(&self, var: Variable) -> f64 {
-        self.values[&var.index()]
+        self.sol.get_var_val(&self.problem.var_for_id[&var.index()])
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{constraint, variable, variables, Solution, SolverModel};
+    use crate::{constraint, Solution, SolverModel, variable, variables};
 
     use super::scip;
 
