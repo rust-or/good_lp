@@ -49,7 +49,7 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
             false => VarType::Continuous,
         };
         let id = model.add_var(min, max, coeff, name.as_str().clone(), var_type);
-        var_map.insert(var.index(), model.get_var(id).unwrap());
+        var_map.insert(var, model.get_var(id).unwrap());
     }
 
     SCIPProblem {
@@ -63,13 +63,16 @@ pub struct SCIPProblem {
     // the underlying SCIP model representing the problem
     model: Model,
     // map from good_lp variable indices to SCIP variables
-    var_for_id: HashMap<usize, russcip::variable::Variable>,
+    var_for_id: HashMap<Variable, russcip::variable::Variable>,
 }
 
 impl SCIPProblem {
+    /// Get access to the raw russcip model
     pub fn as_inner(&self) -> &Model {
         &self.model
     }
+
+    /// Get mutable access to the raw russcip model
     pub fn as_inner_mut(&mut self) -> &mut Model {
         &mut self.model
     }
@@ -113,7 +116,7 @@ impl SolverModel for SCIPProblem {
         let mut vars_in_cons = Vec::with_capacity(n_vars_in_cons);
         let mut coeffs = Vec::with_capacity(n_vars_in_cons);
         for (&var, &coeff) in c.expression.linear.coefficients.iter() {
-            vars_in_cons.push(&self.var_for_id[&var.index()]);
+            vars_in_cons.push(&self.var_for_id[&var]);
             coeffs.push(coeff);
         }
 
@@ -138,7 +141,7 @@ pub struct SCIPSolution {
 
 impl Solution for SCIPSolution {
     fn value(&self, var: Variable) -> f64 {
-        self.sol.get_var_val(&self.problem.var_for_id[&var.index()])
+        self.sol.get_var_val(&self.problem.var_for_id[&var])
     }
 }
 
