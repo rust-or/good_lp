@@ -125,12 +125,11 @@ in `--release` mode when solving large problems.
 
 HiGHS is a free ([MIT](https://github.com/ERGO-Code/HiGHS/blob/master/LICENSE)) parallel mixed integer linear programming
 solver written in C++.
-It is able to use [OpenMP](https://en.wikipedia.org/wiki/OpenMP) to fully leverage all the available processor cores
-to solve a problem.
+It is able to fully leverage all the available processor cores to solve a problem.
 
 good_lp uses the [highs crate](https://docs.rs/highs) to call HiGHS.
 You will need a C compiler, but you shouldn't have to install any additional library on linux
-(it depends only on OpenMP and the C++ standard library).
+(it depends only on the C++ standard library).
 More information in the [highs-sys crate](https://crates.io/crates/highs-sys).
 
 [highs]: https://highs.dev
