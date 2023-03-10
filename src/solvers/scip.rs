@@ -4,7 +4,10 @@
 use std::collections::HashMap;
 
 use russcip::model::Model;
+use russcip::model::ModelWithProblem;
 use russcip::model::ObjSense;
+use russcip::model::ProblemCreated;
+use russcip::model::Solved;
 use russcip::variable::VarType;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
@@ -17,16 +20,15 @@ use crate::{Constraint, Variable};
 /// The [SCIP](https://scipopt.org) solver,
 /// to be used with [UnsolvedProblem::using].
 pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
-    let mut model = Model::new();
+    let mut model = Model::new()
+        .hide_output()
+        .include_default_plugins()
+        .create_prob("problem")
+        .set_obj_sense(match to_solve.direction {
+            ObjectiveDirection::Maximisation => ObjSense::Maximize,
+            ObjectiveDirection::Minimisation => ObjSense::Minimize,
+        });
     let mut var_map = HashMap::new();
-
-    model.include_default_plugins();
-    model.create_prob("problem");
-    model.hide_output();
-    model.set_obj_sense(match to_solve.direction {
-        ObjectiveDirection::Maximisation => ObjSense::Maximize,
-        ObjectiveDirection::Minimisation => ObjSense::Minimize,
-    });
 
     for (
         var,
@@ -49,54 +51,53 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
             false => VarType::Continuous,
         };
         let id = model.add_var(min, max, coeff, name.as_str().clone(), var_type);
-        var_map.insert(var, model.get_var(id).unwrap());
+        var_map.insert(var, id);
     }
 
     SCIPProblem {
-        model,
-        var_for_id: var_map,
+        model: model,
+        id_for_var: var_map,
     }
 }
 
 /// A SCIP Model
 pub struct SCIPProblem {
     // the underlying SCIP model representing the problem
-    model: Model,
-    // map from good_lp variable indices to SCIP variables
-    var_for_id: HashMap<Variable, russcip::variable::Variable>,
+    model: Model<ProblemCreated>,
+    // map from good_lp variables to SCIP variable ids
+    id_for_var: HashMap<Variable, usize>,
 }
 
 impl SCIPProblem {
     /// Get access to the raw russcip model
-    pub fn as_inner(&self) -> &Model {
+    pub fn as_inner(&self) -> &Model<ProblemCreated> {
         &self.model
     }
 
     /// Get mutable access to the raw russcip model
-    pub fn as_inner_mut(&mut self) -> &mut Model {
+    pub fn as_inner_mut(&mut self) -> &mut Model<ProblemCreated> {
         &mut self.model
     }
 }
 
 impl SolverModel for SCIPProblem {
-    type Solution = SCIPSolution;
+    type Solution = SCIPSolved;
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        self.model.solve();
-        let status = self.model.get_status();
+        let solved_model = self.model.solve();
+        let status = solved_model.get_status();
         match status {
-            russcip::status::Status::OPTIMAL => {
-                let russcip_solution = self.model.get_best_sol();
-                Ok(SCIPSolution {
-                    problem: self,
-                    russcip_solution,
+            russcip::status::Status::Optimal => {
+                Ok(SCIPSolved {
+                    solved_problem: solved_model,
+                    id_for_var: self.id_for_var,
                 })
             }
-            russcip::status::Status::INFEASIBLE => {
+            russcip::status::Status::Infeasible => {
                 return Err(ResolutionError::Infeasible);
             }
-            russcip::status::Status::UNBOUNDED => {
+            russcip::status::Status::Unbounded => {
                 return Err(ResolutionError::Unbounded);
             }
             other_status => {
@@ -119,7 +120,7 @@ impl SolverModel for SCIPProblem {
         let mut vars_in_cons = Vec::with_capacity(n_vars_in_cons);
         let mut coeffs = Vec::with_capacity(n_vars_in_cons);
         for (&var, &coeff) in c.expression.linear.coefficients.iter() {
-            vars_in_cons.push(&self.var_for_id[&var]);
+            vars_in_cons.push(self.id_for_var[&var]);
             coeffs.push(coeff);
         }
 
@@ -136,17 +137,18 @@ impl SolverModel for SCIPProblem {
     }
 }
 
-/// A solution to a SCIP problem
-pub struct SCIPSolution {
-    problem: SCIPProblem,
-    /// The raw russcip solution
-    pub russcip_solution: russcip::solution::Solution,
+/// A wrapper to a solved SCIP problem
+pub struct SCIPSolved {
+    solved_problem: Model<Solved>,
+    id_for_var: HashMap<Variable, usize>,
 }
 
-impl Solution for SCIPSolution {
+impl Solution for SCIPSolved {
     fn value(&self, var: Variable) -> f64 {
-        self.russcip_solution
-            .get_var_val(&self.problem.var_for_id[&var])
+        let sol = self.solved_problem.get_best_sol().expect("This problem is expected to have Optimal status, a ");
+        let id = self.id_for_var[&var];
+        let scip_var = self.solved_problem.get_var(id).unwrap();
+        sol.get_var_val(&scip_var)
     }
 }
 
