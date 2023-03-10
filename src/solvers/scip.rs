@@ -88,12 +88,10 @@ impl SolverModel for SCIPProblem {
         let solved_model = self.model.solve();
         let status = solved_model.get_status();
         match status {
-            russcip::status::Status::Optimal => {
-                Ok(SCIPSolved {
-                    solved_problem: solved_model,
-                    id_for_var: self.id_for_var,
-                })
-            }
+            russcip::status::Status::Optimal => Ok(SCIPSolved {
+                solved_problem: solved_model,
+                id_for_var: self.id_for_var,
+            }),
             russcip::status::Status::Infeasible => {
                 return Err(ResolutionError::Infeasible);
             }
@@ -145,7 +143,10 @@ pub struct SCIPSolved {
 
 impl Solution for SCIPSolved {
     fn value(&self, var: Variable) -> f64 {
-        let sol = self.solved_problem.get_best_sol().expect("This problem is expected to have Optimal status, a ");
+        let sol = self
+            .solved_problem
+            .get_best_sol()
+            .expect("This problem is expected to have Optimal status, a ");
         let id = self.id_for_var[&var];
         let scip_var = self.solved_problem.get_var(id).unwrap();
         sol.get_var_val(&scip_var)
