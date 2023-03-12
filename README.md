@@ -74,6 +74,7 @@ you can also activate other solvers using cargo features.
 | [`lpsolve`][lpsolve] | ✅                | ❌              | ✅                     | ❌   |
 | [`minilp`][minilp]   | ❌                | ✅              | ✅                     | ❌   |
 | [`lp-solvers`][lps]  | ✅                | ✅              | ✅                     | ❌   |
+| [`scip`][scip]       | ✅                | ✅              | ❌                     | ✅   |
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
@@ -158,6 +159,19 @@ then this method may not be appropriate.
 Additionally, the end user of your program will have to install the desired solver on his own.
 
 [lps]: https://crates.io/crates/lp-solvers
+
+
+
+### [SCIP][scip]
+
+SCIP is currently one of the fastest open-source solvers for mixed integer programming (MIP) and mixed integer nonlinear programming (MINLP). It is also a framework for constraint integer programming and branch-cut-and-price. It allows for total control of the solution process and the access of detailed information down to the guts of the solver.
+
+`good_lp` uses SCIP through the its rust interface [russcip](https://github.com/mmghannam/russcip). To use this feature you will need to install SCIP. The easiest way to do it is to install a precompiled package from [here](https://scipopt.org/index.php#download) or through conda by running
+```
+conda install --channel conda-forge scip
+```
+
+[scip]: https://scipopt.org/
 
 ### License
 

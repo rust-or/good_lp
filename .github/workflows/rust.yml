@@ -16,10 +16,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: test
+          allow-softlinks: true
       - name: install deps
         run: |
-          sudo apt-get install coinor-cbc coinor-libcbc-dev
+          sudo apt-get install coinor-cbc coinor-libcbc-dev libgsl-dev
           rustup component add rustfmt
+          # Install SCIP
+          conda install -y --prefix $CONDA/envs/test --channel conda-forge scip
+          echo "LD_LIBRARY_PATH=$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
+          echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
+          echo "PATH=$CONDA/envs/test/bin:$PATH" >> "${GITHUB_ENV}"
+          echo "CONDA_PREFIX=$CONDA/envs/test" >> "${GITHUB_ENV}"
       - name: Build
         run: cargo build --all-features --tests
       - name: Run tests # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
@@ -32,6 +42,8 @@ jobs:
         run: cargo test --no-default-features --features highs
       - name: Run tests with lp_solvers
         run: cargo test --no-default-features --features lp-solvers
+      - name: Run tests with SCIP
+        run: cargo test --no-default-features --features scip
       - name: Check formatting
         run: cargo fmt -- --check
       - run: cargo bench
