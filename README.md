@@ -70,7 +70,7 @@ you can also activate other solvers using cargo features.
 | solver feature name  | integer variables | no C compiler\* | no additional libs\*\* | fast |
 | -------------------- | ----------------- | --------------- | ---------------------- | ---- |
 | [`coin_cbc`][cbc]    | ✅                | ✅              | ❌                     | ✅   |
-| [`highs`][highs]     | ✅                | ❌              | ✅                     | ✅   |
+| [`highs`][highs]     | ✅                | ❌              | ✅\+                   | ✅   |
 | [`lpsolve`][lpsolve] | ✅                | ❌              | ✅                     | ❌   |
 | [`minilp`][minilp]   | ❌                | ✅              | ✅                     | ❌   |
 | [`lp-solvers`][lps]  | ✅                | ✅              | ✅                     | ❌   |
@@ -78,6 +78,7 @@ you can also activate other solvers using cargo features.
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
+- \+ highs itself is statically linked and does not require manual installation. However, on some systems, you may have to [install dependencies of highs itself](https://github.com/rust-or/good_lp/issues/29). 
 
 To use an alternative solver, put the following in your `Cargo.toml`:
 
