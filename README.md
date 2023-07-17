@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   quadratic functions. For instance:
   you can maximise `3 * x + y`, but not `3 * x * y`.
 - **Continuous and integer variables**. good_lp itself supports mixed integer-linear programming (MILP),
-  but not all underlying solvers support integer variables. (see [variable types](#variable-types))
+  but not all underlying solvers support integer variables. (see also [variable types](#variable-types))
 - **Not a solver**. This crate uses other rust crates to provide the solvers.
   There is no solving algorithm in good_lp itself. If you have an issue with a solver,
   report it to the solver directly. See below for the list of supported solvers.
@@ -59,7 +59,7 @@ constraints using an idiomatic rust syntax.
 
 ### Variable types
 
-`good_lp` allows expressing constraints using either `f64` or `i32`. However, the solution's [values are `f64`](https://docs.rs/good_lp/1.4.0/good_lp/solvers/trait.Solution.html#tymethod.value).
+`good_lp` allows expressing [variable](https://docs.rs/good_lp/1.4.0/good_lp/variable/struct.Variable.html) constraints using either `f64` or `i32`. However, the solution's [values are `f64`](https://docs.rs/good_lp/1.4.0/good_lp/solvers/trait.Solution.html#tymethod.value).
 
 For instance:
 
