@@ -57,43 +57,6 @@ You can also directly use the underlying solver libraries, such as
 if you don't need a way to express your objective function and
 constraints using an idiomatic rust syntax.
 
-### Variable types
-
-`good_lp` allows expressing [variable](https://docs.rs/good_lp/1.4.0/good_lp/variable/struct.Variable.html) constraints using either `f64` or `i32`. However, the solution's [values are `f64`](https://docs.rs/good_lp/1.4.0/good_lp/solvers/trait.Solution.html#tymethod.value).
-
-For instance:
-
-```rust
-// Correct use of f64 and i32 for Variable struct and constraints
-  variables! {
-    problem:
-      a <= 10.0;
-      2 <= b <= 4;
-  };
-  let model = problem
-    .maximise(b)
-    .using(default_solver)
-    .with(constraint!(a + 2 <= b))
-    .with(constraint!(1 + a >= 4.0 - b));
-```
-
-Here, `a` and `b` are `Variable` instances that can take either continuous (floating-point) or integer values. Constraints can be expressed using either `f64` or `i32`, as shown in the example (but replacing for example `4.0` with a `usize` variable would fail).
-
-Solution values will always be `f64`, regardless of whether the variables were defined with `f64` or `i32`. So, even if you use integer variables, the solution will contain floating-point values for them.
-
-For example, when printing the solution:
-
-```rust
-// Correct use of f64 for solution values
-println!("a={}   b={}", solution.value(a), solution.value(b));
-println!("a + b = {}", solution.eval(a + b));
-
-// Incorrect use of i32 in combination with solution value (Will fail!)
-println!("a + 1 = {}", solution.value(a) + 1); // This will cause a compilation error!
-```
-
-The `solution.value(a)` and `solution.value(b)` will return `f64` values, and `solution.eval(a + b)` will also provide an `f64` value.
-
 ## Usage examples
 
 You can find a resource allocation problem example in
@@ -210,6 +173,48 @@ conda install --channel conda-forge scip
 ```
 
 [scip]: https://scipopt.org/
+
+
+## Variable types
+
+`good_lp` internally represents all [variable](https://docs.rs/good_lp/1.4.0/good_lp/variable/struct.Variable.html) values and coefficients as `f64`.
+It lets you express constraints using either `f64` or `i32` (in the latter case, the integer will be losslessly converted to a floating point number).
+The solution's [values are `f64`](https://docs.rs/good_lp/1.4.0/good_lp/solvers/trait.Solution.html#tymethod.value) as well.
+
+For instance:
+
+```rust
+// Correct use of f64 and i32 for Variable struct and constraints
+  variables! {
+    problem:
+      a <= 10.0;
+      2 <= b <= 4;
+  };
+  let model = problem
+    .maximise(b)
+    .using(default_solver)
+    .with(constraint!(a + 2 <= b))
+    .with(constraint!(1 + a >= 4.0 - b));
+```
+
+Here, `a` and `b` are `Variable` instances that can take either continuous (floating-point) or [integer values](https://docs.rs/good_lp/latest/good_lp/variable/struct.VariableDefinition.html#method.integer).
+Constraints can be expressed using either `f64` or `i32`, as shown in the example (but replacing for example `4.0` with a `usize` variable would fail, because an usize cannot be converted to an f64 losslessly).
+
+Solution values will always be `f64`, regardless of whether the variables were defined with `f64` or `i32`.
+So, even if you use integer variables, the solution object will store the integer variable values as `f64`.
+
+For example, when printing the solution:
+
+```rust
+// Correct use of f64 for solution values
+println!("a={}   b={}", solution.value(a), solution.value(b));
+println!("a + b = {}", solution.eval(a + b));
+
+// Incorrect use of i32 in combination with solution value (Will fail!)
+println!("a + 1 = {}", solution.value(a) + 1); // This will cause a compilation error!
+```
+
+The `solution.value(a)` and `solution.value(b)` will return `f64` values, and `solution.eval(a + b)` will also provide an `f64` value.
 
 ### License
 
