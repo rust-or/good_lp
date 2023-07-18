@@ -279,7 +279,7 @@ impl ProblemVariables {
     ///
     /// ```
     /// # use good_lp::*;
-    /// variables!{problem: 2 <= x <= 3;}
+    /// variables!{problem: y >= 0;}
     /// ```
     /// is equivalent to
     /// ```
