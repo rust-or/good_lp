@@ -106,9 +106,9 @@ fn linear_coefficients_str(
 ) -> StrExpression {
     StrExpression(
         expr.linear_coefficients()
-            .map(|(var, coeff)| format!("{} {}", coeff, variables[var.index()].name))
+            .map(|(var, coeff)| format!("{:+} {}", coeff, variables[var.index()].name))
             .collect::<Vec<String>>()
-            .join(" + "),
+            .join(" "),
     )
 }
 
@@ -120,5 +120,47 @@ pub struct LpSolution {
 impl Solution for LpSolution {
     fn value(&self, variable: Variable) -> f64 {
         self.solution[variable.index()]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::solvers::lp_solvers::{GlpkSolver, LpSolver};
+    use crate::variables;
+
+    #[test]
+    fn coefficient_formatting_pos_pos() {
+        variables! {vars: a; b; }
+        let problem = vars
+            .minimise(1 * a + 2 * b)
+            .using(LpSolver(GlpkSolver::new()));
+        assert_eq!(problem.problem.objective.0, "+2 b +1 a");
+    }
+
+    #[test]
+    fn coefficient_formatting_pos_neg() {
+        variables! {vars: a; b; }
+        let problem = vars
+            .minimise(1 * a - 2 * b)
+            .using(LpSolver(GlpkSolver::new()));
+        assert_eq!(problem.problem.objective.0, "-2 b +1 a");
+    }
+
+    #[test]
+    fn coefficient_formatting_neg_pos() {
+        variables! {vars: a; b; }
+        let problem = vars
+            .minimise(-1 * a + 2 * b)
+            .using(LpSolver(GlpkSolver::new()));
+        assert_eq!(problem.problem.objective.0, "+2 b -1 a");
+    }
+
+    #[test]
+    fn coefficient_formatting_neg_neg() {
+        variables! {vars: a; b; }
+        let problem = vars
+            .minimise(-1 * a - 2 * b)
+            .using(LpSolver(GlpkSolver::new()));
+        assert_eq!(problem.problem.objective.0, "-2 b -1 a");
     }
 }
