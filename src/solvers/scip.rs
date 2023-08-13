@@ -10,6 +10,8 @@ use russcip::model::ObjSense;
 use russcip::model::ProblemCreated;
 use russcip::model::Solved;
 use russcip::variable::VarType;
+use russcip::ProblemOrSolving;
+use russcip::WithSolutions;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
