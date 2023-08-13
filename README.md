@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   quadratic functions. For instance:
   you can maximise `3 * x + y`, but not `3 * x * y`.
 - **Continuous and integer variables**. good_lp itself supports mixed integer-linear programming (MILP),
-  but not all underlying solvers support integer variables.
+  but not all underlying solvers support integer variables. (see also [variable types](#variable-types))
 - **Not a solver**. This crate uses other rust crates to provide the solvers.
   There is no solving algorithm in good_lp itself. If you have an issue with a solver,
   report it to the solver directly. See below for the list of supported solvers.
@@ -70,7 +70,7 @@ you can also activate other solvers using cargo features.
 | solver feature name  | integer variables | no C compiler\* | no additional libs\*\* | fast |
 | -------------------- | ----------------- | --------------- | ---------------------- | ---- |
 | [`coin_cbc`][cbc]    | ✅                | ✅              | ❌                     | ✅   |
-| [`highs`][highs]     | ✅                | ❌              | ✅                     | ✅   |
+| [`highs`][highs]     | ✅                | ❌              | ✅\+                   | ✅   |
 | [`lpsolve`][lpsolve] | ✅                | ❌              | ✅                     | ❌   |
 | [`minilp`][minilp]   | ❌                | ✅              | ✅                     | ❌   |
 | [`lp-solvers`][lps]  | ✅                | ✅              | ✅                     | ❌   |
@@ -78,6 +78,7 @@ you can also activate other solvers using cargo features.
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
+- \+ highs itself is statically linked and does not require manual installation. However, on some systems, you may have to [install dependencies of highs itself](https://github.com/rust-or/good_lp/issues/29). 
 
 To use an alternative solver, put the following in your `Cargo.toml`:
 
@@ -172,6 +173,48 @@ conda install --channel conda-forge scip
 ```
 
 [scip]: https://scipopt.org/
+
+
+## Variable types
+
+`good_lp` internally represents all [variable](https://docs.rs/good_lp/1.4.0/good_lp/variable/struct.Variable.html) values and coefficients as `f64`.
+It lets you express constraints using either `f64` or `i32` (in the latter case, the integer will be losslessly converted to a floating point number).
+The solution's [values are `f64`](https://docs.rs/good_lp/1.4.0/good_lp/solvers/trait.Solution.html#tymethod.value) as well.
+
+For instance:
+
+```rust
+// Correct use of f64 and i32 for Variable struct and constraints
+  variables! {
+    problem:
+      a <= 10.0;
+      2 <= b <= 4;
+  };
+  let model = problem
+    .maximise(b)
+    .using(default_solver)
+    .with(constraint!(a + 2 <= b))
+    .with(constraint!(1 + a >= 4.0 - b));
+```
+
+Here, `a` and `b` are `Variable` instances that can take either continuous (floating-point) or [integer values](https://docs.rs/good_lp/latest/good_lp/variable/struct.VariableDefinition.html#method.integer).
+Constraints can be expressed using either `f64` or `i32`, as shown in the example (but replacing for example `4.0` with a `usize` variable would fail, because an usize cannot be converted to an f64 losslessly).
+
+Solution values will always be `f64`, regardless of whether the variables were defined with `f64` or `i32`.
+So, even if you use integer variables, the solution object will store the integer variable values as `f64`.
+
+For example, when printing the solution:
+
+```rust
+// Correct use of f64 for solution values
+println!("a={}   b={}", solution.value(a), solution.value(b));
+println!("a + b = {}", solution.eval(a + b));
+
+// Incorrect use of i32 in combination with solution value (Will fail!)
+println!("a + 1 = {}", solution.value(a) + 1); // This will cause a compilation error!
+```
+
+The `solution.value(a)` and `solution.value(b)` will return `f64` values, and `solution.eval(a + b)` will also provide an `f64` value.
 
 ### License
 

@@ -2,6 +2,7 @@
 //! of the fastest non-commercial solvers for mixed integer programming.
 
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use russcip::model::Model;
 use russcip::model::ModelWithProblem;
@@ -9,6 +10,8 @@ use russcip::model::ObjSense;
 use russcip::model::ProblemCreated;
 use russcip::model::Solved;
 use russcip::variable::VarType;
+use russcip::ProblemOrSolving;
+use russcip::WithSolutions;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
@@ -65,7 +68,7 @@ pub struct SCIPProblem {
     // the underlying SCIP model representing the problem
     model: Model<ProblemCreated>,
     // map from good_lp variables to SCIP variable ids
-    id_for_var: HashMap<Variable, usize>,
+    id_for_var: HashMap<Variable, Rc<russcip::Variable>>,
 }
 
 impl SCIPProblem {
@@ -86,7 +89,7 @@ impl SolverModel for SCIPProblem {
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let solved_model = self.model.solve();
-        let status = solved_model.get_status();
+        let status = solved_model.status();
         match status {
             russcip::status::Status::Optimal => Ok(SCIPSolved {
                 solved_problem: solved_model,
@@ -118,13 +121,14 @@ impl SolverModel for SCIPProblem {
         let mut vars_in_cons = Vec::with_capacity(n_vars_in_cons);
         let mut coeffs = Vec::with_capacity(n_vars_in_cons);
         for (&var, &coeff) in c.expression.linear.coefficients.iter() {
-            vars_in_cons.push(self.id_for_var[&var]);
+            let id = Rc::clone(&self.id_for_var[&var]);
+            vars_in_cons.push(id);
             coeffs.push(coeff);
         }
 
-        let index = self.model.get_n_conss() + 1;
+        let index = self.model.n_conss() + 1;
         self.model.add_cons(
-            &vars_in_cons,
+            vars_in_cons,
             &coeffs,
             lhs,
             constant,
@@ -138,18 +142,17 @@ impl SolverModel for SCIPProblem {
 /// A wrapper to a solved SCIP problem
 pub struct SCIPSolved {
     solved_problem: Model<Solved>,
-    id_for_var: HashMap<Variable, usize>,
+    id_for_var: HashMap<Variable, Rc<russcip::Variable>>,
 }
 
 impl Solution for SCIPSolved {
     fn value(&self, var: Variable) -> f64 {
         let sol = self
             .solved_problem
-            .get_best_sol()
+            .best_sol()
             .expect("This problem is expected to have Optimal status, a ");
-        let id = self.id_for_var[&var];
-        let scip_var = self.solved_problem.get_var(id).unwrap();
-        sol.get_var_val(&scip_var)
+        let id = Rc::clone(&self.id_for_var[&var]);
+        sol.val(id)
     }
 }
 

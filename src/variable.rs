@@ -17,7 +17,7 @@ use crate::solvers::{ObjectiveDirection, Solver};
 /// to express the [objective](ProblemVariables::optimise)
 /// and the [Constraints](crate::Constraint) of your model.
 ///
-/// Variables are created using [ProblemVariables::add]
+/// Variables are created using [ProblemVariables::add]. They implement std::ops basic math operations on f64 and i32 values.
 ///
 /// ## Warning
 /// `Eq` is implemented on this type, but
@@ -279,7 +279,7 @@ impl ProblemVariables {
     ///
     /// ```
     /// # use good_lp::*;
-    /// variables!{problem: 2 <= x <= 3;}
+    /// variables!{problem: y >= 0;}
     /// ```
     /// is equivalent to
     /// ```
