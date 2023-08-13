@@ -106,9 +106,9 @@ fn linear_coefficients_str(
 ) -> StrExpression {
     StrExpression(
         expr.linear_coefficients()
-            .map(|(var, coeff)| format!("{} {}", coeff, variables[var.index()].name))
+            .map(|(var, coeff)| format!("{:+} {}", coeff, variables[var.index()].name))
             .collect::<Vec<String>>()
-            .join(" + "),
+            .join(" "),
     )
 }
 
