@@ -131,28 +131,36 @@ mod tests {
     #[test]
     fn coefficient_formatting_pos_pos() {
         variables! {vars: a; b; }
-        let problem = vars.minimise(1 * a + 2 * b).using(LpSolver(GlpkSolver::new()));
+        let problem = vars
+            .minimise(1 * a + 2 * b)
+            .using(LpSolver(GlpkSolver::new()));
         assert_eq!(problem.problem.objective.0, "+2 b +1 a");
     }
 
     #[test]
     fn coefficient_formatting_pos_neg() {
         variables! {vars: a; b; }
-        let problem = vars.minimise(1 * a - 2 * b).using(LpSolver(GlpkSolver::new()));
+        let problem = vars
+            .minimise(1 * a - 2 * b)
+            .using(LpSolver(GlpkSolver::new()));
         assert_eq!(problem.problem.objective.0, "-2 b +1 a");
     }
 
     #[test]
     fn coefficient_formatting_neg_pos() {
         variables! {vars: a; b; }
-        let problem = vars.minimise(-1 * a + 2 * b).using(LpSolver(GlpkSolver::new()));
+        let problem = vars
+            .minimise(-1 * a + 2 * b)
+            .using(LpSolver(GlpkSolver::new()));
         assert_eq!(problem.problem.objective.0, "+2 b -1 a");
     }
 
     #[test]
     fn coefficient_formatting_neg_neg() {
         variables! {vars: a; b; }
-        let problem = vars.minimise(-1 * a - 2 * b).using(LpSolver(GlpkSolver::new()));
+        let problem = vars
+            .minimise(-1 * a - 2 * b)
+            .using(LpSolver(GlpkSolver::new()));
         assert_eq!(problem.problem.objective.0, "-2 b -1 a");
     }
 }
