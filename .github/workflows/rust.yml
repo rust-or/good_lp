@@ -16,6 +16,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: test
