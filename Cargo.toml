@@ -1,6 +1,6 @@
 [package]
 name = "good_lp"
-version = "1.4.2"
+version = "1.4.3"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
 repository = "https://github.com/rust-or/good_lp"
@@ -22,7 +22,7 @@ minilp = { version = "0.2", optional = true }
 lpsolve = { version = "0.1", optional = true }
 highs = { version = "1.5.0", optional = true }
 russcip = { version = "0.2.4", optional = true }
-lp-solvers = { version = "0.0.4", features = ["cplex"], optional = true }
+lp-solvers = { version = "1.0.0", features = ["cplex"], optional = true }
 fnv = "1.0.5"
 
 [dev-dependencies]
