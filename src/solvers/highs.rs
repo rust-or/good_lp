@@ -319,3 +319,9 @@ impl WithMipGap for HighsProblem {
         self.set_mip_rel_gap(mip_gap)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{highs, solvers::WithMipGap};
+    mipgap_tests!(highs);
+}

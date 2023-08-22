@@ -9,6 +9,9 @@ use crate::variable::UnsolvedProblem;
 use crate::Constraint;
 use crate::{constraint::ConstraintReference, IntoAffineExpression, Variable};
 
+#[macro_use]
+mod macros;
+
 #[cfg(feature = "coin_cbc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
 pub mod coin_cbc;

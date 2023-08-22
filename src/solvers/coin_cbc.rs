@@ -211,3 +211,9 @@ impl WithMipGap for CoinCbcProblem {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{coin_cbc, solvers::WithMipGap};
+    mipgap_tests!(coin_cbc);
+}
