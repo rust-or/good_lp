@@ -54,6 +54,22 @@ impl<T: lp_solvers::solvers::SolverTrait + Clone> Solver for LpSolver<T> {
     }
 }
 
+impl<T> crate::solvers::WithMipGap for Model<T>
+where
+    T: lp_solvers::solvers::WithMipGap<T>,
+{
+    fn mip_gap(&self) -> Option<f32> {
+        self.solver.mip_gap()
+    }
+
+    fn with_mip_gap(mut self, mip_gap: f32) -> Result<Self, String> {
+        self.solver.with_mip_gap(mip_gap).map(|solver| {
+            self.solver = solver;
+            self
+        })
+    }
+}
+
 /// A problem to be used by lp-solvers
 pub struct Model<T> {
     problem: lp_solvers::problem::Problem,

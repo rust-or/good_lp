@@ -3,7 +3,7 @@
 use highs::HighsModelStatus;
 
 use crate::solvers::{
-    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
+    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel, WithMipGap,
 };
 use crate::{
     constraint::ConstraintReference,
@@ -120,8 +120,8 @@ struct HighsOptions {
     presolve: HighsPresolveType,
     solver: HighsSolverType,
     parallel: HighsParallelType,
-    mip_abs_gap: f64,
-    mip_rel_gap: f64,
+    mip_abs_gap: Option<f32>,
+    mip_rel_gap: Option<f32>,
     time_limit: f64,
     threads: u32,
 }
@@ -132,8 +132,8 @@ impl Default for HighsOptions {
             presolve: HighsPresolveType::Choose,
             solver: HighsSolverType::Choose,
             parallel: HighsParallelType::Choose,
-            mip_abs_gap: 1.0e-6,
-            mip_rel_gap: 1.0e-4,
+            mip_abs_gap: None,
+            mip_rel_gap: None,
             time_limit: f64::MAX,
             threads: 0,
         }
@@ -180,15 +180,23 @@ impl HighsProblem {
     }
 
     /// Sets HiGHS Tolerance on Absolute Gap Option
-    pub fn set_mip_abs_gap(mut self, mip_abs_gap: f64) -> HighsProblem {
-        self.options.mip_abs_gap = mip_abs_gap;
-        self
+    pub fn set_mip_abs_gap(mut self, mip_abs_gap: f32) -> Result<HighsProblem, String> {
+        if mip_abs_gap.is_sign_positive() && mip_abs_gap.is_finite() {
+            self.options.mip_abs_gap = Some(mip_abs_gap);
+            Ok(self)
+        } else {
+            Err("Invalid MIP gap: must be positive and finite".to_string())
+        }
     }
 
     /// Sets HiGHS Tolerance on Relative Gap Option
-    pub fn set_mip_rel_gap(mut self, mip_rel_gap: f64) -> HighsProblem {
-        self.options.mip_rel_gap = mip_rel_gap;
-        self
+    pub fn set_mip_rel_gap(mut self, mip_rel_gap: f32) -> Result<HighsProblem, String> {
+        if mip_rel_gap.is_sign_positive() && mip_rel_gap.is_finite() {
+            self.options.mip_rel_gap = Some(mip_rel_gap);
+            Ok(self)
+        } else {
+            Err("Invalid MIP gap: must be positive and finite".to_string())
+        }
     }
 
     /// Sets HiGHS Time Limit Option
@@ -220,8 +228,15 @@ impl SolverModel for HighsProblem {
         model.set_option("presolve", options.presolve.as_str());
         model.set_option("solver", options.solver.as_str());
         model.set_option("parallel", options.parallel.as_str());
-        model.set_option("mip_abs_gap", options.mip_abs_gap);
-        model.set_option("mip_rel_gap", options.mip_rel_gap);
+
+        if let Some(mip_abs_gap) = options.mip_abs_gap {
+            model.set_option("mip_abs_gap", mip_abs_gap as f64);
+        }
+
+        if let Some(mip_rel_gap) = options.mip_rel_gap {
+            model.set_option("mip_rel_gap", mip_rel_gap as f64);
+        }
+
         model.set_option("time_limit", options.time_limit);
         model.set_option("threads", options.threads as i32);
 
@@ -292,5 +307,15 @@ impl<'a> SolutionWithDual<'a> for HighsSolution {
 
     fn compute_dual(&'a mut self) -> &'a HighsSolution {
         self
+    }
+}
+
+impl WithMipGap for HighsProblem {
+    fn mip_gap(&self) -> Option<f32> {
+        self.options.mip_rel_gap
+    }
+
+    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, String> {
+        self.set_mip_rel_gap(mip_gap)
     }
 }

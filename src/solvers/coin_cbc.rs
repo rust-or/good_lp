@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 
-use crate::solvers::ModelWithSOS1;
+use crate::solvers::{ModelWithSOS1, WithMipGap};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
@@ -56,6 +56,7 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         model,
         columns,
         has_sos: false,
+        mip_gap: None,
     }
 }
 
@@ -64,6 +65,7 @@ pub struct CoinCbcProblem {
     model: Model,
     columns: Vec<Col>,
     has_sos: bool,
+    mip_gap: Option<f32>,
 }
 
 impl CoinCbcProblem {
@@ -113,6 +115,10 @@ impl SolverModel for CoinCbcProblem {
             self.model.set_weight(dummy_row, dummy_col1, 1.);
             self.model.set_weight(dummy_row, dummy_col2, 1.);
             self.model.set_row_upper(dummy_row, 1.);
+        }
+
+        if let Some(mip_gap) = self.mip_gap {
+            self.set_parameter("ratiogap", &mip_gap.to_string());
         }
 
         let solution = self.model.solve();
@@ -188,5 +194,20 @@ impl Solution for CoinCbcSolution {
     fn value(&self, variable: Variable) -> f64 {
         // Our indices should always match those of cbc
         self.solution_vec[variable.index()]
+    }
+}
+
+impl WithMipGap for CoinCbcProblem {
+    fn mip_gap(&self) -> Option<f32> {
+        self.mip_gap
+    }
+
+    fn with_mip_gap(mut self, mip_gap: f32) -> Result<Self, String> {
+        if mip_gap.is_sign_positive() && mip_gap.is_finite() {
+            self.mip_gap = Some(mip_gap);
+            Ok(self)
+        } else {
+            Err("Invalid MIP gap: must be positive and finite".to_string())
+        }
     }
 }

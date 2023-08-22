@@ -234,3 +234,14 @@ pub trait ModelWithSOS1 {
         self
     }
 }
+
+/// A model that supports setting the MIP gap
+pub trait WithMipGap {
+    /// Get the relative MIP gap
+    fn mip_gap(&self) -> Option<f32>;
+
+    /// Set the relative MIP gap
+    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, String>
+    where
+        Self: Sized;
+}
