@@ -267,6 +267,24 @@ pub trait WithMipGap {
     fn mip_gap(&self) -> Option<f32>;
 
     /// Set the relative MIP gap
+    ///
+    /// ```
+    /// use good_lp::*;
+    /// # // Not all solvers support setting the MIP gap
+    /// # #[cfg(any(feature = "highs", feature = "coin_cbc"))] {
+    /// # let solver = default_solver;
+    /// variables! { problem:
+    ///     0 <= x (integer) <= 5;
+    ///     0 <= y (integer) <= 10;
+    /// }
+    /// let model = problem
+    ///     .maximise(x + y)
+    ///     .using(solver)
+    ///     .with_mip_gap(0.125)
+    ///     .unwrap();
+    /// assert_eq!(model.mip_gap(), Some(0.125));
+    /// # }
+    /// ```
     fn with_mip_gap(self, mip_gap: f32) -> Result<Self, MipGapError>
     where
         Self: Sized;
