@@ -17,7 +17,7 @@ where
     S: Solver,
     S::Model: WithMipGap,
 {
-    variables! { vars: a <= 1; };
+    variables! { vars: 0 <= a (integer) <= 10; };
 
     let mut model = vars.maximise(a).using(solver);
     assert_eq!(model.mip_gap(), None);
