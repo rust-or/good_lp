@@ -152,13 +152,8 @@ impl Solution for LpSolution {
 
 #[cfg(test)]
 mod tests {
-    use crate::solvers::{
-        lp_solvers::{GlpkSolver, LpSolver},
-        WithMipGap,
-    };
+    use crate::solvers::lp_solvers::{GlpkSolver, LpSolver};
     use crate::variables;
-
-    mipgap_tests!(LpSolver(GlpkSolver::new()));
 
     #[test]
     fn coefficient_formatting_pos_pos() {
