@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 
-use crate::solvers::{ModelWithSOS1, WithMipGap};
+use crate::solvers::{MipGapError, ModelWithSOS1, WithMipGap};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
@@ -202,12 +202,14 @@ impl WithMipGap for CoinCbcProblem {
         self.mip_gap
     }
 
-    fn with_mip_gap(mut self, mip_gap: f32) -> Result<Self, String> {
-        if mip_gap.is_sign_positive() && mip_gap.is_finite() {
+    fn with_mip_gap(mut self, mip_gap: f32) -> Result<Self, MipGapError> {
+        if mip_gap.is_sign_negative() {
+            Err(MipGapError::Negative)
+        } else if mip_gap.is_infinite() {
+            Err(MipGapError::Infinite)
+        } else {
             self.mip_gap = Some(mip_gap);
             Ok(self)
-        } else {
-            Err("Invalid MIP gap: must be positive and finite".to_string())
         }
     }
 }

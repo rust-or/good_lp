@@ -10,7 +10,7 @@ pub use lp_solvers::solvers::*;
 use lp_solvers::util::UniqueNameGenerator;
 
 use crate::constraint::ConstraintReference;
-use crate::solvers::ObjectiveDirection;
+use crate::solvers::{MipGapError, ObjectiveDirection};
 use crate::variable::UnsolvedProblem;
 use crate::{
     Constraint, Expression, IntoAffineExpression, ResolutionError, Solution, Solver, SolverModel,
@@ -62,11 +62,22 @@ where
         self.solver.mip_gap()
     }
 
-    fn with_mip_gap(mut self, mip_gap: f32) -> Result<Self, String> {
-        self.solver.with_mip_gap(mip_gap).map(|solver| {
-            self.solver = solver;
-            self
-        })
+    fn with_mip_gap(mut self, mip_gap: f32) -> Result<Self, MipGapError> {
+        match self.solver.with_mip_gap(mip_gap) {
+            Ok(solver) => {
+                self.solver = solver;
+                Ok(self)
+            }
+            Err(err) => {
+                if mip_gap.is_sign_negative() {
+                    Err(MipGapError::Negative)
+                } else if mip_gap.is_infinite() {
+                    Err(MipGapError::Infinite)
+                } else {
+                    Err(MipGapError::Other(err))
+                }
+            }
+        }
     }
 }
 

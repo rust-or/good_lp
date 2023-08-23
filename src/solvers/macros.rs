@@ -19,7 +19,11 @@ macro_rules! mipgap_tests {
         fn mipgap_neg_zero() {
             $crate::variables! { vars: a <= 1; };
             let model = vars.maximise(a).using($solver).with_mip_gap(-0.0);
-            assert!(model.is_err());
+            // Ok return type might not implement Debug so we map it to something simple
+            assert_eq!(
+                model.map(|_| "Success"),
+                Err($crate::solvers::MipGapError::Negative)
+            );
         }
 
         #[test]
@@ -33,14 +37,22 @@ macro_rules! mipgap_tests {
         fn mipgap_neg_nonzero() {
             $crate::variables! { vars: a <= 1; };
             let model = vars.maximise(a).using($solver).with_mip_gap(-0.5);
-            assert!(model.is_err());
+            // Ok return type might not implement Debug so we map it to something simple
+            assert_eq!(
+                model.map(|_| "Success"),
+                Err($crate::solvers::MipGapError::Negative)
+            );
         }
 
         #[test]
         fn mipgap_pos_infinity() {
             $crate::variables! { vars: a <= 1; };
             let model = vars.maximise(a).using($solver).with_mip_gap(f32::INFINITY);
-            assert!(model.is_err());
+            // Ok return type might not implement Debug so we map it to something simple
+            assert_eq!(
+                model.map(|_| "Success"),
+                Err($crate::solvers::MipGapError::Infinite)
+            );
         }
 
         #[test]
@@ -50,7 +62,11 @@ macro_rules! mipgap_tests {
                 .maximise(a)
                 .using($solver)
                 .with_mip_gap(f32::NEG_INFINITY);
-            assert!(model.is_err());
+            // Ok return type might not implement Debug so we map it to something simple
+            assert_eq!(
+                model.map(|_| "Success"),
+                Err($crate::solvers::MipGapError::Negative)
+            );
         }
     };
 }

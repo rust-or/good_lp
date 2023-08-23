@@ -123,6 +123,32 @@ impl From<String> for ResolutionError {
 
 impl Error for ResolutionError {}
 
+/// Represents an error setting the MIP gap
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum MipGapError {
+    /// The MIP gap is negative (must be >= 0)
+    Negative,
+    /// The MIP gap is infinite (must be finite)
+    Infinite,
+    /// Another error occurred
+    Other(String),
+}
+
+impl Display for MipGapError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MipGapError::Negative => write!(f, "Negative: The MIP gap is negative"),
+            MipGapError::Infinite => write!(f, "Infinite: The MIP gap is infinite"),
+            MipGapError::Other(s) => {
+                write!(f, "An unexpected error occurred setting the MIP Gap: {s}")
+            }
+        }
+    }
+}
+
+impl Error for MipGapError {}
+
 /// A solver's own representation of a model, to which constraints can be added.
 pub trait SolverModel {
     /// The type of the solution to the problem
@@ -244,7 +270,7 @@ pub trait WithMipGap {
     fn mip_gap(&self) -> Option<f32>;
 
     /// Set the relative MIP gap
-    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, String>
+    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, MipGapError>
     where
         Self: Sized;
 }

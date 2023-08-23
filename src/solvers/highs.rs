@@ -3,7 +3,8 @@
 use highs::HighsModelStatus;
 
 use crate::solvers::{
-    ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel, WithMipGap,
+    MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
+    WithMipGap,
 };
 use crate::{
     constraint::ConstraintReference,
@@ -180,22 +181,26 @@ impl HighsProblem {
     }
 
     /// Sets HiGHS Tolerance on Absolute Gap Option
-    pub fn set_mip_abs_gap(mut self, mip_abs_gap: f32) -> Result<HighsProblem, String> {
-        if mip_abs_gap.is_sign_positive() && mip_abs_gap.is_finite() {
+    pub fn set_mip_abs_gap(mut self, mip_abs_gap: f32) -> Result<HighsProblem, MipGapError> {
+        if mip_abs_gap.is_sign_negative() {
+            Err(MipGapError::Negative)
+        } else if mip_abs_gap.is_infinite() {
+            Err(MipGapError::Infinite)
+        } else {
             self.options.mip_abs_gap = Some(mip_abs_gap);
             Ok(self)
-        } else {
-            Err("Invalid MIP gap: must be positive and finite".to_string())
         }
     }
 
     /// Sets HiGHS Tolerance on Relative Gap Option
-    pub fn set_mip_rel_gap(mut self, mip_rel_gap: f32) -> Result<HighsProblem, String> {
-        if mip_rel_gap.is_sign_positive() && mip_rel_gap.is_finite() {
+    pub fn set_mip_rel_gap(mut self, mip_rel_gap: f32) -> Result<HighsProblem, MipGapError> {
+        if mip_rel_gap.is_sign_negative() {
+            Err(MipGapError::Negative)
+        } else if mip_rel_gap.is_infinite() {
+            Err(MipGapError::Infinite)
+        } else {
             self.options.mip_rel_gap = Some(mip_rel_gap);
             Ok(self)
-        } else {
-            Err("Invalid MIP gap: must be positive and finite".to_string())
         }
     }
 
@@ -315,7 +320,7 @@ impl WithMipGap for HighsProblem {
         self.options.mip_rel_gap
     }
 
-    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, String> {
+    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, MipGapError> {
         self.set_mip_rel_gap(mip_gap)
     }
 }
