@@ -120,6 +120,32 @@ impl From<String> for ResolutionError {
 
 impl Error for ResolutionError {}
 
+/// Represents an error setting the MIP gap
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum MipGapError {
+    /// The MIP gap is negative (must be >= 0)
+    Negative,
+    /// The MIP gap is infinite (must be finite)
+    Infinite,
+    /// Another error occurred
+    Other(String),
+}
+
+impl Display for MipGapError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MipGapError::Negative => write!(f, "Negative: The MIP gap is negative"),
+            MipGapError::Infinite => write!(f, "Infinite: The MIP gap is infinite"),
+            MipGapError::Other(s) => {
+                write!(f, "An unexpected error occurred setting the MIP Gap: {s}")
+            }
+        }
+    }
+}
+
+impl Error for MipGapError {}
+
 /// A solver's own representation of a model, to which constraints can be added.
 pub trait SolverModel {
     /// The type of the solution to the problem
@@ -233,4 +259,107 @@ pub trait ModelWithSOS1 {
         self.add_sos1(variables_and_weights);
         self
     }
+}
+
+/// A model that supports setting the MIP gap
+///
+/// Setting the MIP gap can cause the solver to return a solution faster at the
+/// expense of being suboptimal within a specified tolerance.  Solvers vary in
+/// their definition of the relative MIP gap but common definitions are
+///
+/// |UpperBound - LowerBound| / |UpperBound| *or* |UpperBound - LowerBound| / |LowerBound|
+///
+/// where, for maximisation, UpperBound is the upper bound of the relaxed solution
+/// and LowerBound is the lower bound of the integer solution.
+///
+/// For example, setting the MIP gap to 0.1 would return a solution that's within
+/// 10% of the solver's estimate of the best possible solution.
+pub trait WithMipGap {
+    /// Get the relative MIP gap
+    fn mip_gap(&self) -> Option<f32>;
+
+    /// Set the relative MIP gap
+    ///
+    /// ```
+    /// // Knapsack problem
+    /// //
+    /// // Given a set of objects, each with a value and a cost, find the subset of
+    /// // objects that maximises total value without exceeding a total cost budget
+    ///
+    /// use good_lp::*;
+    /// # // Not all solvers support setting the MIP gap
+    /// # #[cfg(any(feature = "highs", feature = "coin_cbc"))] {
+    /// # let solver = default_solver;
+    ///
+    /// // (value, cost) of each object
+    /// let objects: Vec<(f64, f64)> = vec![
+    ///     (1.87, 6.03),
+    ///     (3.22, 8.03),
+    ///     (9.91, 5.16),
+    ///     (8.31, 1.72),
+    ///     (7.00, 6.33),
+    ///     (5.15, 8.20),
+    ///     (8.01, 4.63),
+    ///     (2.22, 1.50),
+    ///     (7.04, 6.26),
+    ///     (8.99, 9.62),
+    ///     (2.13, 4.00),
+    ///     (8.02, 8.02),
+    ///     (3.07, 1.92),
+    ///     (1.98, 9.03),
+    ///     (7.23, 9.51),
+    ///     (4.08, 3.24),
+    ///     (9.65, 5.13),
+    ///     (6.53, 3.07),
+    ///     (6.76, 3.84),
+    ///     (9.63, 8.33),
+    /// ];
+    ///
+    /// let budget: f64 = 25.0;
+    ///
+    /// let value_optimal = knapsack_value(solver, &objects, budget, None);
+    /// let value_suboptimal = knapsack_value(solver, &objects, budget, Some(0.5));
+    ///
+    /// // NOTE: this assertion may fail if the solver finds an optimal solution
+    /// // before it checks the MIP gap
+    /// assert!(value_suboptimal < value_optimal);
+    ///
+    /// fn knapsack_value<S>(
+    ///     solver: S,
+    ///     objects: &[(f64, f64)],
+    ///     budget: f64,
+    ///     mipgap: Option<f32>,
+    /// ) -> f64
+    /// where
+    ///     S: Solver,
+    ///     S::Model: SolverModel + WithMipGap,
+    /// {
+    ///     let mut prob_vars = ProblemVariables::new();
+    ///     let mut objective = Expression::with_capacity(objects.len());
+    ///     let mut constraint = Expression::with_capacity(objects.len());
+    ///
+    ///     for (value, cost) in objects {
+    ///         let var = prob_vars.add(variable().binary());
+    ///         objective.add_mul(*value, var);
+    ///         constraint.add_mul(*cost, var);
+    ///     }
+    ///
+    ///     let mut model = prob_vars.maximise(objective.clone()).using(solver);
+    ///
+    ///     if let Some(gap) = mipgap {
+    ///         model = model.with_mip_gap(gap).unwrap();
+    ///     }
+    ///
+    ///     model.add_constraint(constraint.leq(budget));
+    ///
+    ///     let solution = model.solve().unwrap();
+    ///
+    ///     // For this example we're interested only in the total value, not in the objects selected
+    ///     objective.eval_with(&solution)
+    /// }
+    /// # }
+    /// ```
+    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, MipGapError>
+    where
+        Self: Sized;
 }
