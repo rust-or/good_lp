@@ -65,78 +65,40 @@
 //!
 
 pub use affine_expression_trait::IntoAffineExpression;
+use cfg_if::cfg_if;
 pub use constraint::Constraint;
 pub use expression::Expression;
-#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
-#[cfg(feature = "coin_cbc")]
-pub use solvers::coin_cbc::coin_cbc;
-#[cfg(feature = "coin_cbc")]
-/// When the "coin_cbc" cargo feature is present, it is used as the default solver
-pub use solvers::coin_cbc::coin_cbc as default_solver;
-#[cfg(feature = "highs")]
-#[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
-pub use solvers::highs::highs;
-#[cfg(not(any(feature = "coin_cbc", feature = "minilp", feature = "lpsolve")))]
-#[cfg(feature = "highs")]
-/// When the "highs" cargo feature is present, highs is used as the default solver
-pub use solvers::highs::highs as default_solver;
-#[cfg(feature = "lp-solvers")]
-#[cfg_attr(docsrs, doc(cfg(feature = "lp-solvers")))]
-pub use solvers::lp_solvers::LpSolver;
-#[cfg(feature = "lpsolve")]
-#[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
-pub use solvers::lpsolve::lp_solve;
-#[cfg(not(any(feature = "coin_cbc", feature = "minilp")))]
-#[cfg(feature = "lpsolve")]
-/// When the "lpsolve" cargo feature is present, lpsolve is used as the default solver
-pub use solvers::lpsolve::lp_solve as default_solver;
-#[cfg(feature = "minilp")]
-#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
-pub use solvers::minilp::minilp;
-#[cfg(not(feature = "coin_cbc"))]
-#[cfg(feature = "minilp")]
-/// When the "coin_cbc" cargo feature is absent, minilp is used as the default solver
-pub use solvers::minilp::minilp as default_solver;
-#[cfg(feature = "scip")]
-#[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
-pub use solvers::scip::scip;
-#[cfg(not(any(
-    feature = "coin_cbc",
-    feature = "minilp",
-    feature = "lpsolve",
-    feature = "highs"
-)))]
-#[cfg(feature = "scip")]
-pub use solvers::scip::scip as default_solver;
-pub use solvers::{
-    DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel,
-    StaticSolver, WithMipGap,
-};
-pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 
-#[cfg(not(any(
-    feature = "coin_cbc",
-    feature = "minilp",
-    feature = "lpsolve",
-    feature = "highs",
-    feature = "scip",
-)))]
-#[cfg(feature = "lp-solvers")]
-/// Default solvers for the 'lp-solvers' feature: a solver that calls Cbc as an external command
-#[allow(non_upper_case_globals)]
-pub const default_solver: LpSolver<
-    solvers::lp_solvers::StaticSolver<solvers::lp_solvers::AllSolvers>,
-> = LpSolver(solvers::lp_solvers::StaticSolver::new());
-
-#[cfg(not(any(
-    feature = "coin_cbc",
-    feature = "minilp",
-    feature = "lpsolve",
-    feature = "highs",
-    feature = "lp-solvers",
-    feature = "scip",
-)))]
-compile_error!(
+cfg_if! {
+    if #[cfg(feature = "coin_cbc")] {
+        /// When the "coin_cbc" cargo feature is present, it is used as the default solver
+        #[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
+        pub use solvers::coin_cbc::coin_cbc as default_solver;
+        pub use solvers::coin_cbc::DEFAULT_SOLVER_NAME;
+    } else if #[cfg(feature = "minilp")] {
+        /// When the "coin_cbc" cargo feature is absent, minilp is used as the default solver
+        pub use solvers::minilp::minilp as default_solver;
+        pub use solvers::minilp::DEFAULT_SOLVER_NAME;
+    } else if #[cfg(feature = "lpsolve")] {
+        /// When the "lpsolve" cargo feature is present, lpsolve is used as the default solver
+        pub use solvers::lpsolve::lp_solve as default_solver;
+        pub use solvers::lpsolve::DEFAULT_SOLVER_NAME;
+    } else if #[cfg(feature = "highs")] {
+        /// When the "highs" cargo feature is present, highs is used as the default solver
+        pub use solvers::highs::highs as default_solver;
+        pub use solvers::highs::DEFAULT_SOLVER_NAME;
+    } else if #[cfg(feature = "scip")] {
+        pub use solvers::scip::scip as default_solver;
+        pub use solvers::scip::DEFAULT_SOLVER_NAME;
+    } else if #[cfg(feature = "lp-solvers")] {
+        /// Default solvers for the 'lp-solvers' feature: a solver that calls Cbc as an external command
+        #[allow(non_upper_case_globals)]
+        pub const default_solver: LpSolver<
+            solvers::lp_solvers::StaticSolver<solvers::lp_solvers::AllSolvers>,
+        > = LpSolver(solvers::lp_solvers::StaticSolver::new());
+        pub use solvers::lp_solvers::DEFAULT_SOLVER_NAME;
+    } else {
+        compile_error!(
     "No solver available. \
 You need to activate at least one solver feature flag in good_lp. \
 You can do by adding the following to your Cargo.toml :
@@ -144,6 +106,33 @@ You can do by adding the following to your Cargo.toml :
 good_lp = { version = \"*\", features = [\"minilp\"] }
 "
 );
+    }
+}
+
+#[cfg(feature = "coin_cbc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
+pub use solvers::coin_cbc::coin_cbc;
+#[cfg(feature = "highs")]
+#[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
+pub use solvers::highs::highs;
+#[cfg(feature = "lp-solvers")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lp-solvers")))]
+pub use solvers::lp_solvers::LpSolver;
+#[cfg(feature = "lpsolve")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
+pub use solvers::lpsolve::lp_solve;
+#[cfg(feature = "minilp")]
+#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
+pub use solvers::minilp::minilp;
+#[cfg(feature = "scip")]
+#[cfg_attr(docsrs, doc(cfg(feature = "scip")))]
+pub use solvers::scip::scip;
+
+pub use solvers::{
+    DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel,
+    StaticSolver, WithMipGap,
+};
+pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 
 mod expression;
 #[macro_use]

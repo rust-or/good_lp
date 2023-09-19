@@ -14,6 +14,10 @@ use crate::{
 };
 use crate::{Constraint, Variable};
 
+/// String constant storing the name of the default solver.
+/// Re-exported in `src/lib.rs`.
+pub const DEFAULT_SOLVER_NAME: &str = "cbc";
+
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
 /// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)
 pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {

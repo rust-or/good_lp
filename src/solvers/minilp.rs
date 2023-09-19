@@ -11,6 +11,10 @@ use crate::{
 };
 use crate::{Constraint, Variable};
 
+/// String constant storing the name of the default solver.
+/// Re-exported in `src/lib.rs`.
+pub const DEFAULT_SOLVER_NAME: &str = "minilp";
+
 /// The [minilp](https://docs.rs/minilp) solver,
 /// to be used with [UnsolvedProblem::using].
 pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {

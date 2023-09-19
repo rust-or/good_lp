@@ -13,6 +13,10 @@ use crate::{
 };
 use crate::{Constraint, IntoAffineExpression, Variable};
 
+/// String constant storing the name of the default solver.
+/// Re-exported in `src/lib.rs`.
+pub const DEFAULT_SOLVER_NAME: &str = "highs";
+
 /// The [highs](https://docs.rs/highs) solver,
 /// to be used with [UnsolvedProblem::using].
 ///

@@ -17,6 +17,10 @@ use crate::{
     Variable,
 };
 
+/// String constant storing the name of the default solver.
+/// Re-exported in `src/lib.rs`.
+pub const DEFAULT_SOLVER_NAME: &str = "lp_solvers";
+
 /// An external solver
 pub struct LpSolver<T: lp_solvers::solvers::SolverTrait>(pub T);
 

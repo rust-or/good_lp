@@ -17,6 +17,7 @@ singlethread-cbc = ["coin_cbc?/singlethread-cbc"]
 scip = ["russcip"]
 
 [dependencies]
+cfg-if = "1.0.0"
 coin_cbc = { version = "0.1", optional = true, default-features = false }
 minilp = { version = "0.2", optional = true }
 lpsolve = { version = "0.1", optional = true }

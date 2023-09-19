@@ -20,6 +20,10 @@ use crate::{
 };
 use crate::{Constraint, Variable};
 
+/// String constant storing the name of the default solver.
+/// Re-exported in `src/lib.rs`.
+pub const DEFAULT_SOLVER_NAME: &str = "scip";
+
 /// The [SCIP](https://scipopt.org) solver,
 /// to be used with [UnsolvedProblem::using].
 pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {

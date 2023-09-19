@@ -12,6 +12,10 @@ use std::convert::TryInto;
 use std::ffi::CString;
 use std::os::raw::c_int;
 
+/// String constant storing the name of the default solver.
+/// Re-exported in `src/lib.rs`.
+pub const DEFAULT_SOLVER_NAME: &str = "lpsolve";
+
 fn expr_to_scatter_vec<E: IntoAffineExpression>(expr: E) -> (Vec<f64>, Vec<c_int>, f64) {
     let constant = expr.constant();
     let mut indices: Vec<c_int> = vec![];
