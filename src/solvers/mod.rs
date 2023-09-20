@@ -45,7 +45,7 @@ pub trait Solver {
 }
 
 /// Returns the name of a solver
-/// 
+///
 /// ```
 /// # #[cfg(feature = "coin_cbc")] {
 /// use good_lp::*;

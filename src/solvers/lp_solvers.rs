@@ -6,7 +6,7 @@ use std::cmp::Ordering;
 
 use lp_solvers::lp_format::LpObjective;
 use lp_solvers::problem::StrExpression;
-pub use lp_solvers::solvers::{Status, SolverTrait};
+pub use lp_solvers::solvers::{SolverTrait, Status};
 use lp_solvers::util::UniqueNameGenerator;
 
 use crate::constraint::ConstraintReference;
