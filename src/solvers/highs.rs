@@ -280,6 +280,10 @@ impl SolverModel for HighsProblem {
         }
         ConstraintReference { index }
     }
+
+    fn name() -> &'static str {
+        "Highs"
+    }
 }
 
 /// The solution to a highs problem

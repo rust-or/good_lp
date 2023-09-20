@@ -100,6 +100,10 @@ impl SolverModel for MiniLpProblem {
         self.n_constraints += 1;
         ConstraintReference { index }
     }
+
+    fn name() -> &'static str {
+        "Minilp"
+    }
 }
 
 impl From<minilp::Error> for ResolutionError {

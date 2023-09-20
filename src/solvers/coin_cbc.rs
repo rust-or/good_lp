@@ -159,6 +159,10 @@ impl SolverModel for CoinCbcProblem {
         }
         ConstraintReference { index }
     }
+
+    fn name() -> &'static str {
+        "Coin Cbc"
+    }
 }
 
 /// Unfortunately, the current version of cbc silently ignores

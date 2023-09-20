@@ -137,6 +137,10 @@ impl SolverModel for SCIPProblem {
 
         ConstraintReference { index }
     }
+
+    fn name() -> &'static str {
+        "SCIP"
+    }
 }
 
 /// A wrapper to a solved SCIP problem
