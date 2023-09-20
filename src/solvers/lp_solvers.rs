@@ -6,15 +6,15 @@ use std::cmp::Ordering;
 
 use lp_solvers::lp_format::LpObjective;
 use lp_solvers::problem::StrExpression;
-pub use lp_solvers::solvers::{SolverTrait, Status};
+pub use lp_solvers::solvers::*;
 use lp_solvers::util::UniqueNameGenerator;
 
 use crate::constraint::ConstraintReference;
 use crate::solvers::{MipGapError, ObjectiveDirection};
 use crate::variable::UnsolvedProblem;
 use crate::{
-    Constraint, Expression, IntoAffineExpression, ResolutionError, Solution, Solver, SolverModel,
-    Variable,
+    Constraint, Expression, IntoAffineExpression, ResolutionError, Solution as GoodLpSolution,
+    Solver, SolverModel, Variable,
 };
 
 /// An external solver
@@ -152,7 +152,7 @@ pub struct LpSolution {
     solution: Vec<f64>,
 }
 
-impl Solution for LpSolution {
+impl GoodLpSolution for LpSolution {
     fn value(&self, variable: Variable) -> f64 {
         self.solution[variable.index()]
     }
