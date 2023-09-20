@@ -110,7 +110,7 @@ pub use solvers::scip::scip;
 pub use solvers::scip::scip as default_solver;
 pub use solvers::{
     DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel,
-    StaticSolver, WithMipGap,
+    StaticSolver, WithMipGap, solver_name
 };
 pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 

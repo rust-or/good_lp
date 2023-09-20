@@ -44,6 +44,18 @@ pub trait Solver {
     fn name() -> &'static str;
 }
 
+/// Returns the name of a solver
+/// 
+/// ```
+/// # #[cfg(feature = "coin_cbc")] {
+/// use good_lp::*;
+/// assert_eq!(solver_name(default_solver), "Coin Cbc");
+/// }
+/// ```
+pub fn solver_name<T: Solver>(_: T) -> &'static str {
+    <T as Solver>::name()
+}
+
 /// A solver that is valid for the static lifetime
 pub trait StaticSolver: Solver + 'static {}
 
