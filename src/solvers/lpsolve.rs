@@ -121,7 +121,7 @@ impl SolverModel for LpSolveProblem {
     }
 
     fn name() -> &'static str {
-        "External lpsolve solver"
+        "lp_solve"
     }
 }
 

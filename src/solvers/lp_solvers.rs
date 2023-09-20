@@ -6,7 +6,7 @@ use std::cmp::Ordering;
 
 use lp_solvers::lp_format::LpObjective;
 use lp_solvers::problem::StrExpression;
-pub use lp_solvers::solvers::*;
+pub use lp_solvers::solvers::{Status, SolverTrait};
 use lp_solvers::util::UniqueNameGenerator;
 
 use crate::constraint::ConstraintReference;
@@ -51,6 +51,10 @@ impl<T: lp_solvers::solvers::SolverTrait + Clone> Solver for LpSolver<T> {
             },
             solver: self.0.clone(),
         }
+    }
+
+    fn name() -> &'static str {
+        <Model<T> as SolverModel>::name()
     }
 }
 
@@ -124,6 +128,10 @@ impl<T: SolverTrait> SolverModel for Model<T> {
                 rhs: -c.expression.constant,
             });
         reference
+    }
+
+    fn name() -> &'static str {
+        "External Solver (through lp_solvers)"
     }
 }
 
