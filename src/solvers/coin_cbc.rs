@@ -61,6 +61,7 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
 }
 
 /// A coin-cbc model
+#[derive(Clone, Default)]
 pub struct CoinCbcProblem {
     model: Model,
     columns: Vec<Col>,
