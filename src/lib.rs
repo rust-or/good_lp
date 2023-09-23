@@ -109,8 +109,8 @@ pub use solvers::scip::scip;
 #[cfg(feature = "scip")]
 pub use solvers::scip::scip as default_solver;
 pub use solvers::{
-    DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver, SolverModel,
-    StaticSolver, WithMipGap,
+    solver_name, DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver,
+    SolverModel, StaticSolver, WithMipGap,
 };
 pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 

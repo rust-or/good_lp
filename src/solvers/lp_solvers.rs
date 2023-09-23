@@ -13,8 +13,8 @@ use crate::constraint::ConstraintReference;
 use crate::solvers::{MipGapError, ObjectiveDirection};
 use crate::variable::UnsolvedProblem;
 use crate::{
-    Constraint, Expression, IntoAffineExpression, ResolutionError, Solution, Solver, SolverModel,
-    Variable,
+    Constraint, Expression, IntoAffineExpression, ResolutionError, Solution as GoodLpSolution,
+    Solver, SolverModel, Variable,
 };
 
 /// An external solver
@@ -51,6 +51,10 @@ impl<T: lp_solvers::solvers::SolverTrait + Clone> Solver for LpSolver<T> {
             },
             solver: self.0.clone(),
         }
+    }
+
+    fn name() -> &'static str {
+        <Model<T> as SolverModel>::name()
     }
 }
 
@@ -125,6 +129,10 @@ impl<T: SolverTrait> SolverModel for Model<T> {
             });
         reference
     }
+
+    fn name() -> &'static str {
+        "External Solver (through lp_solvers)"
+    }
 }
 
 fn linear_coefficients_str(
@@ -144,7 +152,7 @@ pub struct LpSolution {
     solution: Vec<f64>,
 }
 
-impl Solution for LpSolution {
+impl GoodLpSolution for LpSolution {
     fn value(&self, variable: Variable) -> f64 {
         self.solution[variable.index()]
     }

@@ -39,6 +39,21 @@ pub trait Solver {
     type Model: SolverModel;
     /// Solve the given problem
     fn create_model(&mut self, problem: UnsolvedProblem) -> Self::Model;
+
+    /// The human readable name of the solver, for instance "Coin Cbc"
+    fn name() -> &'static str;
+}
+
+/// Returns the name of a solver
+///
+/// ```
+/// # #[cfg(feature = "coin_cbc")] {
+/// use good_lp::*;
+/// assert_eq!(solver_name(default_solver), "Coin Cbc");
+/// }
+/// ```
+pub fn solver_name<T: Solver>(_: T) -> &'static str {
+    <T as Solver>::name()
 }
 
 /// A solver that is valid for the static lifetime
@@ -55,6 +70,10 @@ where
     type Model = MODEL;
     fn create_model(&mut self, pb: UnsolvedProblem) -> Self::Model {
         self(pb)
+    }
+
+    fn name() -> &'static str {
+        MODEL::name()
     }
 }
 
@@ -167,6 +186,9 @@ pub trait SolverModel {
 
     /// Adds a constraint to the Model and returns a reference to the index
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference;
+
+    /// Human readable name of the solver, for instance "Coin Cbc"
+    fn name() -> &'static str;
 }
 
 /// A problem solution

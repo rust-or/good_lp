@@ -119,6 +119,10 @@ impl SolverModel for LpSolveProblem {
         assert!(success, "could not add constraint. memory error.");
         ConstraintReference { index }
     }
+
+    fn name() -> &'static str {
+        "lp_solve"
+    }
 }
 
 impl ModelWithSOS1 for LpSolveProblem {
