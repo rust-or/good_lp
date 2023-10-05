@@ -83,7 +83,7 @@ impl SCIPProblem {
     }
 
     /// Add cardinality constraint. Constrains the number of non-zero variables to at most `rhs`.
-    pub fn add_cardinality_constraint(&mut self, vars: &[Variable], rhs: i32) -> ConstraintReference {
+    pub fn add_cardinality_constraint(&mut self, vars: &[Variable], rhs: usize) -> ConstraintReference {
         let scip_vars = vars.iter()
             .map(|v| Rc::clone(&self.id_for_var[v]))
             .collect::<Vec<_>>();
