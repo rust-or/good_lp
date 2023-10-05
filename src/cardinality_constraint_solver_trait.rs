@@ -1,4 +1,4 @@
-use crate::{Variable, constraint::ConstraintReference};
+use crate::{constraint::ConstraintReference, Variable};
 
 /// A trait for solvers that support cardinality constraints
 pub trait CardinalityConstraintSolver {
