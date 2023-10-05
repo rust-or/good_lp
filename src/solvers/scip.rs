@@ -15,6 +15,7 @@ use russcip::WithSolutions;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
+    CardinalityConstraintSolver,
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
 };
@@ -81,9 +82,11 @@ impl SCIPProblem {
     pub fn as_inner_mut(&mut self) -> &mut Model<ProblemCreated> {
         &mut self.model
     }
+}
 
+impl CardinalityConstraintSolver for SCIPProblem {
     /// Add cardinality constraint. Constrains the number of non-zero variables to at most `rhs`.
-    pub fn add_cardinality_constraint(&mut self, vars: &[Variable], rhs: usize) -> ConstraintReference {
+    fn add_cardinality_constraint(&mut self, vars: &[Variable], rhs: usize) -> ConstraintReference {
         let scip_vars = vars.iter()
             .map(|v| Rc::clone(&self.id_for_var[v]))
             .collect::<Vec<_>>();
@@ -97,7 +100,6 @@ impl SCIPProblem {
 
         ConstraintReference { index }
     }
-
 }
 
 impl SolverModel for SCIPProblem {
@@ -179,7 +181,7 @@ impl Solution for SCIPSolved {
 
 #[cfg(test)]
 mod tests {
-    use crate::{constraint, variable, variables, Solution, SolverModel};
+    use crate::{constraint, variable, variables, Solution, SolverModel, CardinalityConstraintSolver};
 
     use super::scip;
 
