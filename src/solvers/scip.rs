@@ -17,6 +17,7 @@ use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+    CardinalityConstraintSolver,
 };
 use crate::{Constraint, Variable};
 
@@ -80,6 +81,22 @@ impl SCIPProblem {
     /// Get mutable access to the raw russcip model
     pub fn as_inner_mut(&mut self) -> &mut Model<ProblemCreated> {
         &mut self.model
+    }
+}
+
+impl CardinalityConstraintSolver for SCIPProblem {
+    /// Add cardinality constraint. Constrains the number of non-zero variables to at most `rhs`.
+    fn add_cardinality_constraint(&mut self, vars: &[Variable], rhs: usize) -> ConstraintReference {
+        let scip_vars = vars
+            .iter()
+            .map(|v| Rc::clone(&self.id_for_var[v]))
+            .collect::<Vec<_>>();
+
+        let index = self.model.n_conss() + 1;
+        self.model
+            .add_cons_cardinality(scip_vars, rhs, format!("cardinality{}", index).as_str());
+
+        ConstraintReference { index }
     }
 }
 
@@ -162,7 +179,9 @@ impl Solution for SCIPSolved {
 
 #[cfg(test)]
 mod tests {
-    use crate::{constraint, variable, variables, Solution, SolverModel};
+    use crate::{
+        constraint, variable, variables, CardinalityConstraintSolver, Solution, SolverModel,
+    };
 
     use super::scip;
 
@@ -193,5 +212,16 @@ mod tests {
             .solve()
             .unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (1., 2.));
+    }
+
+    #[test]
+    fn can_solve_cardinality_constraint() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2).integer());
+        let y = vars.add(variable().clamp(0, 3).integer());
+        let mut model = vars.maximise(5.0 * x + 3.0 * y).using(scip);
+        model.add_cardinality_constraint(&[x, y], 1);
+        let solution = model.solve().unwrap();
+        assert_eq!((solution.value(x), solution.value(y)), (2., 0.));
     }
 }

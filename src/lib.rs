@@ -65,6 +65,7 @@
 //!
 
 pub use affine_expression_trait::IntoAffineExpression;
+pub use cardinality_constraint_solver_trait::CardinalityConstraintSolver;
 pub use constraint::Constraint;
 pub use expression::Expression;
 #[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
@@ -149,6 +150,7 @@ mod expression;
 #[macro_use]
 pub mod variable;
 mod affine_expression_trait;
+mod cardinality_constraint_solver_trait;
 pub mod constraint;
 pub mod solvers;
 mod variables_macro;
