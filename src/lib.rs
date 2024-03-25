@@ -68,12 +68,20 @@ pub use affine_expression_trait::IntoAffineExpression;
 pub use cardinality_constraint_solver_trait::CardinalityConstraintSolver;
 pub use constraint::Constraint;
 pub use expression::Expression;
-#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
 #[cfg(feature = "coin_cbc")]
 pub use solvers::coin_cbc::coin_cbc;
 #[cfg(feature = "coin_cbc")]
 /// When the "coin_cbc" cargo feature is present, it is used as the default solver
 pub use solvers::coin_cbc::coin_cbc as default_solver;
+#[cfg(not(any(
+    feature = "coin_cbc",
+    feature = "minilp",
+    feature = "lpsolve",
+    feature = "highs"
+)))]
+#[cfg(feature = "cplex-rs")]
+pub use solvers::cplex::cplex as default_solver;
 #[cfg(feature = "highs")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::highs::highs;
@@ -109,6 +117,7 @@ pub use solvers::scip::scip;
 )))]
 #[cfg(feature = "scip")]
 pub use solvers::scip::scip as default_solver;
+
 pub use solvers::{
     solver_name, DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver,
     SolverModel, StaticSolver, WithMipGap,
@@ -136,6 +145,7 @@ pub const default_solver: LpSolver<
     feature = "highs",
     feature = "lp-solvers",
     feature = "scip",
+    feature = "cplex-rs",
 )))]
 compile_error!(
     "No solver available. \
