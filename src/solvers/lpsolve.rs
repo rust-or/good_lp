@@ -1,6 +1,5 @@
-//! A solver that uses a [Cbc](https://www.coin-or.org/Cbc/) [native library binding](https://docs.rs/coin_cbc).
-//! This solver is activated using the default `coin_cbc` feature.
-//! You can disable it an enable another solver instead using cargo features.
+//! lp_solve is a free ([LGPL](https://lpsolve.sourceforge.net/5.5/LGPL.htm)) linear (integer) programming solver written in C and based on the revised simplex method.
+//! good_lp uses the [lpsolve crate](https://docs.rs/lpsolve/) to call lpsolve. You will need a C compiler, but you won't have to install any additional library.
 use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
 use crate::variable::UnsolvedProblem;
 use crate::{
