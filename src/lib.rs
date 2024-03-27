@@ -156,6 +156,16 @@ good_lp = { version = \"*\", features = [\"minilp\"] }
 "
 );
 
+/// The "lpsolve" and "cplex-rs" cargo feature are incompatible,
+/// since the above crates link statically to c libraries defining some
+/// common symbols
+#[cfg(all(feature = "lpsolve", feature = "cplex-rs",))]
+compile_error!(
+    "'lpsolve' and 'cplex-rs' features are incompatible. \
+Please select just one of the two.
+"
+);
+
 mod expression;
 #[macro_use]
 pub mod variable;
