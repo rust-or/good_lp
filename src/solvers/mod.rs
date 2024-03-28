@@ -9,6 +9,10 @@ use crate::variable::UnsolvedProblem;
 use crate::Constraint;
 use crate::{constraint::ConstraintReference, IntoAffineExpression, Variable};
 
+#[cfg(feature = "cplex-rs")]
+#[cfg_attr(docsrs, doc(cfg(feature = "cplex-rs")))]
+pub mod cplex;
+
 #[cfg(feature = "coin_cbc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
 pub mod coin_cbc;

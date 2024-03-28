@@ -9,13 +9,18 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # 'lpsolve' and 'cplex-rs' features are incompatible
+  ALL_FEATURES_EXCEPT_CPLEX: "scip,singlethread-cbc,coin_cbc,highs,lp-solvers,minilp,russcip,lpsolve"
+  ALL_FEATURES_EXCEPT_LPSOLVE: "scip,singlethread-cbc,coin_cbc,highs,lp-solvers,minilp,russcip,cplex-rs"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
       - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: cargo fmt -- --check
@@ -26,17 +31,26 @@ jobs:
       - name: install deps
         run: |
           sudo apt-get install coinor-cbc coinor-libcbc-dev libgsl-dev
-          rustup component add rustfmt
           # Install SCIP
           conda install -y --prefix $CONDA/envs/test --channel conda-forge scip
           echo "LD_LIBRARY_PATH=$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
           echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
           echo "PATH=$CONDA/envs/test/bin:$PATH" >> "${GITHUB_ENV}"
           echo "CONDA_PREFIX=$CONDA/envs/test" >> "${GITHUB_ENV}"
-      - name: Build
-        run: cargo build --all-features --tests
-      - name: Run tests # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
-        run: cargo test --all-features -- --test-threads=1
+          # install CPLEX
+          curl -LO https://github.com/rust-or/good_lp/releases/download/cplex/cplex.bin
+          chmod u+x cplex.bin
+          ./cplex.bin -f ./.github/cplex/response.properties
+      - name: Build with all features except cplex-rs
+        run: cargo build --features ${{ env.ALL_FEATURES_EXCEPT_CPLEX }} --tests
+      - name: Run tests with all features except cplex-rs
+        # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
+        run: cargo test  --features ${{ env.ALL_FEATURES_EXCEPT_CPLEX }} -- --test-threads=1
+      - name: Build with all features except lpsolve
+        run: cargo build --features ${{ env.ALL_FEATURES_EXCEPT_LPSOLVE }} --tests
+      - name: Run tests with all features except lpsolve
+        # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
+        run: cargo test  --features ${{ env.ALL_FEATURES_EXCEPT_LPSOLVE }} -- --test-threads=1
       - name: Run tests with minilp
         run: cargo test --no-default-features --features minilp
       - name: Run tests with lpsolve
@@ -47,4 +61,6 @@ jobs:
         run: cargo test --no-default-features --features lp-solvers
       - name: Run tests with SCIP
         run: cargo test --no-default-features --features scip
+      - name: Run tests with CPLEX
+        run: cargo test --no-default-features --features cplex-rs
       - run: cargo bench

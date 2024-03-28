@@ -10,6 +10,8 @@ pub struct Constraint {
     pub(crate) expression: Expression,
     /// if is_equality, represents expression == 0, otherwise, expression <= 0
     pub(crate) is_equality: bool,
+    /// Optional constraint name
+    pub(crate) name: Option<String>,
 }
 
 impl Constraint {
@@ -17,7 +19,14 @@ impl Constraint {
         Constraint {
             expression,
             is_equality,
+            name: None,
         }
+    }
+
+    /// set the constraint name
+    pub fn set_name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
     }
 }
 
