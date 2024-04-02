@@ -112,18 +112,12 @@ impl SolverModel for SCIPProblem {
                 solved_problem: solved_model,
                 id_for_var: self.id_for_var,
             }),
-            russcip::status::Status::Infeasible => {
-                Err(ResolutionError::Infeasible)
-            }
-            russcip::status::Status::Unbounded => {
-                Err(ResolutionError::Unbounded)
-            }
-            other_status => {
-                Err(ResolutionError::Str(format!(
-                    "Unexpected status {:?}",
-                    other_status
-                )))
-            }
+            russcip::status::Status::Infeasible => Err(ResolutionError::Infeasible),
+            russcip::status::Status::Unbounded => Err(ResolutionError::Unbounded),
+            other_status => Err(ResolutionError::Str(format!(
+                "Unexpected status {:?}",
+                other_status
+            ))),
         }
     }
 
