@@ -67,24 +67,28 @@ You can find a resource allocation problem example in
 This library offers an abstraction over multiple solvers. By default, it uses [cbc][cbc], but
 you can also activate other solvers using cargo features.
 
-| solver feature name  | integer variables | no C compiler\* | no additional libs\*\* | fast |
-| -------------------- | ----------------- | --------------- | ---------------------- | ---- |
-| [`coin_cbc`][cbc]    | ✅                | ✅              | ❌                     | ✅   |
-| [`highs`][highs]     | ✅                | ❌              | ✅\+                   | ✅   |
-| [`lpsolve`][lpsolve] | ✅                | ❌              | ✅                     | ❌   |
-| [`minilp`][minilp]   | ❌                | ✅              | ✅                     | ❌   |
-| [`lp-solvers`][lps]  | ✅                | ✅              | ✅                     | ❌   |
-| [`scip`][scip]       | ✅                | ✅              | ❌                     | ✅   |
+| solver feature name    | integer variables | no C compiler\* | no additional libs\*\* | fast |
+| ---------------------- | ----------------- | --------------- | ---------------------- | ---- |
+| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   |
+| [`highs`][highs]       | ✅                | ❌              | ✅\+                   | ✅   |
+| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   |
+| [`minilp`][minilp]     | ❌                | ✅              | ✅                     | ❌   |
+| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   |
+| [`scip`][scip]         | ✅                | ✅              | ❌                     | ✅   |
+| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅\+\+                 | ✅   |
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
 - \+ highs itself is statically linked and does not require manual installation. However, on some systems, you may have to [install dependencies of highs itself](https://github.com/rust-or/good_lp/issues/29). 
+- \+\+ the cplex_rs crate links statically to a local installation of the IBM ILOG CPLEX Optimizer.
 
 To use an alternative solver, put the following in your `Cargo.toml`:
 
 ```toml
 good_lp = { version = "*", features = ["your solver feature name"], default-features = false }
 ```
+
+Note that the `lpsolve` and `cplex-rs` features are mutually exclusive, and they will produce a compilation error when simultaneously activated. In particular, this means that the building with the `--all-features` option will produce a compilation error.
 
 ### [cbc][cbc]
 
@@ -174,6 +178,17 @@ conda install --channel conda-forge scip
 
 [scip]: https://scipopt.org/
 
+### [cplex-rs][cplex]
+
+The IBM ILOG CPLEX Optimizer is a commercial high-performance optimization solver for linear, mixed-integer and quadratic programming.
+
+good_lp uses the [cplex-rs](https://github.com/mbiggio/cplex-rs/tree/main) crate to call CPLEX through safe rust bindings, which in turn uses the [cplex-rs-sys](https://crates.io/crates/highs-sys) crate to call the raw bindings to the CPLEX C API.
+
+You will need a valid CPLEX installation to use this feature. CPLEX should be installed in its default installation directory, or alternatively you can specify its installation directory through the `CPLEX_PATH` environment variable at compile time
+
+Since cplex-rs-sys uses [bindgen](https://github.com/rust-lang/rust-bindgen) to generate the raw C bindings, you will also need need an installation of clang and llvm as indicated in the [bindgen requirements](https://rust-lang.github.io/rust-bindgen/requirements.html).
+
+[cplex]: https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer
 
 ## Variable types
 
