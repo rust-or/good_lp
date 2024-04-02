@@ -54,12 +54,12 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
             true => VarType::Integer,
             false => VarType::Continuous,
         };
-        let id = model.add_var(min, max, coeff, name.as_str().clone(), var_type);
+        let id = model.add_var(min, max, coeff, name.as_str(), var_type);
         var_map.insert(var, id);
     }
 
     SCIPProblem {
-        model: model,
+        model,
         id_for_var: var_map,
     }
 }
@@ -113,16 +113,16 @@ impl SolverModel for SCIPProblem {
                 id_for_var: self.id_for_var,
             }),
             russcip::status::Status::Infeasible => {
-                return Err(ResolutionError::Infeasible);
+                Err(ResolutionError::Infeasible)
             }
             russcip::status::Status::Unbounded => {
-                return Err(ResolutionError::Unbounded);
+                Err(ResolutionError::Unbounded)
             }
             other_status => {
-                return Err(ResolutionError::Str(format!(
+                Err(ResolutionError::Str(format!(
                     "Unexpected status {:?}",
                     other_status
-                )));
+                )))
             }
         }
     }

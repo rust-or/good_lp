@@ -159,6 +159,6 @@ mod tests {
         let v0 = vars.add_variable();
         let v1 = vars.add_variable();
         let f = format!("{:?}", (3. - v0) >> v1);
-        assert!(vec!["v0 + v1 <= 3", "v1 + v0 <= 3"].contains(&&*f), "{}", f)
+        assert!(["v0 + v1 <= 3", "v1 + v0 <= 3"].contains(&&*f), "{}", f)
     }
 }

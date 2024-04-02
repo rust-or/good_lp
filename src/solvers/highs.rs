@@ -270,7 +270,6 @@ impl SolverModel for HighsProblem {
         let factors = constraint
             .expression
             .linear_coefficients()
-            .into_iter()
             .map(|(variable, factor)| (columns[variable.index()], factor));
         if constraint.is_equality {
             self.highs_problem
