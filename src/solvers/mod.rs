@@ -244,9 +244,44 @@ pub trait DualValues {
 }
 
 /// The dual value measures the increase in the objective function's value per unit
-/// increase in the variable's value. The dual value for a constraint is nonzero only when
+/// increase in a constraint's value.
+/// The dual value for a constraint is nonzero only when
 /// the constraint is equal to its bound. Also known as the shadow price.
+///
+/// It is useful for understanding "how limiting" a constraint is.
+///
 /// This trait handles the retrieval of dual values from a solver.
+///
+/// ## Example
+///
+/// ```
+/// use good_lp::*;
+/// # // Not all solvers support dual values
+/// # #[cfg(any(feature = "clarabel", feature = "highs"))] {
+///
+/// variables!{
+///    vars:
+///     0 <= a <= 1;
+///     0 <= b <= 4;
+/// };
+/// let mut pb = vars.maximise(a + b).using(default_solver);
+/// let c1 = pb.add_constraint(constraint!(a + 2*b <= 5));
+/// let non_binding = pb.add_constraint(constraint!(a + b <= 30));
+/// let mut solution = pb.solve().unwrap();
+/// let dual = solution.compute_dual();
+/// # use float_eq::assert_float_eq;
+/// // The dual value of c1 is 0.5, because the constraint is binding, and the objective function
+/// // increases by 0.5 for each unit increase in the constraint.
+/// // I.e. a+b is currently maximised at 3 for a=1, b=2.
+/// // If we increase the constraint by 1, setting a+2*b<=6, we would have a=1, b=2.5, and a+b=3.5.
+/// // The increase in the objective function is 3.5-3=0.5, for a 1 unit increase in the constraint.
+/// assert_float_eq!(dual.dual(c1), 0.5, abs <= 1e-8);
+///
+/// // The dual value of non_binding is 0, because the constraint is not binding.
+/// // The objective function does not change if we increase the constraint.
+/// assert_float_eq!(dual.dual(non_binding), 0., abs <= 1e-8);
+/// # }
+/// ```
 pub trait SolutionWithDual<'a> {
     /// Type of the object containing the dual values.
     type Dual: DualValues;

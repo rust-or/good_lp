@@ -191,12 +191,18 @@ Since cplex-rs-sys uses [bindgen](https://github.com/rust-lang/rust-bindgen) to 
 
 [cplex]: https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer
 
-### [clarabel][clarabel]
+### [Clarabel][clarabel]
 
-[Clarabel](https://github.com/oxfordcontrol/Clarabel.rs) is a free 
+**Clarabel** is a free 
 ([Apache 2.0](https://github.com/oxfordcontrol/Clarabel.rs/blob/main/LICENSE.md))
 linear programming solver written in Rust by the
 [Oxford Control group](https://eng.ox.ac.uk/control/).
+
+It does not support integer variables, but it is fast and easy to install.
+It does implement the [SolutionWithDual](https://docs.rs/good_lp/latest/good_lp/solvers/trait.SolutionWithDual.html)
+trait, which allows you to access the dual values of the constraints (the shadow prices).
+
+[clarabel]: https://github.com/oxfordcontrol/Clarabel.rs
 
 ## Variable types
 
