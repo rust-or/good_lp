@@ -20,9 +20,10 @@
 //!      .with(a + 2. << b) // or (a + 2).leq(b)
 //!      .with(1 + a >> 4. - b)
 //!      .solve()?;
-//!
-//!  assert_eq!(solution.value(a), 1.);
-//!  assert_eq!(solution.value(b), 3.);
+//! 
+//! # use float_eq::assert_float_eq;
+//!  assert_float_eq!(solution.value(a), 1., abs <= 1e-8);
+//!  assert_float_eq!(solution.value(b), 3., abs <= 1e-8);
 //!  # Ok::<_, good_lp::ResolutionError>(())
 //!  ```
 //!
@@ -117,6 +118,18 @@ pub use solvers::scip::scip;
 )))]
 #[cfg(feature = "scip")]
 pub use solvers::scip::scip as default_solver;
+#[cfg(not(any(
+    feature = "coin_cbc",
+    feature = "minilp",
+    feature = "lpsolve",
+    feature = "highs",
+    feature = "scip",
+    feature = "cplex-rs",
+)))]
+#[cfg(feature = "clarabel")]
+pub use solvers::clarabel::clarabel as default_solver;
+#[cfg(feature = "clarabel")]
+pub use solvers::clarabel::clarabel;
 
 pub use solvers::{
     solver_name, DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver,
@@ -146,6 +159,7 @@ pub const default_solver: LpSolver<
     feature = "lp-solvers",
     feature = "scip",
     feature = "cplex-rs",
+    feature = "clarabel",
 )))]
 compile_error!(
     "No solver available. \
@@ -162,7 +176,7 @@ good_lp = { version = \"*\", features = [\"minilp\"] }
 #[cfg(all(feature = "lpsolve", feature = "cplex-rs",))]
 compile_error!(
     "'lpsolve' and 'cplex-rs' features are incompatible. \
-Please select just one of the two.
+Please select just one of the two. If you need all compatible solvers, use the 'all_deafult_solvers' feature. \
 "
 );
 

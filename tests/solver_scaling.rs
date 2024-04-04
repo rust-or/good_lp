@@ -16,7 +16,7 @@ fn solve_large_problem() {
     }
     let sol = pb.solve().unwrap();
     for (i, var) in v.iter().enumerate() {
-        assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-10);
+        assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-8);
     }
 }
 

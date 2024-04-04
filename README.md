@@ -76,6 +76,7 @@ you can also activate other solvers using cargo features.
 | [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   |
 | [`scip`][scip]         | ✅                | ✅              | ❌                     | ✅   |
 | [`cplex-rs`][cplex]    | ✅                | ❌              | ✅\+\+                 | ✅   |
+| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   |
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
@@ -189,6 +190,13 @@ You will need a valid CPLEX installation to use this feature. CPLEX should be in
 Since cplex-rs-sys uses [bindgen](https://github.com/rust-lang/rust-bindgen) to generate the raw C bindings, you will also need need an installation of clang and llvm as indicated in the [bindgen requirements](https://rust-lang.github.io/rust-bindgen/requirements.html).
 
 [cplex]: https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer
+
+### [clarabel][clarabel]
+
+[Clarabel](https://github.com/oxfordcontrol/Clarabel.rs) is a free 
+([Apache 2.0](https://github.com/oxfordcontrol/Clarabel.rs/blob/main/LICENSE.md))
+linear programming solver written in Rust by the
+[Oxford Control group](https://eng.ox.ac.uk/control/).
 
 ## Variable types
 

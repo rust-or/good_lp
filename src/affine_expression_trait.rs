@@ -49,7 +49,7 @@ pub trait IntoAffineExpression {
     /// ```
     ///
     /// ### Evaluate an expression with a HashMap
-    /// A [HashMap] is a valid [Solution]
+    /// A [std::collections::HashMap] is a valid [Solution]
     ///
     /// ```rust
     /// use std::collections::HashMap;

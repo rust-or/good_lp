@@ -143,7 +143,7 @@ impl VariableDefinition {
     /// # use good_lp::{ProblemVariables, variable, default_solver, SolverModel, Solution};
     /// let mut problem = ProblemVariables::new();
     /// let x = problem.add(variable().integer().min(0).max(2.5));
-    /// # if cfg!(not(feature = "minilp")) {
+    /// # if cfg!(not(any(feature = "minilp", feature="clarabel"))) {
     /// let solution = problem.maximise(x).using(default_solver).solve().unwrap();
     /// // x is bound to [0; 2.5], but the solution is x=2 because x needs to be an integer
     /// assert_eq!(solution.value(x), 2.);
@@ -164,7 +164,7 @@ impl VariableDefinition {
     /// let mut problem = ProblemVariables::new();
     /// let x = problem.add(variable().binary());
     /// let y = problem.add(variable().binary());
-    /// if cfg!(not(any(feature = "minilp"))) {
+    /// if cfg!(not(any(feature = "minilp", feature="clarabel"))) {
     ///     let solution = problem.maximise(x + y).using(default_solver).solve().unwrap();
     ///     assert_eq!(solution.value(x), 1.);
     ///     assert_eq!(solution.value(y), 1.);
@@ -258,7 +258,7 @@ pub fn variable() -> VariableDefinition {
 /// Represents the variables for a given problem.
 /// Each problem has a unique type, which prevents using the variables
 /// from one problem inside an other one.
-/// Instances of this type should be created exclusively using the [variables!] macro.
+/// Instances of this type should be created exclusively using the [crate::variables!] macro.
 #[derive(Default)]
 pub struct ProblemVariables {
     variables: Vec<VariableDefinition>,
@@ -307,7 +307,8 @@ impl ProblemVariables {
     ///   model = model.with(constraint!(y_i >= x));
     /// }
     /// let solution = model.solve().unwrap();
-    /// assert_eq!(solution.value(y[3]), 2.);
+    /// # use float_eq::assert_float_eq;
+    /// assert_float_eq!(solution.value(y[3]), 2., abs <= 1e-8);
     /// ```
     pub fn add_vector(&mut self, var_def: VariableDefinition, len: usize) -> Vec<Variable> {
         (0..len).map(|_i| self.add(var_def.clone())).collect()
@@ -323,8 +324,10 @@ impl ProblemVariables {
     ///     let solution = problem.optimise(sense, x).using(default_solver).solve().unwrap();
     ///     solution.value(x)
     /// }
-    /// assert_eq!(solve(ObjectiveDirection::Minimisation), 2.);
-    /// assert_eq!(solve(ObjectiveDirection::Maximisation), 3.);
+    /// 
+    /// # use float_eq::assert_float_eq;
+    /// assert_float_eq!(solve(ObjectiveDirection::Minimisation), 2., abs<=1e-8);
+    /// assert_float_eq!(solve(ObjectiveDirection::Maximisation), 3., abs<=1e-8);
     /// ```
     pub fn optimise<E: IntoAffineExpression>(
         self,
@@ -350,7 +353,8 @@ impl ProblemVariables {
     /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
     /// variables!{problem: x <= 7;}
     /// let solution = problem.maximise(x).using(default_solver).solve().unwrap();
-    /// assert_eq!(solution.value(x), 7.);
+    /// # use float_eq::assert_float_eq;
+    /// assert_float_eq!(solution.value(x), 7., abs <= 1e-8);
     /// ```
     pub fn maximise<E: IntoAffineExpression>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Maximisation, objective)
@@ -361,7 +365,8 @@ impl ProblemVariables {
     /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
     /// variables!{problem: x >= -8;}
     /// let solution = problem.minimise(x).using(default_solver).solve().unwrap();
-    /// assert_eq!(solution.value(x), -8.);
+    /// # use float_eq::assert_float_eq;
+    /// assert_float_eq!(solution.value(x), -8., abs <= 1e-8);
     /// ```
     pub fn minimise<E: IntoAffineExpression>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Minimisation, objective)
