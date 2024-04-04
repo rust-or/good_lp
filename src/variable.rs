@@ -324,7 +324,7 @@ impl ProblemVariables {
     ///     let solution = problem.optimise(sense, x).using(default_solver).solve().unwrap();
     ///     solution.value(x)
     /// }
-    /// 
+    ///
     /// # use float_eq::assert_float_eq;
     /// assert_float_eq!(solve(ObjectiveDirection::Minimisation), 2., abs<=1e-8);
     /// assert_float_eq!(solve(ObjectiveDirection::Maximisation), 3., abs<=1e-8);

@@ -20,7 +20,7 @@
 //!      .with(a + 2. << b) // or (a + 2).leq(b)
 //!      .with(1 + a >> 4. - b)
 //!      .solve()?;
-//! 
+//!
 //! # use float_eq::assert_float_eq;
 //!  assert_float_eq!(solution.value(a), 1., abs <= 1e-8);
 //!  assert_float_eq!(solution.value(b), 3., abs <= 1e-8);
@@ -69,6 +69,18 @@ pub use affine_expression_trait::IntoAffineExpression;
 pub use cardinality_constraint_solver_trait::CardinalityConstraintSolver;
 pub use constraint::Constraint;
 pub use expression::Expression;
+#[cfg(not(any(
+    feature = "coin_cbc",
+    feature = "minilp",
+    feature = "lpsolve",
+    feature = "highs",
+    feature = "scip",
+    feature = "cplex-rs",
+)))]
+#[cfg(feature = "clarabel")]
+pub use solvers::clarabel::clarabel as default_solver;
+#[cfg(feature = "clarabel")]
+pub use solvers::clarabel::clarabel;
 #[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
 #[cfg(feature = "coin_cbc")]
 pub use solvers::coin_cbc::coin_cbc;
@@ -118,18 +130,6 @@ pub use solvers::scip::scip;
 )))]
 #[cfg(feature = "scip")]
 pub use solvers::scip::scip as default_solver;
-#[cfg(not(any(
-    feature = "coin_cbc",
-    feature = "minilp",
-    feature = "lpsolve",
-    feature = "highs",
-    feature = "scip",
-    feature = "cplex-rs",
-)))]
-#[cfg(feature = "clarabel")]
-pub use solvers::clarabel::clarabel as default_solver;
-#[cfg(feature = "clarabel")]
-pub use solvers::clarabel::clarabel;
 
 pub use solvers::{
     solver_name, DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver,
