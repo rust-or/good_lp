@@ -256,8 +256,15 @@ pub trait DualValues {
 ///
 /// ```
 /// use good_lp::*;
-/// # // Not all solvers support dual values
-/// # #[cfg(any(feature = "clarabel", feature = "highs"))] {
+/// # // These solvers do not support dual values
+/// # #[cfg(not(any(
+/// #     feature = "coin_cbc",
+/// #     feature = "minilp",
+/// #     feature = "lpsolve",
+/// #     feature = "lp-solvers",
+/// #     feature = "scip",
+/// #     feature = "cplex-rs",
+/// # )))] {
 ///
 /// variables!{
 ///    vars:
