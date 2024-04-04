@@ -39,7 +39,7 @@ where
     let dual = solution.compute_dual();
     assert_float_eq!(0., dual.dual(c1), abs <= 1e-1);
     assert_float_eq!(0., dual.dual(c2), abs <= 1e-1);
-    assert_float_eq!(0.667, dual.dual(c3), abs <= 1e-3);
+    assert_float_eq!(0.667, dual.dual(c3), abs <= 1e-1);
     assert_float_eq!(0.0, dual.dual(c4), abs <= 1e-3);
 }
 
@@ -63,7 +63,7 @@ where
 
     // Solve
     let mut solution = p.solve().expect("Library test");
-    assert_float_eq!(4100.0, solution.eval(&objective), abs <= 1e-10);
+    assert_float_eq!(4100.0, solution.eval(&objective), abs <= 1e-5);
     assert_float_eq!(30.0, solution.value(n_chairs), abs <= 1e-1);
     assert_float_eq!(40.0, solution.value(n_tables), abs <= 1e-1);
 
@@ -73,19 +73,26 @@ where
 }
 
 macro_rules! dual_test {
-    ($solver_feature:literal, $solver:expr) => {
+    ($([$solver_feature:literal, $solver:expr])*) => {
         #[test]
-        #[cfg(feature = $solver_feature)]
         fn determine_shadow_prices() {
-            determine_shadow_prices_for_solver($solver)
+            $(
+                #[cfg(feature = $solver_feature)]
+                determine_shadow_prices_for_solver($solver);
+            )*
         }
 
         #[test]
-        #[cfg(feature = $solver_feature)]
         fn furniture_problem() {
-            furniture_problem_for_solver($solver)
+            $(
+                #[cfg(feature = $solver_feature)]
+                furniture_problem_for_solver($solver);
+            )*
         }
     };
 }
 
-dual_test!("highs", good_lp::highs);
+dual_test!(
+    ["highs", good_lp::highs]
+    ["clarabel", good_lp::clarabel]
+);

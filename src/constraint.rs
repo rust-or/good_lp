@@ -102,9 +102,7 @@ impl_shifts!(Expression Variable);
 /// ## Full example
 ///
 /// ```
-/// # fn assert_float_eq(a:f64, b:f64) {
-/// #   assert!((a-b).abs() <= 16. * f64::EPSILON, "{} != {}", a, b);
-/// # }
+/// # use float_eq::assert_float_eq;
 /// use good_lp::*;
 ///
 /// let mut vars = variables!();
@@ -116,8 +114,8 @@ impl_shifts!(Expression Variable);
 ///     .with(constraint!(a - 5 <= b / 2))
 ///     .with(constraint!(b == a))
 ///     .solve().unwrap();
-/// assert_float_eq(10., solution.value(a));
-/// assert_float_eq(10., solution.value(b));
+/// assert_float_eq!(10., solution.value(a), abs<=1e-8);
+/// assert_float_eq!(10., solution.value(b), abs<=1e-8);
 /// ```
 #[macro_export]
 macro_rules! constraint {

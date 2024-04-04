@@ -9,9 +9,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  # 'lpsolve' and 'cplex-rs' features are incompatible
-  ALL_FEATURES_EXCEPT_CPLEX: "scip,singlethread-cbc,coin_cbc,highs,lp-solvers,minilp,russcip,lpsolve"
-  ALL_FEATURES_EXCEPT_LPSOLVE: "scip,singlethread-cbc,coin_cbc,highs,lp-solvers,minilp,russcip,cplex-rs"
 
 jobs:
   build:
@@ -41,16 +38,11 @@ jobs:
           curl -LO https://github.com/rust-or/good_lp/releases/download/cplex/cplex.bin
           chmod u+x cplex.bin
           ./cplex.bin -f ./.github/cplex/response.properties
-      - name: Build with all features except cplex-rs
-        run: cargo build --features ${{ env.ALL_FEATURES_EXCEPT_CPLEX }} --tests
-      - name: Run tests with all features except cplex-rs
+      - name: Build with all default solvers (no cplex)
+        run: cargo build --features all_default_solvers --tests
+      - name: Run tests with all default solvers (no cplex)
         # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
-        run: cargo test  --features ${{ env.ALL_FEATURES_EXCEPT_CPLEX }} -- --test-threads=1
-      - name: Build with all features except lpsolve
-        run: cargo build --features ${{ env.ALL_FEATURES_EXCEPT_LPSOLVE }} --tests
-      - name: Run tests with all features except lpsolve
-        # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
-        run: cargo test  --features ${{ env.ALL_FEATURES_EXCEPT_LPSOLVE }} -- --test-threads=1
+        run: cargo test  --features all_default_solvers -- --test-threads=1
       - name: Run tests with minilp
         run: cargo test --no-default-features --features minilp
       - name: Run tests with lpsolve
@@ -63,4 +55,6 @@ jobs:
         run: cargo test --no-default-features --features scip
       - name: Run tests with CPLEX
         run: cargo test --no-default-features --features cplex-rs
+      - name: Run tests with Clarabel
+        run: cargo test --no-default-features --features clarabel
       - run: cargo bench

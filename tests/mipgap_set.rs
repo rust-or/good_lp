@@ -12,6 +12,7 @@ use good_lp::highs;
 #[cfg(feature = "lp-solvers")]
 use good_lp::{solvers::lp_solvers::GlpkSolver, LpSolver};
 
+#[allow(dead_code)] // used only with some features
 fn generic_mipgap_set<S>(solver: S)
 where
     S: Solver,

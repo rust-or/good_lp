@@ -37,6 +37,10 @@ pub mod scip;
 #[cfg_attr(docsrs, doc(cfg(feature = "lp-solvers")))]
 pub mod lp_solvers;
 
+#[cfg(feature = "clarabel")]
+#[cfg_attr(docsrs, doc(cfg(feature = "clarabel")))]
+pub mod clarabel;
+
 /// An entity that is able to solve linear problems
 pub trait Solver {
     /// The internal model type used by the solver
