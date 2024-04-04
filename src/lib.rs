@@ -79,6 +79,7 @@ pub use expression::Expression;
 )))]
 #[cfg(feature = "clarabel")]
 pub use solvers::clarabel::clarabel as default_solver;
+#[cfg_attr(docsrs, doc(cfg(feature = "clarabel")))]
 #[cfg(feature = "clarabel")]
 pub use solvers::clarabel::clarabel;
 #[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
