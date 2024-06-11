@@ -88,7 +88,7 @@ pub enum HighsSolverType {
 impl HighsSolverType {
     fn as_str(&self) -> &str {
         match self {
-            HighsSolverType::Simplex => "s1implex",
+            HighsSolverType::Simplex => "simplex",
             HighsSolverType::Choose => "choose",
             HighsSolverType::Ipm => "ipm",
         }
