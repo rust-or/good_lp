@@ -1,7 +1,5 @@
 //! A solver that uses [highs](https://docs.rs/highs), a parallel C++ solver.
 
-use highs::HighsModelStatus;
-
 use crate::solvers::{
     MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
     WithMipGap,
@@ -12,6 +10,8 @@ use crate::{
     variable::{UnsolvedProblem, VariableDefinition},
 };
 use crate::{Constraint, IntoAffineExpression, Variable};
+use highs::HighsModelStatus;
+use std::collections::HashMap;
 
 /// The [highs](https://docs.rs/highs) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -49,7 +49,7 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         highs_problem,
         columns,
         verbose: false,
-        options: HighsOptions::default(),
+        options: Default::default(),
     }
 }
 
@@ -116,28 +116,51 @@ impl HighsParallelType {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-struct HighsOptions {
-    presolve: HighsPresolveType,
-    solver: HighsSolverType,
-    parallel: HighsParallelType,
-    mip_abs_gap: Option<f32>,
-    mip_rel_gap: Option<f32>,
-    time_limit: f64,
-    threads: u32,
+/// A HiGHS option value.
+#[derive(Debug, Clone)]
+pub enum HighsOptionValue {
+    /// String option
+    String(String),
+    /// Boolean option
+    Bool(bool),
+    /// Integer option
+    Int(i32),
+    /// Floating point number option
+    Float(f64),
 }
-
-impl Default for HighsOptions {
-    fn default() -> Self {
-        Self {
-            presolve: HighsPresolveType::Choose,
-            solver: HighsSolverType::Choose,
-            parallel: HighsParallelType::Choose,
-            mip_abs_gap: None,
-            mip_rel_gap: None,
-            time_limit: f64::MAX,
-            threads: 0,
+impl HighsOptionValue {
+    /// Gets the float option if applicable.
+    pub fn as_float(&self) -> Option<f64> {
+        if let &Self::Float(v) = self {
+            Some(v)
+        } else {
+            None
         }
+    }
+}
+impl From<bool> for HighsOptionValue {
+    fn from(v: bool) -> Self {
+        Self::Bool(v)
+    }
+}
+impl From<i32> for HighsOptionValue {
+    fn from(v: i32) -> Self {
+        Self::Int(v)
+    }
+}
+impl From<f64> for HighsOptionValue {
+    fn from(v: f64) -> Self {
+        Self::Float(v)
+    }
+}
+impl From<String> for HighsOptionValue {
+    fn from(v: String) -> Self {
+        Self::String(v)
+    }
+}
+impl From<&str> for HighsOptionValue {
+    fn from(v: &str) -> Self {
+        Self::String(v.into())
     }
 }
 
@@ -148,7 +171,7 @@ pub struct HighsProblem {
     highs_problem: highs::RowProblem,
     columns: Vec<highs::Col>,
     verbose: bool,
-    options: HighsOptions,
+    options: HashMap<String, HighsOptionValue>,
 }
 
 impl HighsProblem {
@@ -162,58 +185,61 @@ impl HighsProblem {
         self.verbose = verbose
     }
 
-    /// Sets HiGHS Presolve Option
-    pub fn set_presolve(mut self, presolve: HighsPresolveType) -> HighsProblem {
-        self.options.presolve = presolve;
+    /// Sets the HiGHS option. See https://ergo-code.github.io/HiGHS/dev/options/definitions/
+    pub fn set_option<K: Into<String>, V: Into<HighsOptionValue>>(
+        mut self,
+        key: K,
+        value: V,
+    ) -> Self {
+        self.options.insert(key.into(), value.into());
         self
+    }
+
+    /// Sets HiGHS Presolve Option
+    pub fn set_presolve(self, presolve: HighsPresolveType) -> HighsProblem {
+        self.set_option("presolve", presolve.as_str())
     }
 
     /// Sets HiGHS Solver Option
-    pub fn set_solver(mut self, solver: HighsSolverType) -> HighsProblem {
-        self.options.solver = solver;
-        self
+    pub fn set_solver(self, solver: HighsSolverType) -> HighsProblem {
+        self.set_option("solver", solver.as_str())
     }
 
     /// Sets HiGHS Parallel Option
-    pub fn set_parallel(mut self, parallel: HighsParallelType) -> HighsProblem {
-        self.options.parallel = parallel;
-        self
+    pub fn set_parallel(self, parallel: HighsParallelType) -> HighsProblem {
+        self.set_option("parallel", parallel.as_str())
     }
 
     /// Sets HiGHS Tolerance on Absolute Gap Option
-    pub fn set_mip_abs_gap(mut self, mip_abs_gap: f32) -> Result<HighsProblem, MipGapError> {
+    pub fn set_mip_abs_gap(self, mip_abs_gap: f32) -> Result<HighsProblem, MipGapError> {
         if mip_abs_gap.is_sign_negative() {
             Err(MipGapError::Negative)
         } else if mip_abs_gap.is_infinite() {
             Err(MipGapError::Infinite)
         } else {
-            self.options.mip_abs_gap = Some(mip_abs_gap);
-            Ok(self)
+            Ok(self.set_option("mip_abs_gap", mip_abs_gap as f64))
         }
     }
 
     /// Sets HiGHS Tolerance on Relative Gap Option
-    pub fn set_mip_rel_gap(mut self, mip_rel_gap: f32) -> Result<HighsProblem, MipGapError> {
+    pub fn set_mip_rel_gap(self, mip_rel_gap: f32) -> Result<HighsProblem, MipGapError> {
         if mip_rel_gap.is_sign_negative() {
             Err(MipGapError::Negative)
         } else if mip_rel_gap.is_infinite() {
             Err(MipGapError::Infinite)
         } else {
-            self.options.mip_rel_gap = Some(mip_rel_gap);
-            Ok(self)
+            Ok(self.set_option("mip_rel_gap", mip_rel_gap as f64))
         }
     }
 
     /// Sets HiGHS Time Limit Option
-    pub fn set_time_limit(mut self, time_limit: f64) -> HighsProblem {
-        self.options.time_limit = time_limit;
-        self
+    pub fn set_time_limit(self, time_limit: f64) -> HighsProblem {
+        self.set_option("time_limit", time_limit)
     }
 
     /// Sets number of threads used by HiGHS
-    pub fn set_threads(mut self, threads: u32) -> HighsProblem {
-        self.options.threads = threads;
-        self
+    pub fn set_threads(self, threads: u32) -> HighsProblem {
+        self.set_option("threads", threads as i32)
     }
 }
 
@@ -221,29 +247,23 @@ impl SolverModel for HighsProblem {
     type Solution = HighsSolution;
     type Error = ResolutionError;
 
-    fn solve(self) -> Result<Self::Solution, Self::Error> {
+    fn solve(mut self) -> Result<Self::Solution, Self::Error> {
         let verbose = self.verbose;
-        let options = self.options;
+        let options = std::mem::take(&mut self.options);
         let mut model = self.into_inner();
         if verbose {
             model.set_option(&b"output_flag"[..], true);
             model.set_option(&b"log_to_console"[..], true);
             model.set_option(&b"log_dev_level"[..], 2);
         }
-        model.set_option("presolve", options.presolve.as_str());
-        model.set_option("solver", options.solver.as_str());
-        model.set_option("parallel", options.parallel.as_str());
-
-        if let Some(mip_abs_gap) = options.mip_abs_gap {
-            model.set_option("mip_abs_gap", mip_abs_gap as f64);
+        for (k, v) in options {
+            match v {
+                HighsOptionValue::String(v) => model.set_option(k, v.as_str()),
+                HighsOptionValue::Float(v) => model.set_option(k, v),
+                HighsOptionValue::Bool(v) => model.set_option(k, v),
+                HighsOptionValue::Int(v) => model.set_option(k, v),
+            }
         }
-
-        if let Some(mip_rel_gap) = options.mip_rel_gap {
-            model.set_option("mip_rel_gap", mip_rel_gap as f64);
-        }
-
-        model.set_option("time_limit", options.time_limit);
-        model.set_option("threads", options.threads as i32);
 
         let solved = model.solve();
         match solved.status() {
@@ -320,7 +340,10 @@ impl<'a> SolutionWithDual<'a> for HighsSolution {
 
 impl WithMipGap for HighsProblem {
     fn mip_gap(&self) -> Option<f32> {
-        self.options.mip_rel_gap
+        self.options
+            .get("mip_rel_gap")?
+            .as_float()
+            .map(|v| v as f32)
     }
 
     fn with_mip_gap(self, mip_gap: f32) -> Result<Self, MipGapError> {
