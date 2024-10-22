@@ -102,9 +102,8 @@ impl CardinalityConstraintSolver for SCIPProblem {
 
 impl SolverModel for SCIPProblem {
     type Solution = SCIPSolved;
-    type Error = ResolutionError;
 
-    fn solve(self) -> Result<Self::Solution, Self::Error> {
+    fn solve(self) -> Result<Self::Solution, ResolutionError> {
         let solved_model = self.model.solve();
         let status = solved_model.status();
         match status {

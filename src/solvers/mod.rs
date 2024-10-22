@@ -177,8 +177,6 @@ impl Error for MipGapError {}
 pub trait SolverModel {
     /// The type of the solution to the problem
     type Solution: Solution;
-    /// The error that can occur while solving the problem
-    type Error: std::error::Error;
 
     /// Takes a model and adds a constraint to it
     fn with(mut self, constraint: Constraint) -> Self
@@ -190,7 +188,7 @@ pub trait SolverModel {
     }
 
     /// Find the solution for the problem being modeled
-    fn solve(self) -> Result<Self::Solution, Self::Error>;
+    fn solve(self) -> Result<Self::Solution, ResolutionError>;
 
     /// Adds a constraint to the Model and returns a reference to the index
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference;

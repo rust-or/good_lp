@@ -98,9 +98,8 @@ impl CoinCbcProblem {
 
 impl SolverModel for CoinCbcProblem {
     type Solution = CoinCbcSolution;
-    type Error = ResolutionError;
 
-    fn solve(mut self) -> Result<Self::Solution, Self::Error> {
+    fn solve(mut self) -> Result<Self::Solution, ResolutionError> {
         // Due to a bug in cbc, SOS constraints are only taken into account
         // if the model has at least one integer variable.
         // See: https://github.com/coin-or/Cbc/issues/376

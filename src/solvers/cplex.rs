@@ -98,9 +98,8 @@ impl CPLEXProblem {
 
 impl SolverModel for CPLEXProblem {
     type Solution = CplexSolved;
-    type Error = ResolutionError;
 
-    fn solve(self) -> Result<Self::Solution, Self::Error> {
+    fn solve(self) -> Result<Self::Solution, ResolutionError> {
         let solution = match self.model.solve_as(if self.has_integer {
             ProblemType::MixedInteger
         } else {

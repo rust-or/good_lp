@@ -93,9 +93,8 @@ pub struct Model<T> {
 
 impl<T: SolverTrait> SolverModel for Model<T> {
     type Solution = LpSolution;
-    type Error = ResolutionError;
 
-    fn solve(self) -> Result<Self::Solution, Self::Error> {
+    fn solve(self) -> Result<Self::Solution, ResolutionError> {
         let map = self.solver.run(&self.problem)?;
         match map.status {
             Status::Infeasible => return Err(ResolutionError::Infeasible),

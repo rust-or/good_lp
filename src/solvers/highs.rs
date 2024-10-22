@@ -245,9 +245,8 @@ impl HighsProblem {
 
 impl SolverModel for HighsProblem {
     type Solution = HighsSolution;
-    type Error = ResolutionError;
 
-    fn solve(mut self) -> Result<Self::Solution, Self::Error> {
+    fn solve(mut self) -> Result<Self::Solution, ResolutionError> {
         let verbose = self.verbose;
         let options = std::mem::take(&mut self.options);
         let mut model = self.into_inner();

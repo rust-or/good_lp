@@ -95,9 +95,8 @@ impl ClarabelProblem {
 
 impl SolverModel for ClarabelProblem {
     type Solution = ClarabelSolution;
-    type Error = ResolutionError;
 
-    fn solve(self) -> Result<Self::Solution, Self::Error> {
+    fn solve(self) -> Result<Self::Solution, ResolutionError> {
         let mut solver = self.into_solver();
         solver.solve();
         match solver.solution.status {

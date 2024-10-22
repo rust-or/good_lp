@@ -67,9 +67,8 @@ pub struct LpSolveProblem(Problem);
 
 impl SolverModel for LpSolveProblem {
     type Solution = LpSolveSolution;
-    type Error = ResolutionError;
 
-    fn solve(mut self) -> Result<Self::Solution, Self::Error> {
+    fn solve(mut self) -> Result<Self::Solution, ResolutionError> {
         use ResolutionError::*;
         match Problem::solve(&mut self.0) {
             SolveStatus::Unbounded => Err(Unbounded),

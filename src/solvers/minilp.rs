@@ -70,9 +70,8 @@ impl MiniLpProblem {
 
 impl SolverModel for MiniLpProblem {
     type Solution = MiniLpSolution;
-    type Error = ResolutionError;
 
-    fn solve(self) -> Result<Self::Solution, Self::Error> {
+    fn solve(self) -> Result<Self::Solution, ResolutionError> {
         let mut solution = self.problem.solve()?;
         for int_var in self.integers {
             solution = catch_unwind(|| solution.add_gomory_cut(int_var)).map_err(|_| {
