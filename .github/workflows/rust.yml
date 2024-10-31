@@ -25,6 +25,9 @@ jobs:
         with:
           activate-environment: test
           allow-softlinks: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: install deps
         run: |
           sudo apt-get install coinor-cbc coinor-libcbc-dev libgsl-dev
@@ -38,6 +41,8 @@ jobs:
           curl -LO https://github.com/rust-or/good_lp/releases/download/cplex/cplex.bin
           chmod u+x cplex.bin
           ./cplex.bin -f ./.github/cplex/response.properties
+          # Install wasm-pack 
+          cargo install wasm-pack
       - name: Build with all default solvers (no cplex)
         run: cargo build --features all_default_solvers --tests
       - name: Run tests with all default solvers (no cplex)
@@ -57,4 +62,8 @@ jobs:
         run: cargo test --no-default-features --features cplex-rs
       - name: Run tests with Clarabel
         run: cargo test --no-default-features --features clarabel
+      - name: Run tests with Clarabel on WASM
+        run: wasm-pack test --node --no-default-features --features "clarabel,clarabel-wasm"
+      - name: Run tests with minilp on WASM
+        run: wasm-pack test --node --no-default-features --features "minilp"
       - run: cargo bench

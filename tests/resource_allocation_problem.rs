@@ -12,7 +12,8 @@
 
 use good_lp::variable::ProblemVariables;
 use good_lp::{default_solver, variable, variables, Expression, Solution, SolverModel, Variable};
-
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_test::*;
 struct Product {
     // amount of fuel producing 1 unit takes
     needed_fuel: f64,
@@ -65,6 +66,7 @@ impl ResourceAllocationProblem {
 use float_eq::assert_float_eq;
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn resource_allocation() {
     let mut pb = ResourceAllocationProblem::new(5., 3.);
     let steel = pb.add(Product {
@@ -87,6 +89,7 @@ fn resource_allocation() {
 }
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn using_a_vector() {
     let products = vec![
         Product {

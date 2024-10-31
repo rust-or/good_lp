@@ -1,5 +1,6 @@
 use good_lp::{constraint, variables, Solution, SolverModel, StaticSolver};
-
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_test::*;
 // See: https://github.com/rust-or/good_lp/pull/5
 
 fn generic_solve_example<S: StaticSolver>(solver: S) -> Result<(), Box<dyn std::error::Error>> {
@@ -19,6 +20,7 @@ fn generic_solve_example<S: StaticSolver>(solver: S) -> Result<(), Box<dyn std::
 }
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn concrete() {
     generic_solve_example(good_lp::default_solver).expect("solve")
 }

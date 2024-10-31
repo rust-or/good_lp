@@ -5,7 +5,8 @@ use good_lp::{
     solvers::{DualValues, SolutionWithDual},
     variable, variables, Solution, Solver, SolverModel,
 };
-
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_test::*;
 // Using a generic function here ensures the dual can be retrieved in a generic,
 // solver-independent manner.
 #[allow(dead_code)]
@@ -75,6 +76,7 @@ where
 macro_rules! dual_test {
     ($([$solver_feature:literal, $solver:expr])*) => {
         #[test]
+        #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
         fn determine_shadow_prices() {
             $(
                 #[cfg(feature = $solver_feature)]
@@ -83,6 +85,7 @@ macro_rules! dual_test {
         }
 
         #[test]
+        #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
         fn furniture_problem() {
             $(
                 #[cfg(feature = $solver_feature)]
