@@ -10,7 +10,7 @@ Adding a new solver should not take more than a few hundred lines of code, tests
 
  - add the solver as an optional dependency in `Cargo.toml`
  - add a file named after your solver in the [solvers](./src/solvers) folder
-    - you can copy minilp, our smallest solver interface, as a starting point.
+    - you can copy microlp, our smallest solver interface, as a starting point.
     - create a struct to store linear problems in a way that will make it cheap to dynamically add new constraints to the problem,
        and easy to pass the problem to the solver once it has been fully constructed.
       This generally means constructing vectors to which you can push values for each new constraint.

@@ -15,12 +15,12 @@ categories = ["mathematics", "algorithms", "science", "api-bindings", "data-stru
 default = ["coin_cbc", "singlethread-cbc"]
 singlethread-cbc = ["coin_cbc?/singlethread-cbc"]
 scip = ["russcip"]
-all_default_solvers = ["coin_cbc", "minilp", "lpsolve", "highs", "russcip", "lp-solvers", "clarabel"] # cplex-rs is not included because it is incompatible with lpsolve
+all_default_solvers = ["coin_cbc", "microlp", "lpsolve", "highs", "russcip", "lp-solvers", "clarabel"] # cplex-rs is not included because it is incompatible with lpsolve
 clarabel-wasm = ["clarabel/wasm"]
 
 [dependencies]
 coin_cbc = { version = "0.1", optional = true, default-features = false }
-minilp = { version = "0.2", optional = true }
+microlp = { version = "0.2.4", optional = true }
 lpsolve = { version = "0.1", optional = true }
 highs = { version = "1.5.0", optional = true }
 russcip = { version = "0.3.4", optional = true }

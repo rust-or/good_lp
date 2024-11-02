@@ -48,8 +48,8 @@ jobs:
       - name: Run tests with all default solvers (no cplex)
         # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
         run: cargo test  --features all_default_solvers -- --test-threads=1
-      - name: Run tests with minilp
-        run: cargo test --no-default-features --features minilp
+      - name: Run tests with microlp
+        run: cargo test --no-default-features --features microlp
       - name: Run tests with lpsolve
         run: cargo test --no-default-features --features lpsolve
       - name: Run tests with highs
@@ -64,6 +64,6 @@ jobs:
         run: cargo test --no-default-features --features clarabel
       - name: Run tests with Clarabel on WASM
         run: wasm-pack test --node --no-default-features --features "clarabel,clarabel-wasm"
-      - name: Run tests with minilp on WASM
-        run: wasm-pack test --node --no-default-features --features "minilp"
+      - name: Run tests with microlp on WASM
+        run: wasm-pack test --node --no-default-features --features microlp
       - run: cargo bench

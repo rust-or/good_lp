@@ -17,9 +17,9 @@ pub mod cplex;
 #[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
 pub mod coin_cbc;
 
-#[cfg(feature = "minilp")]
-#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
-pub mod minilp;
+#[cfg(feature = "microlp")]
+#[cfg_attr(docsrs, doc(cfg(feature = "microlp")))]
+pub mod microlp;
 
 #[cfg(feature = "lpsolve")]
 #[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
@@ -259,7 +259,7 @@ pub trait DualValues {
 /// # // These solvers do not support dual values
 /// # #[cfg(not(any(
 /// #     feature = "coin_cbc",
-/// #     feature = "minilp",
+/// #     feature = "microlp",
 /// #     feature = "lpsolve",
 /// #     feature = "lp-solvers",
 /// #     feature = "scip",
