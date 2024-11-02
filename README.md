@@ -67,21 +67,22 @@ You can find a resource allocation problem example in
 This library offers an abstraction over multiple solvers. By default, it uses [cbc][cbc], but
 you can also activate other solvers using cargo features.
 
-| solver feature name    | integer variables | no C compiler\* | no additional libs\*\* | fast |
-| ---------------------- | ----------------- | --------------- | ---------------------- | ---- |
-| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   |
-| [`highs`][highs]       | ✅                | ❌              | ✅\+                   | ✅   |
-| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   |
-| [`minilp`][minilp]     | ❌                | ✅              | ✅                     | ❌   |
-| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   |
-| [`scip`][scip]         | ✅                | ✅              | ❌                     | ✅   |
-| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅\+\+                 | ✅   |
-| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   |
+| solver feature name    | integer variables | no C compiler\* | no additional libs\*\* | fast | WASM    |
+| ---------------------- | ----------------- | --------------- | ---------------------- | ---- |---------|
+| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   | ❌       |
+| [`highs`][highs]       | ✅                | ❌              | ✅\+                   | ✅   | ❌       |
+| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   | ❌       |
+| [`minilp`][minilp]     | ❌                | ✅              | ✅                     | ❌   | ✅       |
+| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌       |
+| [`scip`][scip]         | ✅                | ✅              | ❌                     | ✅   | ❌       |
+| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅\+\+                 | ✅   | ❌       |
+| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅\+\+\+ |
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
 - \+ highs itself is statically linked and does not require manual installation. However, on some systems, you may have to [install dependencies of highs itself](https://github.com/rust-or/good_lp/issues/29). 
 - \+\+ the cplex_rs crate links statically to a local installation of the IBM ILOG CPLEX Optimizer.
+- \+\+\+ to use clarabel for WASM targets, set the `clarabel-wasm` feature flag
 
 To use an alternative solver, put the following in your `Cargo.toml`:
 
@@ -125,7 +126,7 @@ Minilp is written in pure rust, so you can use it without having to install a C 
 or having to install any external library, but it is slower than other solvers.
 
 It performs very poorly when compiled in debug mode, so be sure to compile your code
-in `--release` mode when solving large problems.
+in `--release` mode when solving large problems. This solver can compile to WASM targets.
 
 ### [HiGHS][highs]
 
@@ -201,6 +202,7 @@ linear programming solver written in Rust by the
 It does not support integer variables, but it is fast and easy to install.
 It does implement the [SolutionWithDual](https://docs.rs/good_lp/latest/good_lp/solvers/trait.SolutionWithDual.html)
 trait, which allows you to access the dual values of the constraints (the shadow prices).
+If you want to use it with WASM targets, you must include the `clarabel-wasm` feature flag
 
 [clarabel]: https://github.com/oxfordcontrol/Clarabel.rs
 

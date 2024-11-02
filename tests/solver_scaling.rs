@@ -1,6 +1,7 @@
 use float_eq::assert_float_eq;
 use good_lp::{constraint, default_solver, variable, variables, Expression, Solution, SolverModel};
-
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_test::*;
 const BIG_NUM: usize = 1000; // <- Set this higher to test how good_lp and the solvers scale
 
 #[test]
@@ -21,6 +22,7 @@ fn solve_large_problem() {
 }
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn add_10_000_constraints() {
     let mut vars = variables!();
     let v = vars.add_vector(variable(), 10_000);
@@ -31,6 +33,7 @@ fn add_10_000_constraints() {
 }
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn sum_binaries() {
     // See: https://github.com/rust-or/good_lp/issues/8
     let mut vars = variables!();

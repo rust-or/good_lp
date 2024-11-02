@@ -1,6 +1,9 @@
 use good_lp::{variables, Expression};
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_test::*;
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn complex_expression() {
     let mut var1 = variables!();
     let a = var1.add_variable();
@@ -14,6 +17,7 @@ fn complex_expression() {
 }
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn large_sum() {
     let mut var1 = variables!();
     let var_vec: Vec<_> = (0..100_000).map(|_i| var1.add_variable()).collect();
@@ -23,6 +27,7 @@ fn large_sum() {
 }
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn complete() {
     let mut var1 = variables!();
     let mut var2 = variables!();
@@ -38,6 +43,7 @@ fn complete() {
 }
 
 #[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn debug_format() {
     let mut vars = variables!();
     let a = vars.add_variable();
