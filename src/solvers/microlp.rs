@@ -1,8 +1,8 @@
-//! A solver that uses [minilp](https://docs.rs/minilp), a pure rust solver.
+//! A solver that uses [microlp](https://docs.rs/microlp), a pure rust solver.
 
 use std::panic::catch_unwind;
 
-use minilp::Error;
+use microlp::Error;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
@@ -11,20 +11,20 @@ use crate::{
 };
 use crate::{Constraint, Variable};
 
-/// The [minilp](https://docs.rs/minilp) solver,
+/// The [microlp](https://docs.rs/microlp) solver,
 /// to be used with [UnsolvedProblem::using].
-pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
+pub fn microlp(to_solve: UnsolvedProblem) -> MicroLpProblem {
     let UnsolvedProblem {
         objective,
         direction,
         variables,
     } = to_solve;
-    let mut problem = minilp::Problem::new(match direction {
-        ObjectiveDirection::Maximisation => minilp::OptimizationDirection::Maximize,
-        ObjectiveDirection::Minimisation => minilp::OptimizationDirection::Minimize,
+    let mut problem = microlp::Problem::new(match direction {
+        ObjectiveDirection::Maximisation => microlp::OptimizationDirection::Maximize,
+        ObjectiveDirection::Minimisation => microlp::OptimizationDirection::Minimize,
     });
-    let mut integers: Vec<minilp::Variable> = vec![];
-    let variables: Vec<minilp::Variable> = variables
+    let mut integers: Vec<microlp::Variable> = vec![];
+    let variables: Vec<microlp::Variable> = variables
         .iter_variables_with_def()
         .map(
             |(
@@ -45,7 +45,7 @@ pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
             },
         )
         .collect();
-    MiniLpProblem {
+    MicroLpProblem {
         problem,
         variables,
         integers,
@@ -53,33 +53,33 @@ pub fn minilp(to_solve: UnsolvedProblem) -> MiniLpProblem {
     }
 }
 
-/// A minilp model
-pub struct MiniLpProblem {
-    problem: minilp::Problem,
-    variables: Vec<minilp::Variable>,
-    integers: Vec<minilp::Variable>,
+/// A microlp model
+pub struct MicroLpProblem {
+    problem: microlp::Problem,
+    variables: Vec<microlp::Variable>,
+    integers: Vec<microlp::Variable>,
     n_constraints: usize,
 }
 
-impl MiniLpProblem {
-    /// Get the inner minilp model
-    pub fn as_inner(&self) -> &minilp::Problem {
+impl MicroLpProblem {
+    /// Get the inner microlp model
+    pub fn as_inner(&self) -> &microlp::Problem {
         &self.problem
     }
 }
 
-impl SolverModel for MiniLpProblem {
-    type Solution = MiniLpSolution;
+impl SolverModel for MicroLpProblem {
+    type Solution = MicroLpSolution;
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let mut solution = self.problem.solve()?;
         for int_var in self.integers {
             solution = catch_unwind(|| solution.add_gomory_cut(int_var)).map_err(|_| {
-                ResolutionError::Other("minilp does not support integer variables")
+                ResolutionError::Other("microlp does not support integer variables")
             })??;
         }
-        Ok(MiniLpSolution {
+        Ok(MicroLpSolution {
             solution,
             variables: self.variables,
         })
@@ -88,11 +88,11 @@ impl SolverModel for MiniLpProblem {
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
         let index = self.n_constraints;
         let op = match constraint.is_equality {
-            true => minilp::ComparisonOp::Eq,
-            false => minilp::ComparisonOp::Le,
+            true => microlp::ComparisonOp::Eq,
+            false => microlp::ComparisonOp::Le,
         };
         let constant = -constraint.expression.constant;
-        let mut linear_expr = minilp::LinearExpr::empty();
+        let mut linear_expr = microlp::LinearExpr::empty();
         for (var, coefficient) in constraint.expression.linear.coefficients {
             linear_expr.add(self.variables[var.index()], coefficient);
         }
@@ -102,33 +102,34 @@ impl SolverModel for MiniLpProblem {
     }
 
     fn name() -> &'static str {
-        "Minilp"
+        "Microlp"
     }
 }
 
-impl From<minilp::Error> for ResolutionError {
-    fn from(minilp_error: Error) -> Self {
-        match minilp_error {
-            minilp::Error::Unbounded => Self::Unbounded,
-            minilp::Error::Infeasible => Self::Infeasible,
+impl From<microlp::Error> for ResolutionError {
+    fn from(microlp_error: Error) -> Self {
+        match microlp_error {
+            microlp::Error::Unbounded => Self::Unbounded,
+            microlp::Error::Infeasible => Self::Infeasible,
+            microlp::Error::InternalError(s) => Self::Str(s),
         }
     }
 }
 
-/// The solution to a minilp problem
-pub struct MiniLpSolution {
-    solution: minilp::Solution,
-    variables: Vec<minilp::Variable>,
+/// The solution to a microlp problem
+pub struct MicroLpSolution {
+    solution: microlp::Solution,
+    variables: Vec<microlp::Variable>,
 }
 
-impl MiniLpSolution {
-    /// Returns the MiniLP solution object. You can use it to dynamically add new constraints
-    pub fn into_inner(self) -> minilp::Solution {
+impl MicroLpSolution {
+    /// Returns the MicroLP solution object. You can use it to dynamically add new constraints
+    pub fn into_inner(self) -> microlp::Solution {
         self.solution
     }
 }
 
-impl Solution for MiniLpSolution {
+impl Solution for MicroLpSolution {
     fn value(&self, variable: Variable) -> f64 {
         self.solution[self.variables[variable.index()]]
     }
@@ -138,7 +139,7 @@ impl Solution for MiniLpSolution {
 mod tests {
     use crate::{variable, variables, Solution, SolverModel};
 
-    use super::minilp;
+    use super::microlp;
 
     #[test]
     fn can_solve_easy() {
@@ -147,7 +148,7 @@ mod tests {
         let y = vars.add(variable().clamp(1, 3));
         let solution = vars
             .maximise(x + y)
-            .using(minilp)
+            .using(microlp)
             .with((2 * x + y) << 4)
             .solve()
             .unwrap();

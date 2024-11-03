@@ -71,7 +71,7 @@ pub use constraint::Constraint;
 pub use expression::Expression;
 #[cfg(not(any(
     feature = "coin_cbc",
-    feature = "minilp",
+    feature = "microlp",
     feature = "lpsolve",
     feature = "highs",
     feature = "scip",
@@ -90,7 +90,7 @@ pub use solvers::coin_cbc::coin_cbc;
 pub use solvers::coin_cbc::coin_cbc as default_solver;
 #[cfg(not(any(
     feature = "coin_cbc",
-    feature = "minilp",
+    feature = "microlp",
     feature = "lpsolve",
     feature = "highs"
 )))]
@@ -99,7 +99,7 @@ pub use solvers::cplex::cplex as default_solver;
 #[cfg(feature = "highs")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::highs::highs;
-#[cfg(not(any(feature = "coin_cbc", feature = "minilp", feature = "lpsolve")))]
+#[cfg(not(any(feature = "coin_cbc", feature = "microlp", feature = "lpsolve")))]
 #[cfg(feature = "highs")]
 /// When the "highs" cargo feature is present, highs is used as the default solver
 pub use solvers::highs::highs as default_solver;
@@ -109,23 +109,23 @@ pub use solvers::lp_solvers::LpSolver;
 #[cfg(feature = "lpsolve")]
 #[cfg_attr(docsrs, doc(cfg(feature = "lpsolve")))]
 pub use solvers::lpsolve::lp_solve;
-#[cfg(not(any(feature = "coin_cbc", feature = "minilp")))]
+#[cfg(not(any(feature = "coin_cbc", feature = "microlp")))]
 #[cfg(feature = "lpsolve")]
 /// When the "lpsolve" cargo feature is present, lpsolve is used as the default solver
 pub use solvers::lpsolve::lp_solve as default_solver;
-#[cfg(feature = "minilp")]
-#[cfg_attr(docsrs, doc(cfg(feature = "minilp")))]
-pub use solvers::minilp::minilp;
+#[cfg(feature = "microlp")]
+#[cfg_attr(docsrs, doc(cfg(feature = "microlp")))]
+pub use solvers::microlp::microlp;
 #[cfg(not(feature = "coin_cbc"))]
-#[cfg(feature = "minilp")]
-/// When the "coin_cbc" cargo feature is absent, minilp is used as the default solver
-pub use solvers::minilp::minilp as default_solver;
+#[cfg(feature = "microlp")]
+/// When the "coin_cbc" cargo feature is absent, microlp is used as the default solver
+pub use solvers::microlp::microlp as default_solver;
 #[cfg(feature = "scip")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::scip::scip;
 #[cfg(not(any(
     feature = "coin_cbc",
-    feature = "minilp",
+    feature = "microlp",
     feature = "lpsolve",
     feature = "highs"
 )))]
@@ -140,7 +140,7 @@ pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 
 #[cfg(not(any(
     feature = "coin_cbc",
-    feature = "minilp",
+    feature = "microlp",
     feature = "lpsolve",
     feature = "highs",
     feature = "scip",
@@ -154,7 +154,7 @@ pub const default_solver: LpSolver<
 
 #[cfg(not(any(
     feature = "coin_cbc",
-    feature = "minilp",
+    feature = "microlp",
     feature = "lpsolve",
     feature = "highs",
     feature = "lp-solvers",
@@ -167,7 +167,7 @@ compile_error!(
 You need to activate at least one solver feature flag in good_lp. \
 You can do by adding the following to your Cargo.toml :
 [dependencies]
-good_lp = { version = \"*\", features = [\"minilp\"] }
+good_lp = { version = \"*\", features = [\"microlp\"] }
 "
 );
 

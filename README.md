@@ -53,7 +53,7 @@ However, it is currently very slow with large problems.
 
 You can also directly use the underlying solver libraries, such as
 [coin_cbc](https://docs.rs/coin_cbc/) or
-[minilp](https://crates.io/crates/minilp)
+[microlp](https://crates.io/crates/microlp)
 if you don't need a way to express your objective function and
 constraints using an idiomatic rust syntax.
 
@@ -72,7 +72,7 @@ you can also activate other solvers using cargo features.
 | [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   | ❌       |
 | [`highs`][highs]       | ✅                | ❌              | ✅\+                   | ✅   | ❌       |
 | [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   | ❌       |
-| [`minilp`][minilp]     | ❌                | ✅              | ✅                     | ❌   | ✅       |
+| [`microlp`][microlp]     | ❌                | ✅              | ✅                     | ❌   | ✅       |
 | [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌       |
 | [`scip`][scip]         | ✅                | ✅              | ❌                     | ✅   | ❌       |
 | [`cplex-rs`][cplex]    | ✅                | ❌              | ✅\+\+                 | ✅   | ❌       |
@@ -116,13 +116,13 @@ option. Otherwise, using Cbc from multiple threads would be unsafe.
 
 [cbc]: https://www.coin-or.org/Cbc/
 
-### [minilp](https://docs.rs/minilp)
+### [microlp](https://docs.rs/microlp)
 
-minilp is a pure rust solver, which means it works out of the box without installing anything else.
+Microlp is a fork of [minilp](https://docs.rs/minilp), a pure rust solver, which means it works out of the box without installing anything else.
 
-[minilp]: https://docs.rs/minilp
+[microlp]: https://docs.rs/microlp
 
-Minilp is written in pure rust, so you can use it without having to install a C compiler on your machine,
+Microlp is written in pure rust, so you can use it without having to install a C compiler on your machine,
 or having to install any external library, but it is slower than other solvers.
 
 It performs very poorly when compiled in debug mode, so be sure to compile your code
