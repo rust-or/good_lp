@@ -69,7 +69,7 @@ impl IntoAffineExpression for Option<Variable> {
     }
 }
 
-impl<'a> IntoAffineExpression for &'a Variable {
+impl IntoAffineExpression for &Variable {
     type Iter = std::iter::Once<(Variable, f64)>;
 
     #[inline]
@@ -412,7 +412,7 @@ struct DisplayExpr<'a, 'b, V> {
     value: &'b V,
 }
 
-impl<'a, 'b, V: FormatWithVars> Display for DisplayExpr<'a, 'b, V> {
+impl<V: FormatWithVars> Display for DisplayExpr<'_, '_, V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.value.format_with(f, |f, var| {
             let mut name = &self.problem.variables[var.index].name;

@@ -26,7 +26,7 @@ impl IntoAffineExpression for LinearExpression {
 #[doc(hidden)]
 pub struct CopiedCoefficients<'a>(std::collections::hash_map::Iter<'a, Variable, f64>);
 
-impl<'a> Iterator for CopiedCoefficients<'a> {
+impl Iterator for CopiedCoefficients<'_> {
     type Item = (Variable, f64);
 
     #[inline]
