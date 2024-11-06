@@ -68,15 +68,15 @@ This library offers an abstraction over multiple solvers. By default, it uses [c
 you can also activate other solvers using cargo features.
 
 | solver feature name    | integer variables | no C compiler\* | no additional libs\*\* | fast | WASM    |
-| ---------------------- | ----------------- | --------------- | ---------------------- | ---- |---------|
-| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   | ❌       |
-| [`highs`][highs]       | ✅                | ❌              | ✅\+                   | ✅   | ❌       |
-| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   | ❌       |
-| [`microlp`][microlp]     | ❌                | ✅              | ✅                     | ❌   | ✅       |
-| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌       |
-| [`scip`][scip]         | ✅                | ✅              | ❌                     | ✅   | ❌       |
-| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅\+\+                 | ✅   | ❌       |
-| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅\+\+\+ |
+| ---------------------- |-------------------| --------------- | ---------------------- | ---- |---------|
+| [`coin_cbc`][cbc]      | ✅                 | ✅              | ❌                     | ✅   | ❌       |
+| [`highs`][highs]       | ✅                 | ❌              | ✅\+                   | ✅   | ❌       |
+| [`lpsolve`][lpsolve]   | ✅                 | ❌              | ✅                     | ❌   | ❌       |
+| [`microlp`][microlp]   | ✅                 | ✅              | ✅                     | ❌   | ✅       |
+| [`lp-solvers`][lps]    | ✅                 | ✅              | ✅                     | ❌   | ❌       |
+| [`scip`][scip]         | ✅                 | ✅              | ❌                     | ✅   | ❌       |
+| [`cplex-rs`][cplex]    | ✅                 | ❌              | ✅\+\+                 | ✅   | ❌       |
+| [`clarabel`][clarabel] | ❌                 | ✅              | ✅                     | ✅   | ✅\+\+\+ |
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
