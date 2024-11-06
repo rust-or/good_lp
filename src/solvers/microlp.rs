@@ -1,7 +1,5 @@
 //! A solver that uses [microlp](https://docs.rs/microlp), a pure rust solver.
 
-use std::panic::catch_unwind;
-
 use microlp::Error;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
@@ -23,7 +21,6 @@ pub fn microlp(to_solve: UnsolvedProblem) -> MicroLpProblem {
         ObjectiveDirection::Maximisation => microlp::OptimizationDirection::Maximize,
         ObjectiveDirection::Minimisation => microlp::OptimizationDirection::Minimize,
     });
-    let mut integers: Vec<microlp::Variable> = vec![];
     let variables: Vec<microlp::Variable> = variables
         .iter_variables_with_def()
         .map(
@@ -37,18 +34,17 @@ pub fn microlp(to_solve: UnsolvedProblem) -> MicroLpProblem {
                 },
             )| {
                 let coeff = *objective.linear.coefficients.get(&var).unwrap_or(&0.);
-                let var = problem.add_var(coeff, (min, max));
                 if is_integer {
-                    integers.push(var);
+                    problem.add_integer_var(coeff, (min as i32, max as i32))
+                } else {
+                    problem.add_var(coeff, (min, max))
                 }
-                var
             },
         )
         .collect();
     MicroLpProblem {
         problem,
         variables,
-        integers,
         n_constraints: 0,
     }
 }
@@ -57,7 +53,6 @@ pub fn microlp(to_solve: UnsolvedProblem) -> MicroLpProblem {
 pub struct MicroLpProblem {
     problem: microlp::Problem,
     variables: Vec<microlp::Variable>,
-    integers: Vec<microlp::Variable>,
     n_constraints: usize,
 }
 
@@ -73,12 +68,7 @@ impl SolverModel for MicroLpProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        let mut solution = self.problem.solve()?;
-        for int_var in self.integers {
-            solution = catch_unwind(|| solution.add_gomory_cut(int_var)).map_err(|_| {
-                ResolutionError::Other("microlp does not support integer variables")
-            })??;
-        }
+        let solution = self.problem.solve()?;
         Ok(MicroLpSolution {
             solution,
             variables: self.variables,
@@ -153,5 +143,26 @@ mod tests {
             .solve()
             .unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+    }
+
+    #[test]
+    fn can_solve_milp() {
+        let mut vars = variables!();
+
+        let x = vars.add(variable().clamp(2, f64::INFINITY));
+        let y = vars.add(variable().clamp(0, 7));
+        let z = vars.add(variable().integer().clamp(0, f64::INFINITY));
+
+        let solution = vars
+            .maximise(50 * x + 40 * y + 45 * z)
+            .using(microlp)
+            .with((3 * x + 2 * y + z) << 20)
+            .with((2 * x + y + 3 * z) << 15)
+            .solve()
+            .unwrap();
+        assert_eq!(
+            (solution.value(x), solution.value(y), solution.value(z)),
+            (2.0, 6.5, 1.0)
+        )
     }
 }
