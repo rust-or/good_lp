@@ -1,5 +1,8 @@
 use float_eq::assert_float_eq;
-use good_lp::{constraint, default_solver, variable, variables, Expression, Solution, SolverModel};
+use good_lp::{
+    constraint, default_solver, variable, variables, Expression, Solution, SolverModel,
+    WithInitialSolution,
+};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;
 const BIG_NUM: usize = 1000; // <- Set this higher to test how good_lp and the solvers scale
@@ -16,6 +19,41 @@ fn solve_large_problem() {
         pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
     }
     let sol = pb.solve().unwrap();
+    for (i, var) in v.iter().enumerate() {
+        assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-8);
+    }
+}
+
+#[test]
+fn solve_problem_with_initial_solution() {
+    // Solve problem once
+    let mut vars = variables!();
+    let min = -((BIG_NUM / 2) as f64);
+    let max = (BIG_NUM / 2 - 1) as f64;
+    let v = vars.add_vector(variable().min(min).max(max), BIG_NUM);
+    let objective: Expression = v.iter().sum();
+    let mut pb = vars.maximise(objective).using(default_solver);
+    for vs in v.windows(2) {
+        pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
+    }
+    let sol = pb.solve().unwrap();
+    for (i, var) in v.iter().enumerate() {
+        assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-8);
+    }
+    // Recreate problem and solve with initial solution
+    let mut vars = variables!();
+    let min = -((BIG_NUM / 2) as f64);
+    let max = (BIG_NUM / 2 - 1) as f64;
+    let v = vars.add_vector(variable().min(min).max(max), BIG_NUM);
+    let objective: Expression = v.iter().sum();
+    let mut pb = vars
+        .maximise(objective)
+        .using(default_solver)
+        .set_initial_solution(&sol);
+    for vs in v.windows(2) {
+        pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
+    }
+    let sol = pb.solve().expect("problem has no solution");
     for (i, var) in v.iter().enumerate() {
         assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-8);
     }
