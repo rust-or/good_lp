@@ -169,7 +169,7 @@ impl SolverModel for CoinCbcProblem {
 impl WithInitialSolution for CoinCbcProblem {
     type Solution = CoinCbcSolution;
 
-    fn set_initial_solution(mut self, solution: &Self::Solution) -> Self {
+    fn with_initial_solution(mut self, solution: &Self::Solution) -> Self {
         self.model.set_initial_solution(&solution.solution);
         self
     }
