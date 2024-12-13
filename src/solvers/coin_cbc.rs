@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 
-use crate::solvers::{MipGapError, ModelWithSOS1, WithMipGap};
+use crate::solvers::{MipGapError, ModelWithSOS1, WithInitialSolution, WithMipGap};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
@@ -163,6 +163,15 @@ impl SolverModel for CoinCbcProblem {
 
     fn name() -> &'static str {
         "Coin Cbc"
+    }
+}
+
+impl WithInitialSolution for CoinCbcProblem {
+    type Solution = CoinCbcSolution;
+
+    fn set_initial_solution(mut self, solution: &Self::Solution) -> Self {
+        self.model.set_initial_solution(&solution.solution);
+        self
     }
 }
 
