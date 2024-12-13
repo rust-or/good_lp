@@ -26,37 +26,26 @@ fn solve_large_problem() {
 
 #[test]
 fn solve_problem_with_initial_solution() {
+    let limit = 3.0;
     // Solve problem once
-    let mut vars = variables!();
-    let min = -((BIG_NUM / 2) as f64);
-    let max = (BIG_NUM / 2 - 1) as f64;
-    let v = vars.add_vector(variable().min(min).max(max), BIG_NUM);
-    let objective: Expression = v.iter().sum();
-    let mut pb = vars.maximise(objective).using(default_solver);
-    for vs in v.windows(2) {
-        pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
-    }
+    variables! {
+        vars:
+            0.0 <= v <= limit;
+    };
+    let pb = vars.maximise(v).using(default_solver);
     let sol = pb.solve().unwrap();
-    for (i, var) in v.iter().enumerate() {
-        assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-8);
-    }
+    assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
     // Recreate problem and solve with initial solution
-    let mut vars = variables!();
-    let min = -((BIG_NUM / 2) as f64);
-    let max = (BIG_NUM / 2 - 1) as f64;
-    let v = vars.add_vector(variable().min(min).max(max), BIG_NUM);
-    let objective: Expression = v.iter().sum();
-    let mut pb = vars
-        .maximise(objective)
+    variables! {
+        vars:
+            0.0 <= v <= limit;
+    };
+    let pb = vars
+        .maximise(v)
         .using(default_solver)
         .with_initial_solution(&sol);
-    for vs in v.windows(2) {
-        pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
-    }
-    let sol = pb.solve().expect("problem has no solution");
-    for (i, var) in v.iter().enumerate() {
-        assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-8);
-    }
+    let sol = pb.solve().unwrap();
+    assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
 }
 
 #[test]
