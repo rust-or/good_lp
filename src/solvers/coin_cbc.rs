@@ -227,3 +227,33 @@ impl WithMipGap for CoinCbcProblem {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{variables, Solution, SolverModel, WithInitialSolution};
+    use float_eq::assert_float_eq;
+
+    #[test]
+    fn solve_problem_with_initial_solution() {
+        let limit = 3.0;
+        // Solve problem once
+        variables! {
+            vars:
+                0.0 <= v <= limit;
+        };
+        let pb = vars.maximise(v).using(super::coin_cbc);
+        let sol = pb.solve().unwrap();
+        assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
+        // Recreate problem and solve with initial solution
+        variables! {
+            vars:
+                0.0 <= v <= limit;
+        };
+        let pb = vars
+            .maximise(v)
+            .using(super::coin_cbc)
+            .with_initial_solution(&sol);
+        let sol = pb.solve().unwrap();
+        assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
+    }
+}

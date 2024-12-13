@@ -1,8 +1,5 @@
 use float_eq::assert_float_eq;
-use good_lp::{
-    constraint, default_solver, variable, variables, Expression, Solution, SolverModel,
-    WithInitialSolution,
-};
+use good_lp::{constraint, default_solver, variable, variables, Expression, Solution, SolverModel};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;
 const BIG_NUM: usize = 1000; // <- Set this higher to test how good_lp and the solvers scale
@@ -22,30 +19,6 @@ fn solve_large_problem() {
     for (i, var) in v.iter().enumerate() {
         assert_float_eq!(sol.value(*var), min + i as f64, abs <= 1e-8);
     }
-}
-
-#[test]
-fn solve_problem_with_initial_solution() {
-    let limit = 3.0;
-    // Solve problem once
-    variables! {
-        vars:
-            0.0 <= v <= limit;
-    };
-    let pb = vars.maximise(v).using(default_solver);
-    let sol = pb.solve().unwrap();
-    assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
-    // Recreate problem and solve with initial solution
-    variables! {
-        vars:
-            0.0 <= v <= limit;
-    };
-    let pb = vars
-        .maximise(v)
-        .using(default_solver)
-        .with_initial_solution(&sol);
-    let sol = pb.solve().unwrap();
-    assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
 }
 
 #[test]
