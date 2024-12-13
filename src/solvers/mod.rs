@@ -205,7 +205,7 @@ pub trait WithInitialSolution {
     type Solution: Solution;
 
     /// Sets the initial solution to the problem
-    fn set_initial_solution(self, solution: &Self::Solution) -> Self;
+    fn with_initial_solution(self, solution: &Self::Solution) -> Self;
 }
 
 /// A problem solution
