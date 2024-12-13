@@ -19,3 +19,9 @@ Adding a new solver should not take more than a few hundred lines of code, tests
   - implement the [`SolverModel`](https://docs.rs/good_lp/latest/good_lp/index.html#reexport.SolverModel) trait for your new problem type.
   - add your solver to `lib.rs` and to the `all_default_solvers` feature in Cargo.toml.
   - open a [pull request](https://github.com/rust-or/good_lp/pulls)
+
+## Dev Container Setup
+
+This repository contains a dev container definition.
+Currently, it only contains the setup for coin_cbc, microlp, highs, and lp_solve.
+Contributions that add new solvers are welcome.
