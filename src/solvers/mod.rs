@@ -199,6 +199,15 @@ pub trait SolverModel {
     fn name() -> &'static str;
 }
 
+/// A solver that can take an initial solution to a problem before solving it
+pub trait WithInitialSolution {
+    /// The type of solution to the problem
+    type Solution: Solution;
+
+    /// Sets the initial solution to the problem
+    fn set_initial_solution(self, solution: &Self::Solution) -> Self;
+}
+
 /// A problem solution
 pub trait Solution {
     /// Get the optimal value of a variable of the problem

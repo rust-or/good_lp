@@ -134,7 +134,7 @@ pub use solvers::scip::scip as default_solver;
 
 pub use solvers::{
     solver_name, DualValues, ModelWithSOS1, ResolutionError, Solution, SolutionWithDual, Solver,
-    SolverModel, StaticSolver, WithMipGap,
+    SolverModel, StaticSolver, WithInitialSolution, WithMipGap,
 };
 pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
 
