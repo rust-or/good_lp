@@ -49,7 +49,7 @@ fn solve_problem_with_initial_solution() {
     let mut pb = vars
         .maximise(objective)
         .using(default_solver)
-        .set_initial_solution(&sol);
+        .with_initial_solution(&sol);
     for vs in v.windows(2) {
         pb = pb.with(constraint!(vs[0] + 1 <= vs[1]));
     }
