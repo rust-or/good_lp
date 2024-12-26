@@ -28,6 +28,6 @@ It will also give you the entire Rust toolchain as well as all necessary VS Code
 
 1. Make sure you have [Docker](https://docs.docker.com/engine/install/) installed on your system
 2. Make sure you have the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed in VS Code
-3. Run the command `Dev Containers: Reopen in Container`
+3. Run the command `Dev Containers: Reopen in Container` in VS Code
 
 Done.
