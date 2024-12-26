@@ -15,7 +15,8 @@ categories = ["mathematics", "algorithms", "science", "api-bindings", "data-stru
 default = ["coin_cbc", "singlethread-cbc"]
 singlethread-cbc = ["coin_cbc?/singlethread-cbc"]
 scip = ["russcip"]
-all_default_solvers = ["coin_cbc", "microlp", "lpsolve", "highs", "russcip", "lp-solvers", "clarabel"] # cplex-rs is not included because it is incompatible with lpsolve
+scip_bundled = ["russcip/bundled"]
+all_default_solvers = ["coin_cbc", "microlp", "lpsolve", "highs", "russcip/bundled", "lp-solvers", "clarabel"] # cplex-rs is not included because it is incompatible with lpsolve
 clarabel-wasm = ["clarabel/wasm"]
 minilp = ["microlp"] # minilp is not maintained anymore, we use the microlp fork instead
 
