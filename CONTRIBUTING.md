@@ -1,10 +1,10 @@
-# General guidelines
+# General Guidelines
 
-Contribution happens through github.
+Contribution happens through GitHub.
 
 Please format your code with `cargo fmt`, and if you add a new feature, update the README, the doc comments, and the doc tests accordingly.
 
-## Adding a new solver
+## Adding a New Solver
 
 Adding a new solver should not take more than a few hundred lines of code, tests included.
 
