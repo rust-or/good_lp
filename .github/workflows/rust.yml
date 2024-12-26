@@ -21,10 +21,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: cargo fmt -- --check
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: test
-          allow-softlinks: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
