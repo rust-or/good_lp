@@ -74,15 +74,16 @@ you can also activate other solvers using cargo features.
 | [`lpsolve`][lpsolve]   | ✅                 | ❌              | ✅                     | ❌   | ❌       |
 | [`microlp`][microlp]   | ✅                 | ✅              | ✅                     | ❌   | ✅       |
 | [`lp-solvers`][lps]    | ✅                 | ✅              | ✅                     | ❌   | ❌       |
-| [`scip`][scip]         | ✅                 | ✅              | ❌                     | ✅   | ❌       |
-| [`cplex-rs`][cplex]    | ✅                 | ❌              | ✅\+\+                 | ✅   | ❌       |
-| [`clarabel`][clarabel] | ❌                 | ✅              | ✅                     | ✅   | ✅\+\+\+ |
+| [`scip`][scip]         | ✅                 | ✅              | ✅\+\+                 | ✅   | ❌       |
+| [`cplex-rs`][cplex]    | ✅                 | ❌              | ✅\+\+\+               | ✅   | ❌       |
+| [`clarabel`][clarabel] | ❌                 | ✅              | ✅                     | ✅   | ✅\+\+\+\+ |
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
-- \+ highs itself is statically linked and does not require manual installation. However, on some systems, you may have to [install dependencies of highs itself](https://github.com/rust-or/good_lp/issues/29). 
-- \+\+ the cplex_rs crate links statically to a local installation of the IBM ILOG CPLEX Optimizer.
-- \+\+\+ to use clarabel for WASM targets, set the `clarabel-wasm` feature flag
+- \+ highs itself is statically linked and does not require manual installation. However, on some systems, you may have to [install dependencies of highs itself](https://github.com/rust-or/good_lp/issues/29).
+- \+\+ using the precompiled binary is possible by enabling the optional `scip_bundled` feature
+- \+\+\+ the cplex_rs crate links statically to a local installation of the IBM ILOG CPLEX Optimizer.
+- \+\+\+\+ to use clarabel for WASM targets, set the `clarabel-wasm` feature flag
 
 To use an alternative solver, put the following in your `Cargo.toml`:
 
