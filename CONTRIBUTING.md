@@ -23,5 +23,11 @@ Adding a new solver should not take more than a few hundred lines of code, tests
 ## Dev Container Setup
 
 This repository contains a dev container definition.
-Currently, it only contains the setup for coin_cbc, microlp, highs, and lp_solve.
-Contributions that add new solvers are welcome.
+This gives you a working system setup with all solvers installed with a single command.
+It will also give you the entire Rust toolchain as well as all necessary VS Code extensions.
+
+1. Make sure you have [Docker](https://docs.docker.com/engine/install/) installed on your system
+2. Make sure you have the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed in VS Code
+3. Run the command `Dev Containers: Reopen in Container`
+
+Done.
