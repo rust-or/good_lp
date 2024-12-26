@@ -1,0 +1,17 @@
+{
+  "name": "Existing Dockerfile",
+  "build": {
+    "context": "..",
+    "dockerfile": "./Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-vscode-remote.remote-containers",
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  },
+  "postCreateCommand": "./build/postsetup.sh && P=~/.local/share/bash-completion/completions && mkdir -p $P && rustup completions bash > $P/rustup && rustup completions bash cargo > $P/cargo"
+}
