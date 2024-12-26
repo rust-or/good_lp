@@ -29,7 +29,7 @@ pub mod lpsolve;
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub mod highs;
 
-#[cfg(any(feature = "scip", feature = "scip_bundled"))]
+#[cfg(feature = "scip")]
 #[cfg_attr(docsrs, doc(cfg(feature = "scip")))]
 pub mod scip;
 
@@ -263,7 +263,6 @@ pub trait DualValues {
 /// #     feature = "lpsolve",
 /// #     feature = "lp-solvers",
 /// #     feature = "scip",
-/// #     feature = "scip_bundled",
 /// #     feature = "cplex-rs",
 /// # )))] {
 ///

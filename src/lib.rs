@@ -75,7 +75,6 @@ pub use expression::Expression;
     feature = "lpsolve",
     feature = "highs",
     feature = "scip",
-    feature = "scip_bundled",
     feature = "cplex-rs",
 )))]
 #[cfg(feature = "clarabel")]
@@ -121,7 +120,7 @@ pub use solvers::microlp::microlp;
 #[cfg(feature = "microlp")]
 /// When the "coin_cbc" cargo feature is absent, microlp is used as the default solver
 pub use solvers::microlp::microlp as default_solver;
-#[cfg(any(feature = "scip", feature = "scip_bundled"))]
+#[cfg(feature = "scip")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::scip::scip;
 #[cfg(not(any(
@@ -130,7 +129,7 @@ pub use solvers::scip::scip;
     feature = "lpsolve",
     feature = "highs"
 )))]
-#[cfg(any(feature = "scip", feature = "scip_bundled"))]
+#[cfg(feature = "scip")]
 pub use solvers::scip::scip as default_solver;
 
 pub use solvers::{
@@ -145,7 +144,6 @@ pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
     feature = "lpsolve",
     feature = "highs",
     feature = "scip",
-    feature = "scip_bundled",
 )))]
 #[cfg(feature = "lp-solvers")]
 /// Default solvers for the 'lp-solvers' feature: a solver that calls Cbc as an external command
@@ -161,7 +159,6 @@ pub const default_solver: LpSolver<
     feature = "highs",
     feature = "lp-solvers",
     feature = "scip",
-    feature = "scip_bundled",
     feature = "cplex-rs",
     feature = "clarabel",
 )))]
