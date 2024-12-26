@@ -167,13 +167,13 @@ Additionally, the end user of your program will have to install the desired solv
 
 [lps]: https://crates.io/crates/lp-solvers
 
-
-
 ### [SCIP][scip]
 
 SCIP is currently one of the fastest open-source solvers for mixed integer programming (MIP) and mixed integer nonlinear programming (MINLP). It is also a framework for constraint integer programming and branch-cut-and-price. It allows for total control of the solution process and the access of detailed information down to the guts of the solver.
 
-`good_lp` uses SCIP through the its rust interface [russcip](https://github.com/mmghannam/russcip). To use this feature you will need to install SCIP. The easiest way to do it is to install a precompiled package from [here](https://scipopt.org/index.php#download) or through conda by running
+`good_lp` uses SCIP through its rust interface [russcip](https://github.com/mmghannam/russcip) which can ship a precompiled binary. The easiest way to use SCIP with `good_lp` is therefore to enable the `scip_bundled` feature.
+
+You can also use a custom installation of SCIP by enabling the `scip` feature instead. A good way of installing SCIP is by downloading a precompiled package from [here](https://scipopt.org/index.php#download) or through conda by running
 ```
 conda install --channel conda-forge scip
 ```
