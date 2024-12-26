@@ -44,7 +44,7 @@ jobs:
       - name: Run tests with lp_solvers
         run: cargo test --no-default-features --features lp-solvers
       - name: Run tests with SCIP
-        run: cargo test --no-default-features --features scip
+        run: cargo test --no-default-features --features scip_bundled
       - name: Run tests with CPLEX
         run: cargo test --no-default-features --features cplex-rs
       - name: Run tests with Clarabel
