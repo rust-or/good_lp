@@ -13,5 +13,5 @@
       ]
     }
   },
-  "postCreateCommand": "mkdir -p ~/.local/share/bash-completion/completions && rustup completions bash > ~/.local/share/bash-completion/completions/rustup && rustup completions bash cargo > ~/.local/share/bash-completion/completions/cargo"
+  "postCreateCommand": "./build/postsetup.sh && P=~/.local/share/bash-completion/completions && mkdir -p $P && rustup completions bash > $P/rustup && rustup completions bash cargo > $P/cargo"
 }

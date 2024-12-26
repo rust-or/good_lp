@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 22
       - name: install deps
-        run: ./build/setup.sh
+        run: ./build/setup.sh && ./build/postsetup.sh
       - name: Build with all default solvers (no cplex)
         run: cargo build --features all_default_solvers --tests
       - name: Run tests with all default solvers (no cplex)
