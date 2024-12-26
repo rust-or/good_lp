@@ -29,20 +29,7 @@ jobs:
         with:
           node-version: 22
       - name: install deps
-        run: |
-          sudo apt-get install coinor-cbc coinor-libcbc-dev libgsl-dev
-          # Install SCIP
-          conda install -y --prefix $CONDA/envs/test --channel conda-forge scip
-          echo "LD_LIBRARY_PATH=$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
-          echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
-          echo "PATH=$CONDA/envs/test/bin:$PATH" >> "${GITHUB_ENV}"
-          echo "CONDA_PREFIX=$CONDA/envs/test" >> "${GITHUB_ENV}"
-          # install CPLEX
-          curl -LO https://github.com/rust-or/good_lp/releases/download/cplex/cplex.bin
-          chmod u+x cplex.bin
-          ./cplex.bin -f ./.github/cplex/response.properties
-          # Install wasm-pack 
-          cargo install wasm-pack
+        run: ./build/setup.sh
       - name: Build with all default solvers (no cplex)
         run: cargo build --features all_default_solvers --tests
       - name: Run tests with all default solvers (no cplex)
