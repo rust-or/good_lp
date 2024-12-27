@@ -176,7 +176,7 @@ SCIP is currently one of the fastest open-source solvers for mixed integer progr
 
 You can also use a custom installation of SCIP by enabling only the `scip` feature. A good way of installing SCIP is by downloading a precompiled package from [here](https://scipopt.org/index.php#download) or through conda by running
 
-```
+```sh
 conda install --channel conda-forge scip
 ```
 
