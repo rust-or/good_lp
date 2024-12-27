@@ -21,28 +21,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: cargo fmt -- --check
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: test
-          allow-softlinks: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: install deps
-        run: |
-          sudo apt-get install coinor-cbc coinor-libcbc-dev libgsl-dev
-          # Install SCIP
-          conda install -y --prefix $CONDA/envs/test --channel conda-forge scip
-          echo "LD_LIBRARY_PATH=$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
-          echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:$CONDA/envs/test/lib" >> "${GITHUB_ENV}"
-          echo "PATH=$CONDA/envs/test/bin:$PATH" >> "${GITHUB_ENV}"
-          echo "CONDA_PREFIX=$CONDA/envs/test" >> "${GITHUB_ENV}"
-          # install CPLEX
-          curl -LO https://github.com/rust-or/good_lp/releases/download/cplex/cplex.bin
-          chmod u+x cplex.bin
-          ./cplex.bin -f ./.github/cplex/response.properties
-          # Install wasm-pack 
-          cargo install wasm-pack
+        run: ./build/setup.sh && ./build/postsetup.sh
       - name: Build with all default solvers (no cplex)
         run: cargo build --features all_default_solvers --tests
       - name: Run tests with all default solvers (no cplex)
@@ -57,7 +40,7 @@ jobs:
       - name: Run tests with lp_solvers
         run: cargo test --no-default-features --features lp-solvers
       - name: Run tests with SCIP
-        run: cargo test --no-default-features --features scip
+        run: cargo test --no-default-features --features "scip,scip_bundled"
       - name: Run tests with CPLEX
         run: cargo test --no-default-features --features cplex-rs
       - name: Run tests with Clarabel
