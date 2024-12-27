@@ -201,11 +201,8 @@ pub trait SolverModel {
 
 /// A solver that can take an initial solution to a problem before solving it
 pub trait WithInitialSolution {
-    /// The type of solution to the problem
-    type Solution: Solution;
-
     /// Sets the initial solution to the problem
-    fn with_initial_solution(self, solution: &Self::Solution) -> Self;
+    fn with_initial_solution(self, solution: &Vec<(Variable, f64)>) -> Self;
 }
 
 /// A problem solution

@@ -2,7 +2,6 @@
 //! This solver is activated using the default `coin_cbc` feature.
 //! You can disable it an enable another solver instead using cargo features.
 use std::convert::TryInto;
-use std::iter::FromIterator;
 
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 
@@ -168,23 +167,12 @@ impl SolverModel for CoinCbcProblem {
 }
 
 impl WithInitialSolution for CoinCbcProblem {
-    type Solution = CoinCbcSolution;
-
-    fn with_initial_solution(mut self, solution: &Self::Solution) -> Self {
-        self.model.set_initial_solution(&solution.solution);
-        self
-    }
-}
-
-impl FromIterator<(Variable, f64)> for CoinCbcSolution {
-    fn from_iter<T: IntoIterator<Item = (Variable, f64)>>(iter: T) -> Self {
-        CoinCbcSolution {
-            solution: CbcSolution {
-                raw: todo!(),
-                col_solution: todo!(),
-            },
-            solution_vec: iter.into_iter().map(|(_, value)| value).collect(),
+    fn with_initial_solution(mut self, solution: &Vec<(Variable, f64)>) -> Self {
+        for (var, val) in solution {
+            self.model
+                .set_col_initial_solution(self.columns[var.index()], *val);
         }
+        self
     }
 }
 
@@ -262,7 +250,7 @@ mod tests {
         let sol = pb.solve().unwrap();
         assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
         // Recreate problem and solve with initial solution
-        let initial_solution = CoinCbcSolution::from_iter(vec![(v, sol.value(v))]);
+        let initial_solution = vec![(v, sol.value(v))];
         variables! {
             vars:
                 0.0 <= v <= limit;
