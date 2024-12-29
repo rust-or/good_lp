@@ -67,22 +67,23 @@ You can find a resource allocation problem example in
 This library offers an abstraction over multiple solvers. By default, it uses [cbc][cbc], but
 you can also activate other solvers using cargo features.
 
-| solver feature name    | integer variables | no C compiler\* | no additional libs\*\* | fast | WASM     |
-| ---------------------- | ----------------- | --------------- | ---------------------- | ---- | -------- |
-| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   | ❌       |
-| [`highs`][highs]       | ✅                | ❌              | ✅\+                   | ✅   | ❌       |
-| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   | ❌       |
-| [`microlp`][microlp]   | ✅                | ✅              | ✅                     | ❌   | ✅       |
-| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌       |
-| [`scip`][scip]         | ✅                | ✅              | ❌                     | ✅   | ❌       |
-| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅\+\+                 | ✅   | ❌       |
-| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅\+\+\+ |
+| solver feature name    | integer variables | no C compiler\* | no additional libs\*\* | fast | WASM       |
+| ---------------------- | ----------------- | --------------- | ---------------------- | ---- | ---------- |
+| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   | ❌         |
+| [`highs`][highs]       | ✅                | ❌              | ✅\+                   | ✅   | ❌         |
+| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   | ❌         |
+| [`microlp`][microlp]   | ✅                | ✅              | ✅                     | ❌   | ✅         |
+| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌         |
+| [`scip`][scip]         | ✅                | ✅              | ✅\+\+                 | ✅   | ❌         |
+| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅\+\+\+               | ✅   | ❌         |
+| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅\+\+\+\+ |
 
 - \* no C compiler: builds with only cargo, without requiring you to install a C compiler
 - \*\* no additional libs: works without additional libraries at runtime, all the dependencies are statically linked
 - \+ highs itself is statically linked and does not require manual installation. However, on some systems, you may have to [install dependencies of highs itself](https://github.com/rust-or/good_lp/issues/29).
-- \+\+ the cplex_rs crate links statically to a local installation of the IBM ILOG CPLEX Optimizer.
-- \+\+\+ to use clarabel for WASM targets, set the `clarabel-wasm` feature flag
+- \+\+ using the precompiled binary is possible by enabling the optional `scip_bundled` feature
+- \+\+\+ the cplex_rs crate links statically to a local installation of the IBM ILOG CPLEX Optimizer.
+- \+\+\+\+ to use clarabel for WASM targets, set the `clarabel-wasm` feature flag
 
 To use an alternative solver, put the following in your `Cargo.toml`:
 
@@ -174,7 +175,8 @@ SCIP is currently one of the fastest open-source solvers for mixed integer progr
 `good_lp` uses SCIP through its rust interface [russcip](https://github.com/mmghannam/russcip) which can ship a precompiled binary. The easiest way to use SCIP with `good_lp` is therefore to enable both the `scip` and the `scip_bundled` features.
 
 You can also use a custom installation of SCIP by enabling only the `scip` feature. A good way of installing SCIP is by downloading a precompiled package from [here](https://scipopt.org/index.php#download) or through conda by running
-```
+
+```sh
 conda install --channel conda-forge scip
 ```
 
