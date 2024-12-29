@@ -234,11 +234,7 @@ impl WithMipGap for CoinCbcProblem {
 
 #[cfg(test)]
 mod tests {
-    use std::iter::FromIterator;
-
-    use crate::{
-        solvers::coin_cbc::CoinCbcSolution, variables, Solution, SolverModel, WithInitialSolution,
-    };
+    use crate::{variables, Solution, SolverModel, WithInitialSolution};
     use float_eq::assert_float_eq;
 
     #[test]
