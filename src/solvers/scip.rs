@@ -160,7 +160,7 @@ impl WithInitialSolution for SCIPProblem {
         for (var, val) in solution {
             sol.set_val(Rc::clone(&self.id_for_var[&var]), val);
         }
-        self.model.add_sol(sol);
+        self.model.add_sol(sol).expect("could not set solution");
         self
     }
 }
