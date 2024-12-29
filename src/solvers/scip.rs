@@ -17,7 +17,7 @@ use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
-    CardinalityConstraintSolver,
+    CardinalityConstraintSolver, WithInitialSolution,
 };
 use crate::{Constraint, Variable};
 
@@ -151,6 +151,16 @@ impl SolverModel for SCIPProblem {
 
     fn name() -> &'static str {
         "SCIP"
+    }
+}
+
+impl WithInitialSolution for SCIPProblem {
+    fn with_initial_solution(self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self {
+        let sol = self.model.create_sol();
+        for (var, val) in solution {
+            sol.set_val(Rc::clone(&self.id_for_var[&var]), val);
+        }
+        self
     }
 }
 
