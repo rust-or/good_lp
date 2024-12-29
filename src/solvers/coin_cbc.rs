@@ -167,7 +167,10 @@ impl SolverModel for CoinCbcProblem {
 }
 
 impl WithInitialSolution for CoinCbcProblem {
-    fn with_initial_solution(mut self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self {
+    fn with_initial_solution(
+        mut self,
+        solution: impl IntoIterator<Item = (Variable, f64)>,
+    ) -> Self {
         for (var, val) in solution {
             self.model
                 .set_col_initial_solution(self.columns[var.index()], val);
