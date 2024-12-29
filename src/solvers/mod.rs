@@ -202,7 +202,7 @@ pub trait SolverModel {
 /// A solver that can take an initial solution to a problem before solving it
 pub trait WithInitialSolution {
     /// Sets the initial solution to the problem
-    fn with_initial_solution(self, solution: &Vec<(Variable, f64)>) -> Self;
+    fn with_initial_solution(self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self;
 }
 
 /// A problem solution
