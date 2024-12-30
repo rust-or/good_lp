@@ -40,6 +40,7 @@ pub fn cplex_with_env(to_solve: UnsolvedProblem, cplex_env: Environment) -> CPLE
                 max,
                 is_integer,
                 ref name,
+                ..,
             },
         )| {
             let coeff = *to_solve
