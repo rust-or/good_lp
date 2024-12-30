@@ -17,7 +17,7 @@ use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
-    CardinalityConstraintSolver,
+    CardinalityConstraintSolver, WithInitialSolution,
 };
 use crate::{Constraint, Variable};
 
@@ -154,6 +154,17 @@ impl SolverModel for SCIPProblem {
     }
 }
 
+impl WithInitialSolution for SCIPProblem {
+    fn with_initial_solution(self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self {
+        let sol = self.model.create_sol();
+        for (var, val) in solution {
+            sol.set_val(Rc::clone(&self.id_for_var[&var]), val);
+        }
+        self.model.add_sol(sol).expect("could not set solution");
+        self
+    }
+}
+
 /// A wrapper to a solved SCIP problem
 pub struct SCIPSolved {
     solved_problem: Model<Solved>,
@@ -175,6 +186,7 @@ impl Solution for SCIPSolved {
 mod tests {
     use crate::{
         constraint, variable, variables, CardinalityConstraintSolver, Solution, SolverModel,
+        WithInitialSolution,
     };
 
     use super::scip;
@@ -190,6 +202,35 @@ mod tests {
             .with((2 * x + y) << 4)
             .solve()
             .unwrap();
+        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+    }
+
+    #[test]
+    fn can_solve_with_initial_solution() {
+        // Solve problem initially
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(scip)
+            .with((2 * x + y) << 4)
+            .solve()
+            .unwrap();
+        // Recreate same problem with initial values slightly off
+        let initial_x = solution.value(x) - 0.1;
+        let initial_y = solution.value(x) - 1.0;
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(scip)
+            .with((2 * x + y) << 4)
+            .with_initial_solution([(x, initial_x), (y, initial_y)])
+            .solve()
+            .unwrap();
+
         assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
     }
 
