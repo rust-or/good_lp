@@ -199,6 +199,12 @@ pub trait SolverModel {
     fn name() -> &'static str;
 }
 
+/// A solver that can take an initial solution to a problem before solving it
+pub trait WithInitialSolution {
+    /// Sets the initial solution to the problem
+    fn with_initial_solution(self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self;
+}
+
 /// A problem solution
 pub trait Solution {
     /// Get the optimal value of a variable of the problem

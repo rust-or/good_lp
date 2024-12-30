@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 
-use crate::solvers::{MipGapError, ModelWithSOS1, WithMipGap};
+use crate::solvers::{MipGapError, ModelWithSOS1, WithInitialSolution, WithMipGap};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
@@ -166,6 +166,19 @@ impl SolverModel for CoinCbcProblem {
     }
 }
 
+impl WithInitialSolution for CoinCbcProblem {
+    fn with_initial_solution(
+        mut self,
+        solution: impl IntoIterator<Item = (Variable, f64)>,
+    ) -> Self {
+        for (var, val) in solution {
+            self.model
+                .set_col_initial_solution(self.columns[var.index()], val);
+        }
+        self
+    }
+}
+
 /// Unfortunately, the current version of cbc silently ignores
 /// sos constraints on continuous variables.
 /// See <https://github.com/coin-or/Cbc/issues/376>
@@ -216,5 +229,36 @@ impl WithMipGap for CoinCbcProblem {
             self.mip_gap = Some(mip_gap);
             Ok(self)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{variables, Solution, SolverModel, WithInitialSolution};
+    use float_eq::assert_float_eq;
+
+    #[test]
+    fn solve_problem_with_initial_solution() {
+        let limit = 3.0;
+        // Solve problem once
+        variables! {
+            vars:
+                0.0 <= v <= limit;
+        };
+        let pb = vars.maximise(v).using(super::coin_cbc);
+        let sol = pb.solve().unwrap();
+        assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
+        // Recreate problem and solve with initial solution
+        let initial_solution = vec![(v, sol.value(v))];
+        variables! {
+            vars:
+                0.0 <= v <= limit;
+        };
+        let pb = vars
+            .maximise(v)
+            .using(super::coin_cbc)
+            .with_initial_solution(initial_solution);
+        let sol = pb.solve().unwrap();
+        assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
     }
 }
