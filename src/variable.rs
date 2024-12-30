@@ -181,7 +181,7 @@ impl VariableDefinition {
 
     /// Set the initial value of the variable. This may help the solver to find a solution significantly faster.
     ///
-    /// **Warning**: not all solvers support integer variables.
+    /// **Warning**: not all solvers support initial solutions.
     /// Refer to the documentation of the solver you are using.
     ///
     /// ```
