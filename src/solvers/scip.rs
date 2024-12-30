@@ -33,12 +33,14 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
             ObjectiveDirection::Minimisation => ObjSense::Minimize,
         });
     let mut var_map = HashMap::new();
+    let mut initial_solution = vec![];
 
     for (
         var,
         &VariableDefinition {
             min,
             max,
+            initial,
             is_integer,
             ref name,
         },
@@ -56,12 +58,19 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
         };
         let id = model.add_var(min, max, coeff, name.as_str(), var_type);
         var_map.insert(var, id);
+        if let Some(val) = initial {
+            initial_solution.push((var, val));
+        };
     }
 
-    SCIPProblem {
+    let mut problem = SCIPProblem {
         model,
         id_for_var: var_map,
+    };
+    if initial_solution.len() > 0 {
+        problem = problem.with_initial_solution(initial_solution);
     }
+    problem
 }
 
 /// A SCIP Model
@@ -228,6 +237,34 @@ mod tests {
             .using(scip)
             .with((2 * x + y) << 4)
             .with_initial_solution([(x, initial_x), (y, initial_y)])
+            .solve()
+            .unwrap();
+
+        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+    }
+
+    #[test]
+    fn solve_problem_with_initial_variable_values() {
+        // Solve problem initially
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(scip)
+            .with((2 * x + y) << 4)
+            .solve()
+            .unwrap();
+        // Recreate same problem with initial values slightly off
+        let initial_x = solution.value(x) - 0.1;
+        let initial_y = solution.value(x) - 1.0;
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2).initial(initial_x));
+        let y = vars.add(variable().clamp(1, 3).initial(initial_y));
+        let solution = vars
+            .maximise(x + y)
+            .using(scip)
+            .with((2 * x + y) << 4)
             .solve()
             .unwrap();
 
