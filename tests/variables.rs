@@ -61,6 +61,7 @@ fn debug_format() {
 
 #[test]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
+#[cfg(not(feature = "clarabel"))]
 fn variables_macro_integer() {
     variables! {
         vars:
