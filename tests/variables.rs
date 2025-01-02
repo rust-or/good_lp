@@ -1,4 +1,5 @@
-use good_lp::{variables, Expression};
+use good_lp::{constraint, default_solver, variables, Expression, Solution, SolverModel};
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;
 
@@ -56,4 +57,24 @@ fn debug_format() {
         possibilities,
         expr_str
     )
+}
+
+#[test]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
+#[cfg(not(feature = "clarabel"))]
+fn variables_macro_integer() {
+    variables! {
+        vars:
+               a <= 1;
+          2 <= b (integer) <= 4;
+    }
+    let solution = vars
+        .maximise(10 * (a - b / 5) - b)
+        .using(default_solver)
+        .with(constraint!(a + 2 <= b))
+        .with(constraint!(1 + a >= 4 - b))
+        .solve()
+        .expect("solve");
+    assert!((solution.value(a) - 1.).abs() < 1e-5);
+    assert!((solution.value(b) - 3.).abs() < 1e-5);
 }

@@ -212,18 +212,18 @@ If you want to use it with WASM targets, you must include the `clarabel-wasm` fe
 
 ## Variable types
 
-`good_lp` internally represents all [variable](https://docs.rs/good_lp/1.4.0/good_lp/variable/struct.Variable.html) values and coefficients as `f64`.
-It lets you express constraints using either `f64` or `i32` (in the latter case, the integer will be losslessly converted to a floating point number).
-The solution's [values are `f64`](https://docs.rs/good_lp/1.4.0/good_lp/solvers/trait.Solution.html#tymethod.value) as well.
+`good_lp` internally represents all [variable](https://docs.rs/good_lp/latest/good_lp/variable/struct.Variable.html) values and coefficients as `f64`.
+It lets you express constraints on the range of possible values using either `f64` or `i32` (in the latter case, the integer will be losslessly converted to a floating point number).
+The solution's [values are `f64`](https://docs.rs/good_lp/latest/good_lp/solvers/trait.Solution.html#tymethod.value) as well.
 
 For instance:
 
 ```rust
-// Correct use of f64 and i32 for Variable struct and constraints
+// Correct use of f64 and i32 to specify feasible ranges for Variables
   variables! {
     problem:
       a <= 10.0;
-      2 <= b <= 4;
+      2 <= b (integer) <= 4;  // Variables can be restricted using qualifiers like (integer)
   };
   let model = problem
     .maximise(b)
@@ -233,7 +233,9 @@ For instance:
 ```
 
 Here, `a` and `b` are `Variable` instances that can take either continuous (floating-point) or [integer values](https://docs.rs/good_lp/latest/good_lp/variable/struct.VariableDefinition.html#method.integer).
-Constraints can be expressed using either `f64` or `i32`, as shown in the example (but replacing for example `4.0` with a `usize` variable would fail, because an usize cannot be converted to an f64 losslessly).
+Constraints on possible values can be expressed using either `f64` or `i32`, as shown in the example (but replacing for example `4.0` with a `usize` variable would fail, because an usize cannot be converted to an f64 losslessly).
+The [`variables!` macro](https://docs.rs/good_lp/latest/good_lp/macro.variables.html) also allows constraining variables to integer values using qualifiers like `2 <= b (integer) <= 4` above.
+
 
 Solution values will always be `f64`, regardless of whether the variables were defined with `f64` or `i32`.
 So, even if you use integer variables, the solution object will store the integer variable values as `f64`.
