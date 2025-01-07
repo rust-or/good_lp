@@ -189,6 +189,17 @@ pub trait SolverModel {
         self
     }
 
+    /// Takes a model and adds a list of constraints to it
+    fn with_all(mut self, constraints: impl Iterator<Item = Constraint>) -> Self
+    where
+        Self: Sized,
+    {
+        for constraint in constraints {
+            self.add_constraint(constraint);
+        }
+        self
+    }
+
     /// Find the solution for the problem being modeled
     fn solve(self) -> Result<Self::Solution, Self::Error>;
 
