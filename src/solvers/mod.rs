@@ -190,7 +190,20 @@ pub trait SolverModel {
     }
 
     /// Takes a model and adds a list of constraints to it
-    fn with_all(mut self, constraints: impl Iterator<Item = Constraint>) -> Self
+    ///
+    /// # Examples
+    /// ```rust
+    /// use good_lp::*;
+    /// let mut vars = variables!();
+    /// let x = vars.add_variable(); // unbounded variable
+    /// let result = vars.maximise(x)
+    ///              .using(default_solver)
+    ///              .with_all([constraint!(x >= 1), constraint!(x <= 10)])
+    ///              .solve()
+    ///              .expect("example model, trivial to solve"); //
+    /// assert_eq!(result.eval(&x), 10.);
+    /// ```
+    fn with_all(mut self, constraints: impl IntoIterator<Item = Constraint>) -> Self
     where
         Self: Sized,
     {
