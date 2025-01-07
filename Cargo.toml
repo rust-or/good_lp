@@ -47,7 +47,7 @@ harness = false
 [package.metadata.docs.rs]
 # Display the documentation for all solvers on docs.rs
 all-features = false
-features = [ "all_default_solvers" ]
+features = ["coin_cbc", "microlp", "lpsolve", "highs", "russcip", "lp-solvers", "clarabel"]
 default-target = "x86_64-unknown-linux-gnu"
 targets = ["x86_64-unknown-linux-gnu"]
 rustdoc-args = ["--cfg", "docsrs"]
