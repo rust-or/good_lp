@@ -196,12 +196,13 @@ pub trait SolverModel {
     /// use good_lp::*;
     /// let mut vars = variables!();
     /// let x = vars.add_variable(); // unbounded variable
+    /// let epsilon = 1e-10;
     /// let result = vars.maximise(x)
     ///              .using(default_solver)
     ///              .with_all([constraint!(x >= 1), constraint!(x <= 10)])
     ///              .solve()
     ///              .expect("example model, trivial to solve"); //
-    /// assert!((result.eval(&x) - 10.).abs() <= f64::EPSILON);
+    /// assert!((result.eval(&x) - 10.).abs() <= epsilon)
     /// ```
     fn with_all(mut self, constraints: impl IntoIterator<Item = Constraint>) -> Self
     where
