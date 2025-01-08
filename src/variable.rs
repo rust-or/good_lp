@@ -421,6 +421,15 @@ impl ProblemVariables {
     }
 
     /// Returns the number of variables with initial solution values
+    ///
+    /// ```
+    /// use good_lp::{variable, variables};
+    /// let mut vars = variables!();
+    /// vars.add(variable());
+    /// vars.add(variable().initial(5));
+    /// vars.add(variable());
+    /// assert_eq!(vars.initial_solution_len(), 1);
+    /// ```
     pub fn initial_solution_len(&self) -> usize {
         self.initial_count
     }
