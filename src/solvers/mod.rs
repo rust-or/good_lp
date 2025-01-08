@@ -201,7 +201,7 @@ pub trait SolverModel {
     ///              .with_all([constraint!(x >= 1), constraint!(x <= 10)])
     ///              .solve()
     ///              .expect("example model, trivial to solve"); //
-    /// assert_eq!(result.eval(&x), 10.);
+    /// assert!((result.eval(&x) - 10.).abs() <= f64::EPSILON);
     /// ```
     fn with_all(mut self, constraints: impl IntoIterator<Item = Constraint>) -> Self
     where
