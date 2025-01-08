@@ -196,10 +196,10 @@ pub trait SolverModel {
     /// use good_lp::*;
     /// let mut vars = variables!();
     /// let x = vars.add_variable(); // unbounded variable
-    /// let epsilon = 1e-10;
+    /// let epsilon = 1e-7; // works if epsilon is no smaller than this
     /// let result = vars.maximise(x)
     ///              .using(default_solver)
-    ///              .with_all([constraint!(x >= 1), constraint!(x <= 10)])
+    ///              .with_all([constraint!(x >= 1.), constraint!(x <= 10.)])
     ///              .solve()
     ///              .expect("example model, trivial to solve"); //
     /// assert!((result.eval(&x) - 10.).abs() <= epsilon)
