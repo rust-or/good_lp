@@ -118,6 +118,7 @@ impl FormatWithVars for Variable {
 pub struct VariableDefinition {
     pub(crate) min: f64,
     pub(crate) max: f64,
+    pub(crate) initial: Option<f64>,
     pub(crate) name: String,
     pub(crate) is_integer: bool,
 }
@@ -128,6 +129,7 @@ impl VariableDefinition {
         VariableDefinition {
             min: f64::NEG_INFINITY,
             max: f64::INFINITY,
+            initial: None,
             name: String::new(),
             is_integer: false,
         }
@@ -174,6 +176,27 @@ impl VariableDefinition {
         self.is_integer = true;
         self.min = 0.;
         self.max = 1.;
+        self
+    }
+
+    /// Set the initial value of the variable. This may help the solver to find a solution significantly faster.
+    ///
+    /// **Warning**: not all solvers support initial solutions.
+    /// Refer to the documentation of the solver you are using.
+    ///
+    /// ```
+    /// # use good_lp::{ProblemVariables, variable, default_solver, SolverModel, Solution};
+    /// let mut problem = ProblemVariables::new();
+    /// let x = problem.add(variable().max(3).initial(3));
+    /// let y = problem.add(variable().max(5).initial(5));
+    /// if cfg!(not(any(feature="clarabel"))) {
+    ///     let solution = problem.maximise(x + y).using(default_solver).solve().unwrap();
+    ///     assert_eq!(solution.value(x), 3.);
+    ///     assert_eq!(solution.value(y), 5.);
+    /// }
+    /// ```
+    pub fn initial<N: Into<f64>>(mut self, value: N) -> Self {
+        self.initial = Some(value.into());
         self
     }
 
@@ -262,12 +285,16 @@ pub fn variable() -> VariableDefinition {
 #[derive(Default)]
 pub struct ProblemVariables {
     variables: Vec<VariableDefinition>,
+    initial_count: usize,
 }
 
 impl ProblemVariables {
     /// Create an empty list of variables
     pub fn new() -> Self {
-        ProblemVariables { variables: vec![] }
+        ProblemVariables {
+            variables: vec![],
+            initial_count: 0,
+        }
     }
 
     /// Add a anonymous unbounded continuous variable to the problem
@@ -289,6 +316,9 @@ impl ProblemVariables {
     /// ```
     pub fn add(&mut self, var_def: VariableDefinition) -> Variable {
         let index = self.variables.len();
+        if var_def.initial.is_some() {
+            self.initial_count += 1;
+        }
         self.variables.push(var_def);
         Variable::at(index)
     }
@@ -388,6 +418,20 @@ impl ProblemVariables {
     /// Returns true when no variables have been added
     pub fn is_empty(&self) -> bool {
         self.variables.is_empty()
+    }
+
+    /// Returns the number of variables with initial solution values
+    ///
+    /// ```
+    /// use good_lp::{variable, variables};
+    /// let mut vars = variables!();
+    /// vars.add(variable());
+    /// vars.add(variable().initial(5));
+    /// vars.add(variable());
+    /// assert_eq!(vars.initial_solution_len(), 1);
+    /// ```
+    pub fn initial_solution_len(&self) -> usize {
+        self.initial_count
     }
 
     /// Display the given expression or constraint with the correct variable names
