@@ -33,7 +33,7 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
             ObjectiveDirection::Minimisation => ObjSense::Minimize,
         });
     let mut var_map = HashMap::new();
-    let mut initial_solution = vec![];
+    let mut initial_solution = Vec::with_capacity(to_solve.variables.initial_solution_len());
 
     for (
         var,

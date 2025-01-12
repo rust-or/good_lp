@@ -23,7 +23,7 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         variables,
     } = to_solve;
     let mut model = Model::default();
-    let mut initial_solution = vec![];
+    let mut initial_solution = Vec::with_capacity(variables.initial_solution_len());
     let columns: Vec<Col> = variables
         .iter_variables_with_def()
         .map(

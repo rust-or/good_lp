@@ -285,12 +285,16 @@ pub fn variable() -> VariableDefinition {
 #[derive(Default)]
 pub struct ProblemVariables {
     variables: Vec<VariableDefinition>,
+    initial_count: usize,
 }
 
 impl ProblemVariables {
     /// Create an empty list of variables
     pub fn new() -> Self {
-        ProblemVariables { variables: vec![] }
+        ProblemVariables {
+            variables: vec![],
+            initial_count: 0,
+        }
     }
 
     /// Add a anonymous unbounded continuous variable to the problem
@@ -312,6 +316,9 @@ impl ProblemVariables {
     /// ```
     pub fn add(&mut self, var_def: VariableDefinition) -> Variable {
         let index = self.variables.len();
+        if var_def.initial.is_some() {
+            self.initial_count += 1;
+        }
         self.variables.push(var_def);
         Variable::at(index)
     }
@@ -411,6 +418,20 @@ impl ProblemVariables {
     /// Returns true when no variables have been added
     pub fn is_empty(&self) -> bool {
         self.variables.is_empty()
+    }
+
+    /// Returns the number of variables with initial solution values
+    ///
+    /// ```
+    /// use good_lp::{variable, variables};
+    /// let mut vars = variables!();
+    /// vars.add(variable());
+    /// vars.add(variable().initial(5));
+    /// vars.add(variable());
+    /// assert_eq!(vars.initial_solution_len(), 1);
+    /// ```
+    pub fn initial_solution_len(&self) -> usize {
+        self.initial_count
     }
 
     /// Display the given expression or constraint with the correct variable names
