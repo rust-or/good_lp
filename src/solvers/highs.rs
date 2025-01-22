@@ -436,6 +436,34 @@ mod tests {
     }
 
     #[test]
+    fn can_solve_with_initial_variable_values() {
+        // Solve problem initially
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .solve()
+            .unwrap();
+        // Recreate same problem with initial values slightly off
+        let initial_x = solution.value(x) - 0.1;
+        let initial_y = solution.value(x) - 1.0;
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2).initial(initial_x));
+        let y = vars.add(variable().clamp(1, 3).initial(initial_y));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .solve()
+            .unwrap();
+
+        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+    }
+
+    #[test]
     fn can_solve_with_equality() {
         let mut vars = variables!();
         let x = vars.add(variable().clamp(0, 2).integer());
