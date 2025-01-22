@@ -67,7 +67,7 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
         model,
         id_for_var: var_map,
     };
-    if initial_solution.len() > 0 {
+    if !initial_solution.is_empty() {
         problem = problem.with_initial_solution(initial_solution);
     }
     problem
