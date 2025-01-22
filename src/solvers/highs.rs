@@ -9,9 +9,10 @@ use crate::{
     solvers::DualValues,
     variable::{UnsolvedProblem, VariableDefinition},
 };
-use crate::{Constraint, IntoAffineExpression, Variable};
+use crate::{Constraint, IntoAffineExpression, Variable, WithInitialSolution};
 use highs::HighsModelStatus;
 use std::collections::HashMap;
+use std::iter::FromIterator;
 
 /// The [highs](https://docs.rs/highs) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -48,6 +49,7 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         sense,
         highs_problem,
         columns,
+        initial_solution: None,
         verbose: false,
         options: Default::default(),
     }
@@ -170,6 +172,7 @@ pub struct HighsProblem {
     sense: highs::Sense,
     highs_problem: highs::RowProblem,
     columns: Vec<highs::Col>,
+    initial_solution: Option<Vec<(Variable, f64)>>,
     verbose: bool,
     options: HashMap<String, HighsOptionValue>,
 }
@@ -250,6 +253,15 @@ impl SolverModel for HighsProblem {
     fn solve(mut self) -> Result<Self::Solution, Self::Error> {
         let verbose = self.verbose;
         let options = std::mem::take(&mut self.options);
+        let initial_solution = self.initial_solution.as_ref().map(|pairs| {
+            pairs
+                .iter()
+                .fold(vec![0.0; self.columns.len()], |mut sol, (var, val)| {
+                    sol[var.index()] = *val;
+                    sol
+                })
+        });
+
         let mut model = self.into_inner();
         if verbose {
             model.set_option(&b"output_flag"[..], true);
@@ -263,6 +275,10 @@ impl SolverModel for HighsProblem {
                 HighsOptionValue::Bool(v) => model.set_option(k, v),
                 HighsOptionValue::Int(v) => model.set_option(k, v),
             }
+        }
+
+        if initial_solution.is_some() {
+            model.set_solution(initial_solution.as_deref(), None, None, None);
         }
 
         let solved = model.solve();
@@ -302,6 +318,16 @@ impl SolverModel for HighsProblem {
 
     fn name() -> &'static str {
         "Highs"
+    }
+}
+
+impl WithInitialSolution for HighsProblem {
+    fn with_initial_solution(
+        mut self,
+        solution: impl IntoIterator<Item = (Variable, f64)>,
+    ) -> Self {
+        self.initial_solution = Some(Vec::from_iter(solution));
+        self
     }
 }
 
@@ -348,5 +374,69 @@ impl WithMipGap for HighsProblem {
 
     fn with_mip_gap(self, mip_gap: f32) -> Result<Self, MipGapError> {
         self.set_mip_rel_gap(mip_gap)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{constraint, variable, variables, Solution, SolverModel, WithInitialSolution};
+
+    use super::highs;
+    #[test]
+    fn can_solve_with_inequality() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .solve()
+            .unwrap();
+        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+    }
+
+    #[test]
+    fn can_solve_with_initial_solution() {
+        // Solve problem initially
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .solve()
+            .unwrap();
+        // Recreate same problem with initial values slightly off
+        let initial_x = solution.value(x) - 0.1;
+        let initial_y = solution.value(x) - 1.0;
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .with_initial_solution([(x, initial_x), (y, initial_y)])
+            .solve()
+            .unwrap();
+
+        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+    }
+
+    #[test]
+    fn can_solve_with_equality() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2).integer());
+        let y = vars.add(variable().clamp(1, 3).integer());
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with(constraint!(2 * x + y == 4))
+            .with(constraint!(x + 2 * y <= 5))
+            .solve()
+            .unwrap();
+        assert_eq!((solution.value(x), solution.value(y)), (1., 2.));
     }
 }
