@@ -27,7 +27,7 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
     };
     let mut columns = Vec::with_capacity(to_solve.variables.len());
     let mut initial_solution = Vec::with_capacity(to_solve.variables.initial_solution_len());
-    
+
     for (
         var,
         &VariableDefinition {
