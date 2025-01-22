@@ -64,6 +64,18 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
     }
 }
 
+/// The heuristic to use for the solver
+pub enum ScipHeuristics {
+    /// Use default values.
+    Default,
+    /// Set to aggressive settings.
+    Aggressive,
+    /// Set to fast settings.
+    Fast,
+    /// Turn off.
+    Off,
+}
+
 /// A SCIP Model
 pub struct SCIPProblem {
     // the underlying SCIP model representing the problem
@@ -81,6 +93,68 @@ impl SCIPProblem {
     /// Get mutable access to the raw russcip model
     pub fn as_inner_mut(&mut self) -> &mut Model<ProblemCreated> {
         &mut self.model
+    }
+
+    /// Sets whether or not SCIP should display verbose logging information to the console
+    pub fn set_verbose(self, verbose: bool) -> Model<ProblemCreated> {
+        self.model
+            .set_int_param("display/verblevel", if verbose { 4 } else { 0 })
+            .expect("could not set verbosity level")
+    }
+
+    /// Sets the heuristics parameter of the SCIP instance
+    pub fn set_heuristics(self, heuristics: ScipHeuristics) -> Model<ProblemCreated> {
+        self.model.set_heuristics(match heuristics {
+            ScipHeuristics::Default => russcip::ParamSetting::Default,
+            ScipHeuristics::Aggressive => russcip::ParamSetting::Aggressive,
+            ScipHeuristics::Fast => russcip::ParamSetting::Fast,
+            ScipHeuristics::Off => russcip::ParamSetting::Off,
+        })
+    }
+
+    /// Sets the time limit in seconds
+    pub fn set_time_limit(self, time_limit: usize) -> Model<ProblemCreated> {
+        self.model.set_time_limit(time_limit)
+    }
+
+    /// Sets the memory limit in MB
+    pub fn set_memory_limit(self, memory_limit: usize) -> Model<ProblemCreated> {
+        self.model.set_memory_limit(memory_limit)
+    }
+
+    /// Sets a SCIP integer parameter
+    pub fn set_option_int(self, option: &str, value: i32) -> Model<ProblemCreated> {
+        self.model
+            .set_int_param(option, value)
+            .unwrap_or_else(|_| panic!("cound not set option {}", option))
+    }
+
+    /// Sets a SCIP long integer parameter
+    pub fn set_option_longint(self, option: &str, value: i64) -> Model<ProblemCreated> {
+        self.model
+            .set_longint_param(option, value)
+            .unwrap_or_else(|_| panic!("cound not set option {}", option))
+    }
+
+    /// Sets a SCIP boolean parameter
+    pub fn set_option_bool(self, option: &str, value: bool) -> Model<ProblemCreated> {
+        self.model
+            .set_bool_param(option, value)
+            .unwrap_or_else(|_| panic!("cound not set option {}", option))
+    }
+
+    /// Sets a SCIP string parameter
+    pub fn set_option_str(self, option: &str, value: &str) -> Model<ProblemCreated> {
+        self.model
+            .set_str_param(option, value)
+            .unwrap_or_else(|_| panic!("cound not set option {}", option))
+    }
+
+    /// Sets a SCIP real parameter
+    pub fn set_option_float(self, option: &str, value: f64) -> Model<ProblemCreated> {
+        self.model
+            .set_real_param(option, value)
+            .unwrap_or_else(|_| panic!("cound not set option {}", option))
     }
 }
 
