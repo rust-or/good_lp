@@ -66,7 +66,7 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         has_sos: false,
         mip_gap: None,
     };
-    if initial_solution.len() > 0 {
+    if !initial_solution.is_empty() {
         problem = problem.with_initial_solution(initial_solution);
     }
     problem
