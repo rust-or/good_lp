@@ -26,11 +26,14 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         ObjectiveDirection::Minimisation => highs::Sense::Minimise,
     };
     let mut columns = Vec::with_capacity(to_solve.variables.len());
+    let mut initial_solution = Vec::with_capacity(to_solve.variables.initial_solution_len());
+    
     for (
         var,
         &VariableDefinition {
             min,
             max,
+            initial,
             is_integer,
             ..
         },
@@ -44,15 +47,22 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
             .unwrap_or(&0.);
         let col = highs_problem.add_column_with_integrality(col_factor, min..max, is_integer);
         columns.push(col);
+        if let Some(val) = initial {
+            initial_solution.push((var, val));
+        }
     }
-    HighsProblem {
+    let mut problem = HighsProblem {
         sense,
         highs_problem,
         columns,
         initial_solution: None,
         verbose: false,
         options: Default::default(),
+    };
+    if !initial_solution.is_empty() {
+        problem = problem.with_initial_solution(initial_solution);
     }
+    problem
 }
 
 /// Presolve option
