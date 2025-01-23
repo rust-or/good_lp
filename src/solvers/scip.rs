@@ -11,6 +11,7 @@ use russcip::model::ProblemCreated;
 use russcip::model::Solved;
 use russcip::variable::VarType;
 use russcip::ProblemOrSolving;
+use russcip::Retcode;
 use russcip::WithSolutions;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
@@ -84,6 +85,61 @@ pub struct SCIPProblem {
     id_for_var: HashMap<Variable, Rc<russcip::Variable>>,
 }
 
+/// A value that can be set for a SCIP option
+pub trait ScipOptionValue {
+    /// Applies the value to a given model for a given option name
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode>;
+}
+impl ScipOptionValue for i32 {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_int_param(option, self)
+    }
+}
+impl ScipOptionValue for f64 {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_real_param(option, self)
+    }
+}
+impl ScipOptionValue for &str {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_str_param(option, self)
+    }
+}
+impl ScipOptionValue for i64 {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_longint_param(option, self)
+    }
+}
+impl ScipOptionValue for bool {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_bool_param(option, self)
+    }
+}
+
 impl SCIPProblem {
     /// Get access to the raw russcip model
     pub fn as_inner(&self) -> &Model<ProblemCreated> {
@@ -96,10 +152,16 @@ impl SCIPProblem {
     }
 
     /// Sets whether or not SCIP should display verbose logging information to the console
-    pub fn set_verbose(self, verbose: bool) -> Model<ProblemCreated> {
+    pub fn try_set_verbose(self, verbose: bool) -> Result<Model<ProblemCreated>, Retcode> {
         self.model
             .set_int_param("display/verblevel", if verbose { 4 } else { 0 })
-            .expect("could not set verbosity level")
+    }
+
+    /// Tries to set whether or not SCIP should display verbose logging
+    /// information to the console and panics if the operation fails
+    pub fn set_verbose(self, verbose: bool) -> Model<ProblemCreated> {
+        self.try_set_verbose(verbose)
+            .unwrap_or_else(|e| panic!("cound not set verbosity to {}: {:?}", verbose, e))
     }
 
     /// Sets the heuristics parameter of the SCIP instance
@@ -122,39 +184,19 @@ impl SCIPProblem {
         self.model.set_memory_limit(memory_limit)
     }
 
-    /// Sets a SCIP integer parameter
-    pub fn set_option_int(self, option: &str, value: i32) -> Model<ProblemCreated> {
-        self.model
-            .set_int_param(option, value)
-            .unwrap_or_else(|_| panic!("cound not set option {}", option))
+    /// Sets a SCIP parameter
+    pub fn try_set_option<T: ScipOptionValue>(
+        self,
+        option: &str,
+        value: T,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        value.set_for(self.model, option)
     }
 
-    /// Sets a SCIP long integer parameter
-    pub fn set_option_longint(self, option: &str, value: i64) -> Model<ProblemCreated> {
-        self.model
-            .set_longint_param(option, value)
-            .unwrap_or_else(|_| panic!("cound not set option {}", option))
-    }
-
-    /// Sets a SCIP boolean parameter
-    pub fn set_option_bool(self, option: &str, value: bool) -> Model<ProblemCreated> {
-        self.model
-            .set_bool_param(option, value)
-            .unwrap_or_else(|_| panic!("cound not set option {}", option))
-    }
-
-    /// Sets a SCIP string parameter
-    pub fn set_option_str(self, option: &str, value: &str) -> Model<ProblemCreated> {
-        self.model
-            .set_str_param(option, value)
-            .unwrap_or_else(|_| panic!("cound not set option {}", option))
-    }
-
-    /// Sets a SCIP real parameter
-    pub fn set_option_float(self, option: &str, value: f64) -> Model<ProblemCreated> {
-        self.model
-            .set_real_param(option, value)
-            .unwrap_or_else(|_| panic!("cound not set option {}", option))
+    /// Tries to set a SCIP parameter and panics if the operation fails
+    pub fn set_option<T: ScipOptionValue>(self, option: &str, value: T) -> Model<ProblemCreated> {
+        self.try_set_option(option, value)
+            .unwrap_or_else(|e| panic!("could not set option '{}': {:?}", option, e))
     }
 }
 
