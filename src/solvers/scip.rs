@@ -64,7 +64,7 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
     }
 }
 
-/// The heuristic to use for the solver
+/// The heuristic emphasis to use for the solver
 pub enum ScipHeuristics {
     /// Use default values.
     Default,
