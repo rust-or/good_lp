@@ -3,7 +3,6 @@
         "./Cargo.toml",
     ],
     "rust-analyzer.cargo.features": [
-        "scip",
-        "scip_bundled"
+        "all_default_solvers"
     ]
 }
