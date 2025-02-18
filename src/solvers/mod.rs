@@ -189,6 +189,31 @@ pub trait SolverModel {
         self
     }
 
+    /// Takes a model and adds a list of constraints to it
+    ///
+    /// # Examples
+    /// ```rust
+    /// use good_lp::*;
+    /// let mut vars = variables!();
+    /// let x = vars.add_variable(); // unbounded variable
+    /// let epsilon = 1e-7; // works if epsilon is no smaller than this
+    /// let result = vars.maximise(x)
+    ///              .using(default_solver)
+    ///              .with_all([constraint!(x >= 1.), constraint!(x <= 10.)])
+    ///              .solve()
+    ///              .expect("example model, trivial to solve"); //
+    /// assert!((result.eval(&x) - 10.).abs() <= epsilon)
+    /// ```
+    fn with_all(mut self, constraints: impl IntoIterator<Item = Constraint>) -> Self
+    where
+        Self: Sized,
+    {
+        for constraint in constraints {
+            self.add_constraint(constraint);
+        }
+        self
+    }
+
     /// Find the solution for the problem being modeled
     fn solve(self) -> Result<Self::Solution, Self::Error>;
 
