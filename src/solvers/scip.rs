@@ -194,7 +194,7 @@ impl SCIPProblem {
     }
 
     /// Sets the time limit in seconds
-    pub fn set_time_limit(self, time_limit: usize) {
+    pub fn set_time_limit(mut self, time_limit: usize) -> Self {
         std::mem::take(self.as_inner_mut()).set_time_limit(time_limit);
         self
     }
