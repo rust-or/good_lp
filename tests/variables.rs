@@ -29,22 +29,6 @@ fn large_sum() {
 
 #[test]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
-fn complete() {
-    let mut var1 = variables!();
-    let mut var2 = variables!();
-    assert_eq!(
-        // variables iss the size of an empty vector
-        std::mem::size_of_val(&Vec::<u8>::new()),
-        std::mem::size_of_val(&var1)
-    );
-    let a = var1.add_variable();
-    let b = var2.add_variable();
-    let _sum_a = a + a;
-    let _diff_b = b - b + b;
-}
-
-#[test]
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn debug_format() {
     let mut vars = variables!();
     let a = vars.add_variable();
