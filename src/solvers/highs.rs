@@ -26,11 +26,14 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
         ObjectiveDirection::Minimisation => highs::Sense::Minimise,
     };
     let mut columns = Vec::with_capacity(to_solve.variables.len());
+    let mut initial_solution = Vec::with_capacity(to_solve.variables.initial_solution_len());
+
     for (
         var,
         &VariableDefinition {
             min,
             max,
+            initial,
             is_integer,
             ..
         },
@@ -44,15 +47,22 @@ pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
             .unwrap_or(&0.);
         let col = highs_problem.add_column_with_integrality(col_factor, min..max, is_integer);
         columns.push(col);
+        if let Some(val) = initial {
+            initial_solution.push((var, val));
+        }
     }
-    HighsProblem {
+    let mut problem = HighsProblem {
         sense,
         highs_problem,
         columns,
         initial_solution: None,
         verbose: false,
         options: Default::default(),
+    };
+    if !initial_solution.is_empty() {
+        problem = problem.with_initial_solution(initial_solution);
     }
+    problem
 }
 
 /// Presolve option
@@ -188,7 +198,7 @@ impl HighsProblem {
         self.verbose = verbose
     }
 
-    /// Sets the HiGHS option. See https://ergo-code.github.io/HiGHS/dev/options/definitions/
+    /// Sets the HiGHS option. See <https://ergo-code.github.io/HiGHS/dev/options/definitions/>
     pub fn set_option<K: Into<String>, V: Into<HighsOptionValue>>(
         mut self,
         key: K,
@@ -408,9 +418,9 @@ mod tests {
             .with((2 * x + y) << 4)
             .solve()
             .unwrap();
-        // Recreate same problem with initial values slightly off
-        let initial_x = solution.value(x) - 0.1;
-        let initial_y = solution.value(x) - 1.0;
+        let initial_x = solution.value(x);
+        let initial_y = solution.value(y);
+        // Recreate same problem with initial values
         let mut vars = variables!();
         let x = vars.add(variable().clamp(0, 2));
         let y = vars.add(variable().clamp(1, 3));
@@ -419,10 +429,40 @@ mod tests {
             .using(highs)
             .with((2 * x + y) << 4)
             .with_initial_solution([(x, initial_x), (y, initial_y)])
+            .set_time_limit(0.0)
             .solve()
             .unwrap();
 
-        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.));
+    }
+
+    #[test]
+    fn can_solve_with_initial_variable_values() {
+        // Solve problem initially
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .solve()
+            .unwrap();
+        let initial_x = solution.value(x);
+        let initial_y = solution.value(y);
+        // Recreate same problem with initial values
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2).initial(initial_x));
+        let y = vars.add(variable().clamp(1, 3).initial(initial_y));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .set_time_limit(0.0)
+            .solve()
+            .unwrap();
+
+        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.));
     }
 
     #[test]

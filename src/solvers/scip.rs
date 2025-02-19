@@ -33,12 +33,14 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
             ObjectiveDirection::Minimisation => ObjSense::Minimize,
         });
     let mut var_map = HashMap::new();
+    let mut initial_solution = Vec::with_capacity(to_solve.variables.initial_solution_len());
 
     for (
         var,
         &VariableDefinition {
             min,
             max,
+            initial,
             is_integer,
             ref name,
         },
@@ -56,12 +58,19 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
         };
         let id = model.add_var(min, max, coeff, name.as_str(), var_type);
         var_map.insert(var, id);
+        if let Some(val) = initial {
+            initial_solution.push((var, val));
+        };
     }
 
-    SCIPProblem {
+    let mut problem = SCIPProblem {
         model,
         id_for_var: var_map,
+    };
+    if !initial_solution.is_empty() {
+        problem = problem.with_initial_solution(initial_solution);
     }
+    problem
 }
 
 /// The heuristic emphasis to use for the solver
@@ -230,13 +239,10 @@ impl SCIPProblem {
 impl CardinalityConstraintSolver for SCIPProblem {
     /// Add cardinality constraint. Constrains the number of non-zero variables to at most `rhs`.
     fn add_cardinality_constraint(&mut self, vars: &[Variable], rhs: usize) -> ConstraintReference {
-        let id_for_var = &self.id_for_var;
-        let scip_vars = vars.iter().map(|v| &id_for_var[v]).collect::<Vec<_>>();
-
-        let index = self.model.n_conss() + 1;
-        self.model
-            .add_cons_cardinality(scip_vars, rhs, format!("cardinality{}", index).as_str());
-
+        let Self { id_for_var, model } = self;
+        let scip_vars: Vec<&russcip::Variable> = vars.iter().map(|v| &id_for_var[v]).collect();
+        let index = model.n_conss() + 1;
+        model.add_cons_cardinality(scip_vars, rhs, format!("cardinality{}", index).as_str());
         ConstraintReference { index }
     }
 }
@@ -273,7 +279,8 @@ impl SolverModel for SCIPProblem {
         let mut vars_in_cons = Vec::with_capacity(n_vars_in_cons);
         let mut coeffs = Vec::with_capacity(n_vars_in_cons);
         for (&var, &coeff) in c.expression.linear.coefficients.iter() {
-            vars_in_cons.push(&self.id_for_var[&var]);
+            let id = &self.id_for_var[&var];
+            vars_in_cons.push(id);
             coeffs.push(coeff);
         }
 
@@ -366,6 +373,34 @@ mod tests {
             .using(scip)
             .with((2 * x + y) << 4)
             .with_initial_solution([(x, initial_x), (y, initial_y)])
+            .solve()
+            .unwrap();
+
+        assert_eq!((solution.value(x), solution.value(y)), (0.5, 3.))
+    }
+
+    #[test]
+    fn solve_problem_with_initial_variable_values() {
+        // Solve problem initially
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(scip)
+            .with((2 * x + y) << 4)
+            .solve()
+            .unwrap();
+        // Recreate same problem with initial values slightly off
+        let initial_x = solution.value(x) - 0.1;
+        let initial_y = solution.value(x) - 1.0;
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2).initial(initial_x));
+        let y = vars.add(variable().clamp(1, 3).initial(initial_y));
+        let solution = vars
+            .maximise(x + y)
+            .using(scip)
+            .with((2 * x + y) << 4)
             .solve()
             .unwrap();
 

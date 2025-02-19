@@ -23,15 +23,20 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         variables,
     } = to_solve;
     let mut model = Model::default();
+    let mut initial_solution = Vec::with_capacity(variables.initial_solution_len());
     let columns: Vec<Col> = variables
-        .into_iter()
+        .iter_variables_with_def()
         .map(
-            |VariableDefinition {
-                 min,
-                 max,
-                 is_integer,
-                 ..
-             }| {
+            |(
+                var,
+                &VariableDefinition {
+                    min,
+                    max,
+                    initial,
+                    is_integer,
+                    ..
+                },
+            )| {
                 let col = model.add_col();
                 // Variables are created with a default min of 0
                 model.set_col_lower(col, min);
@@ -41,6 +46,9 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
                 if is_integer {
                     model.set_integer(col);
                 }
+                if let Some(val) = initial {
+                    initial_solution.push((var, val));
+                };
                 col
             },
         )
@@ -52,12 +60,16 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         ObjectiveDirection::Maximisation => Sense::Maximize,
         ObjectiveDirection::Minimisation => Sense::Minimize,
     });
-    CoinCbcProblem {
+    let mut problem = CoinCbcProblem {
         model,
         columns,
         has_sos: false,
         mip_gap: None,
+    };
+    if !initial_solution.is_empty() {
+        problem = problem.with_initial_solution(initial_solution);
     }
+    problem
 }
 
 /// A coin-cbc model
@@ -234,7 +246,7 @@ impl WithMipGap for CoinCbcProblem {
 
 #[cfg(test)]
 mod tests {
-    use crate::{variables, Solution, SolverModel, WithInitialSolution};
+    use crate::{variable, variables, Solution, SolverModel, WithInitialSolution};
     use float_eq::assert_float_eq;
 
     #[test]
@@ -258,6 +270,25 @@ mod tests {
             .maximise(v)
             .using(super::coin_cbc)
             .with_initial_solution(initial_solution);
+        let sol = pb.solve().unwrap();
+        assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
+    }
+
+    #[test]
+    fn solve_problem_with_initial_variable_values() {
+        let limit = 3.0;
+        // Solve problem once
+        variables! {
+            vars:
+                0.0 <= v <= limit;
+        };
+        let pb = vars.maximise(v).using(super::coin_cbc);
+        let sol = pb.solve().unwrap();
+        assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
+        // Recreate problem and solve with initial solution
+        let mut vars = variables!();
+        let v = vars.add(variable().min(0).max(limit).initial(2));
+        let pb = vars.maximise(v).using(super::coin_cbc);
         let sol = pb.solve().unwrap();
         assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
     }

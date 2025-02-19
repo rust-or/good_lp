@@ -1,17 +1,22 @@
-//! In this example, we have multiple products,
-//! and each consumes a set amount of fuel, and of time to produce.
-//! The goal is to find, knowing the available fuel and time,
-//! and the value of each product, how much we should produce of each.
+//! This example shows how to use the "good_lp" library for solving a resource allocation problem
+//! using linear programming.
 //!
-//! In this example, the number of resources is fixed (only fuel an time),
-//! and the amount of products varies.
-//! In the opposite case (a fixed number of products and an arbitrary number of resources),
-//! the modelling is even simpler: you don't have to store any expression in your problem struct,
-//! you can instantiate a SolverModel directly when creating your problem,
-//! and then use SolverModel::with to add constraints dynamically.
+//! In this problem, we decide the production quantities for several products.
+//! Each product requires a certain amount of fuel and time to produce,
+//! and provides a specific profit per unit.
+//!
+//! The goal is to maximize the overall profit without exceeding the available fuel and time.
+//!
+//! Here, both fuel and time are available in limited quantities, and the number of products can vary.
+//! Conversely, if you have a fixed set of products and multiple resource types,
+//! the modeling becomes even simpler: you can build a SolverModel directly and add constraints dynamically,
+//! without needing to store extra expressions in your problem structure.
 
 use good_lp::variable::ProblemVariables;
-use good_lp::{default_solver, variable, variables, Expression, Solution, SolverModel, Variable};
+use good_lp::{
+    constraint, default_solver, variable, variables, Constraint, Expression, Solution, SolverModel,
+    Variable,
+};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;
 struct Product {
@@ -22,24 +27,42 @@ struct Product {
     value: f64, // The amount of money we can sell an unit of the product for
 }
 
+/// Fuel and time are both resources, with a fixed amount available and a variable amount consumed by each product
+struct Resource {
+    available: f64,
+    consumed: Expression,
+}
+
+struct ResourceSet {
+    fuel: Resource,
+    time: Resource,
+}
+
 struct ResourceAllocationProblem {
+    /// Stores the variables of the problem
     vars: ProblemVariables,
+    /// The total amount of money we can make by producing the products
     total_value: Expression,
-    consumed_fuel: Expression,
-    consumed_time: Expression,
-    available_fuel: f64,
-    available_time: f64,
+    /// The resources available and consumed by the products
+    resources: ResourceSet,
 }
 
 impl ResourceAllocationProblem {
+    /// Create a new problem, with a fixed amount of fuel and time available
     fn new(available_fuel: f64, available_time: f64) -> ResourceAllocationProblem {
         ResourceAllocationProblem {
             vars: variables!(),
-            available_fuel,
-            available_time,
-            consumed_fuel: 0.into(),
-            consumed_time: 0.into(),
             total_value: 0.into(),
+            resources: ResourceSet {
+                fuel: Resource {
+                    available: available_fuel,
+                    consumed: 0.into(),
+                },
+                time: Resource {
+                    available: available_time,
+                    consumed: 0.into(),
+                },
+            },
         }
     }
 
@@ -47,17 +70,28 @@ impl ResourceAllocationProblem {
     fn add(&mut self, product: Product) -> Variable {
         let amount_to_produce = self.vars.add(variable().min(0));
         self.total_value += amount_to_produce * product.value;
-        self.consumed_fuel += amount_to_produce * product.needed_fuel;
-        self.consumed_time += amount_to_produce * product.needed_time;
+        self.resources.fuel.consumed += amount_to_produce * product.needed_fuel;
+        self.resources.time.consumed += amount_to_produce * product.needed_time;
         amount_to_produce
     }
 
+    /// Generate a vector containing the constraints.
+    /// In this simple problem, our only constraints are that we can't consume more fuel or time than we have available.
+    fn constraints(resources: ResourceSet) -> Vec<Constraint> {
+        let mut constraints = Vec::with_capacity(2);
+        for resource in [resources.fuel, resources.time] {
+            constraints.push(constraint!(resource.consumed <= resource.available));
+        }
+        constraints
+    }
+
+    /// Solve the problem, returning the optimal amount of each product to produce.
     fn best_product_quantities(self) -> impl Solution {
+        let objective = self.total_value;
         self.vars
-            .maximise(self.total_value)
+            .maximise(objective)
             .using(default_solver)
-            .with(self.consumed_fuel.leq(self.available_fuel))
-            .with(self.consumed_time.leq(self.available_time))
+            .with_all(Self::constraints(self.resources))
             .solve()
             .unwrap()
     }
