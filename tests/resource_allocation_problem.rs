@@ -1,14 +1,16 @@
-//! In this example, we have multiple products,
-//! and each consumes a set amount of fuel, and of time to produce.
-//! The goal is to find, knowing the available fuel and time,
-//! and the value of each product, how much we should produce of each.
+//! This example shows how to use the "good_lp" library for solving a resource allocation problem
+//! using linear programming.
 //!
-//! In this example, the number of resources is fixed (only fuel an time),
-//! and the amount of products varies.
-//! In the opposite case (a fixed number of products and an arbitrary number of resources),
-//! the modelling is even simpler: you don't have to store any expression in your problem struct,
-//! you can instantiate a SolverModel directly when creating your problem,
-//! and then use SolverModel::with to add constraints dynamically.
+//! In this problem, we decide the production quantities for several products.
+//! Each product requires a certain amount of fuel and time to produce,
+//! and provides a specific profit per unit.
+//!
+//! The goal is to maximize the overall profit without exceeding the available fuel and time.
+//!
+//! Here, both fuel and time are available in limited quantities, and the number of products can vary.
+//! Conversely, if you have a fixed set of products and multiple resource types,
+//! the modeling becomes even simpler: you can build a SolverModel directly and add constraints dynamically,
+//! without needing to store extra expressions in your problem structure.
 
 use good_lp::variable::ProblemVariables;
 use good_lp::{
