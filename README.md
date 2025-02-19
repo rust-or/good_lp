@@ -78,7 +78,7 @@ you can also activate other solvers using cargo features.
 | [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌   |
 | [`scip`][scip]         | ✅                | ✅              | ✅²                    | ✅   | ❌   |
 | [`cplex-rs`][cplex]    | ✅                | ❌              | ✅³                    | ✅   | ❌   |
-| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅⁴  |
+| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅   |
 
 - \* *no C compiler*: builds with only cargo, without requiring you to install a C compiler
 - \* *no additional libs*: works without additional libraries at runtime, all the dependencies are statically linked
@@ -87,7 +87,6 @@ you can also activate other solvers using cargo features.
 - ¹ highs itself is statically linked and does not require manual installation. However, on some systems, you may have to [install dependencies of highs itself](https://github.com/rust-or/good_lp/issues/29).
 - ² using the precompiled binary is possible by enabling the optional `scip_bundled` feature
 - ³ the [cplex_rs crate](https://crates.io/crates/cplex-rs) links statically to a local installation of the proprietary [IBM ILOG CPLEX Optimizer](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer).
-- ⁴ to use clarabel for WASM targets, set the `clarabel-wasm` feature flag
 
 To use an alternative solver, put the following in your `Cargo.toml`:
 
@@ -208,7 +207,6 @@ linear programming solver written in Rust by the
 It does not support integer variables, but it is fast and easy to install.
 It does implement the [SolutionWithDual](https://docs.rs/good_lp/latest/good_lp/solvers/trait.SolutionWithDual.html)
 trait, which allows you to access the dual values of the constraints (the shadow prices).
-If you want to use it with WASM targets, you must include the `clarabel-wasm` feature flag
 
 [clarabel]: https://github.com/oxfordcontrol/Clarabel.rs
 

@@ -46,7 +46,7 @@ jobs:
       - name: Run tests with Clarabel
         run: cargo test --no-default-features --features clarabel
       - name: Run tests with Clarabel on WASM
-        run: wasm-pack test --node --no-default-features --features "clarabel,clarabel-wasm"
+        run: wasm-pack test --node --no-default-features --features "clarabel"
       - name: Run tests with microlp on WASM
         run: wasm-pack test --node --no-default-features --features microlp
       - run: cargo bench
