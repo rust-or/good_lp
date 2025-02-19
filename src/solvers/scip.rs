@@ -2,7 +2,6 @@
 //! of the fastest non-commercial solvers for mixed integer programming.
 
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use russcip::model::Model;
 use russcip::model::ModelWithProblem;
@@ -78,7 +77,7 @@ pub struct SCIPProblem {
     // the underlying SCIP model representing the problem
     model: Model<ProblemCreated>,
     // map from good_lp variables to SCIP variable ids
-    id_for_var: HashMap<Variable, Rc<russcip::Variable>>,
+    id_for_var: HashMap<Variable, russcip::Variable>,
 }
 
 impl SCIPProblem {
@@ -96,15 +95,10 @@ impl SCIPProblem {
 impl CardinalityConstraintSolver for SCIPProblem {
     /// Add cardinality constraint. Constrains the number of non-zero variables to at most `rhs`.
     fn add_cardinality_constraint(&mut self, vars: &[Variable], rhs: usize) -> ConstraintReference {
-        let scip_vars = vars
-            .iter()
-            .map(|v| Rc::clone(&self.id_for_var[v]))
-            .collect::<Vec<_>>();
-
-        let index = self.model.n_conss() + 1;
-        self.model
-            .add_cons_cardinality(scip_vars, rhs, format!("cardinality{}", index).as_str());
-
+        let Self { id_for_var, model } = self;
+        let scip_vars: Vec<&russcip::Variable> = vars.iter().map(|v| &id_for_var[v]).collect();
+        let index = model.n_conss() + 1;
+        model.add_cons_cardinality(scip_vars, rhs, format!("cardinality{}", index).as_str());
         ConstraintReference { index }
     }
 }
@@ -141,7 +135,7 @@ impl SolverModel for SCIPProblem {
         let mut vars_in_cons = Vec::with_capacity(n_vars_in_cons);
         let mut coeffs = Vec::with_capacity(n_vars_in_cons);
         for (&var, &coeff) in c.expression.linear.coefficients.iter() {
-            let id = Rc::clone(&self.id_for_var[&var]);
+            let id = &self.id_for_var[&var];
             vars_in_cons.push(id);
             coeffs.push(coeff);
         }
@@ -167,7 +161,7 @@ impl WithInitialSolution for SCIPProblem {
     fn with_initial_solution(self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self {
         let sol = self.model.create_sol();
         for (var, val) in solution {
-            sol.set_val(Rc::clone(&self.id_for_var[&var]), val);
+            sol.set_val(&self.id_for_var[&var], val);
         }
         self.model.add_sol(sol).expect("could not set solution");
         self
@@ -177,7 +171,7 @@ impl WithInitialSolution for SCIPProblem {
 /// A wrapper to a solved SCIP problem
 pub struct SCIPSolved {
     solved_problem: Model<Solved>,
-    id_for_var: HashMap<Variable, Rc<russcip::Variable>>,
+    id_for_var: HashMap<Variable, russcip::Variable>,
 }
 
 impl Solution for SCIPSolved {
@@ -186,7 +180,7 @@ impl Solution for SCIPSolved {
             .solved_problem
             .best_sol()
             .expect("This problem is expected to have Optimal status, a ");
-        let id = Rc::clone(&self.id_for_var[&var]);
+        let id = &self.id_for_var[&var];
         sol.val(id)
     }
 }

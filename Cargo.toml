@@ -1,6 +1,6 @@
 [package]
 name = "good_lp"
-version = "1.12.0"
+version = "2.0.0"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
 edition = "2018"
 repository = "https://github.com/rust-or/good_lp"
@@ -8,7 +8,13 @@ documentation = "https://docs.rs/good_lp"
 description = " Mixed Integer Linear Programming for Rust, with an user-friendly API. This crate allows modeling LP problems, and lets you solve them with various solvers."
 license = "MIT"
 keywords = ["linear-programming", "optimization", "symbolic", "math", "solver"]
-categories = ["mathematics", "algorithms", "science", "api-bindings", "data-structures"]
+categories = [
+    "mathematics",
+    "algorithms",
+    "science",
+    "api-bindings",
+    "data-structures",
+]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
@@ -16,8 +22,19 @@ default = ["coin_cbc", "singlethread-cbc"]
 singlethread-cbc = ["coin_cbc?/singlethread-cbc"]
 scip = ["russcip"]
 scip_bundled = ["russcip?/bundled"]
-all_default_solvers = ["coin_cbc", "microlp", "lpsolve", "highs", "russcip", "russcip/bundled", "lp-solvers", "clarabel"] # cplex-rs is not included because it is incompatible with lpsolve
-minilp = ["microlp"] # minilp is not maintained anymore, we use the microlp fork instead
+all_default_solvers = [
+    "coin_cbc",
+    "microlp",
+    "lpsolve",
+    "highs",
+    "russcip",
+    "russcip/bundled",
+    "lp-solvers",
+    "clarabel",
+] # cplex-rs is not included because it is incompatible with lpsolve
+minilp = [
+    "microlp",
+] # minilp is not maintained anymore, we use the microlp fork instead
 
 [dependencies]
 coin_cbc = { version = "0.1", optional = true, default-features = false }
