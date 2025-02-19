@@ -198,7 +198,7 @@ impl HighsProblem {
         self.verbose = verbose
     }
 
-    /// Sets the HiGHS option. See https://ergo-code.github.io/HiGHS/dev/options/definitions/
+    /// Sets the HiGHS option. See <https://ergo-code.github.io/HiGHS/dev/options/definitions/>
     pub fn set_option<K: Into<String>, V: Into<HighsOptionValue>>(
         mut self,
         key: K,
