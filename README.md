@@ -28,6 +28,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 ```
 
+For a more complex example, see the [resource allocation problem](https://github.com/lovasoa/good_lp/blob/main/tests/resource_allocation_problem.rs).
+
 ## Features and limitations
 
 - **Linear programming**. This crate currently supports only the definition of linear programs. You cannot use it with
