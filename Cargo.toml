@@ -50,7 +50,7 @@ all-features = false
 # Use almost the same as all_default_solvers. Similarly, cplex-rs is not
 # included because it is incompatible with lpsolve. Additionally,
 # russcip/bundled is not included because network access is blocked on docs.rs.
-features = ["coin_cbc", "microlp", "lpsolve", "highs", "russcip", "lp-solvers", "clarabel"]
+features = ["coin_cbc", "microlp", "lpsolve", "highs", "lp-solvers", "clarabel"]
 default-target = "x86_64-unknown-linux-gnu"
 targets = ["x86_64-unknown-linux-gnu"]
 rustdoc-args = ["--cfg", "docsrs"]
