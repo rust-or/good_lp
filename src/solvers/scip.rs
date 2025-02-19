@@ -104,7 +104,11 @@ pub trait ScipOptionGetValue {
 /// A value that can be set for a SCIP option
 pub trait ScipOptionSetValue {
     /// Applies the value to a given model for a given option name
-    fn set_for(self, model: Model<ProblemCreated>, option: &str) -> Result<(), Retcode>
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode>
     where
         Self: Sized;
 }
@@ -115,9 +119,12 @@ impl ScipOptionGetValue for i32 {
     }
 }
 impl ScipOptionSetValue for i32 {
-    fn set_for(self, model: Model<ProblemCreated>, option: &str) -> Result<(), Retcode> {
-        model.set_int_param(option, self)?;
-        Ok(())
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_int_param(option, self)
     }
 }
 
@@ -127,9 +134,12 @@ impl ScipOptionGetValue for f64 {
     }
 }
 impl ScipOptionSetValue for f64 {
-    fn set_for(self, model: Model<ProblemCreated>, option: &str) -> Result<(), Retcode> {
-        model.set_real_param(option, self)?;
-        Ok(())
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_real_param(option, self)
     }
 }
 impl ScipOptionGetValue for String {
@@ -138,9 +148,12 @@ impl ScipOptionGetValue for String {
     }
 }
 impl ScipOptionSetValue for &str {
-    fn set_for(self, model: Model<ProblemCreated>, option: &str) -> Result<(), Retcode> {
-        model.set_str_param(option, &self)?;
-        Ok(())
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_str_param(option, &self)
     }
 }
 impl ScipOptionGetValue for i64 {
@@ -149,9 +162,12 @@ impl ScipOptionGetValue for i64 {
     }
 }
 impl ScipOptionSetValue for i64 {
-    fn set_for(self, model: Model<ProblemCreated>, option: &str) -> Result<(), Retcode> {
-        model.set_longint_param(option, self)?;
-        Ok(())
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_longint_param(option, self)
     }
 }
 impl ScipOptionGetValue for bool {
@@ -160,9 +176,12 @@ impl ScipOptionGetValue for bool {
     }
 }
 impl ScipOptionSetValue for bool {
-    fn set_for(self, model: Model<ProblemCreated>, option: &str) -> Result<(), Retcode> {
-        model.set_bool_param(option, self)?;
-        Ok(())
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_bool_param(option, self)
     }
 }
 
@@ -179,7 +198,7 @@ impl SCIPProblem {
 
     /// Sets whether or not SCIP should display verbose logging information to the console
     pub fn try_set_verbose(mut self, verbose: bool) -> Result<Self, Retcode> {
-        std::mem::take(self.as_inner_mut())
+        self.model = std::mem::take(self.as_inner_mut())
             .set_int_param("display/verblevel", if verbose { 4 } else { 0 })?;
         Ok(self)
     }
@@ -193,7 +212,7 @@ impl SCIPProblem {
 
     /// Sets the heuristics parameter of the SCIP instance
     pub fn set_heuristics(mut self, heuristics: ScipHeuristics) -> Self {
-        std::mem::take(self.as_inner_mut()).set_heuristics(match heuristics {
+        self.model = std::mem::take(self.as_inner_mut()).set_heuristics(match heuristics {
             ScipHeuristics::Default => russcip::ParamSetting::Default,
             ScipHeuristics::Aggressive => russcip::ParamSetting::Aggressive,
             ScipHeuristics::Fast => russcip::ParamSetting::Fast,
@@ -204,13 +223,13 @@ impl SCIPProblem {
 
     /// Sets the time limit in seconds
     pub fn set_time_limit(mut self, time_limit: usize) -> Self {
-        std::mem::take(self.as_inner_mut()).set_time_limit(time_limit);
+        self.model = std::mem::take(self.as_inner_mut()).set_time_limit(time_limit);
         self
     }
 
     /// Sets the memory limit in MB
     pub fn set_memory_limit(mut self, memory_limit: usize) -> Self {
-        std::mem::take(self.as_inner_mut()).set_memory_limit(memory_limit);
+        self.model = std::mem::take(self.as_inner_mut()).set_memory_limit(memory_limit);
         self
     }
 
@@ -220,7 +239,7 @@ impl SCIPProblem {
         option: &str,
         value: T,
     ) -> Result<Self, Retcode> {
-        value.set_for(std::mem::take(self.as_inner_mut()), option)?;
+        self.model = value.set_for(std::mem::take(self.as_inner_mut()), option)?;
         Ok(self)
     }
 
@@ -417,6 +436,7 @@ mod tests {
             .using(scip)
             .with(constraint!(2 * x + y == 4))
             .with(constraint!(x + 2 * y <= 5))
+            .set_verbose(true)
             .solve()
             .unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (1., 2.));
