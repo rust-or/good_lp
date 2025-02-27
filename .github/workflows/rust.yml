@@ -35,7 +35,7 @@ jobs:
         # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
         run: cargo test  --features all_default_solvers -- --test-threads=1
 
-  test-microlp:  
+  test-microlp:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
       - name: Run tests with microlp
         run: cargo test --no-default-features --features microlp
 
-  test-microlp-wasm:  
+  test-microlp-wasm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
       - name: Run tests with microlp on WASM
         run: wasm-pack test --node --no-default-features --features microlp
 
-  test-lpsolve:  
+  test-lpsolve:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,7 +73,7 @@ jobs:
       - name: Run tests with lpsolve
         run: cargo test --no-default-features --features lpsolve
 
-  test-highs:  
+  test-highs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
       - name: Run tests with highs
         run: cargo test --no-default-features --features highs
 
-  test-lpsolvers:  
+  test-lpsolvers:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -99,7 +99,7 @@ jobs:
       - name: Run tests with lp_solvers
         run: cargo test --no-default-features --features lp-solvers
 
-  test-scip:  
+  test-scip:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -112,7 +112,7 @@ jobs:
       - name: Run tests with SCIP
         run: cargo test --no-default-features --features "scip,scip_bundled"
 
-  test-cplex:  
+  test-cplex:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -125,7 +125,7 @@ jobs:
       - name: Run tests with CPLEX
         run: cargo test --no-default-features --features cplex-rs
 
-  test-clarabel:  
+  test-clarabel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -138,7 +138,7 @@ jobs:
       - name: Run tests with Clarabel
         run: cargo test --no-default-features --features clarabel
 
-  test-clarabel-wasm:  
+  test-clarabel-wasm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
