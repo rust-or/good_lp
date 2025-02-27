@@ -16,7 +16,7 @@ use russcip::WithSolutions;
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
-    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+    solvers::{MipGapError, ObjectiveDirection, ResolutionError, Solution, SolverModel},
     CardinalityConstraintSolver, WithInitialSolution, WithMipGap,
 };
 use crate::{Constraint, Variable};
@@ -275,6 +275,10 @@ impl SolverModel for SCIPProblem {
         let solved_model = self.model.solve();
         let status = solved_model.status();
         match status {
+            russcip::Status::GapLimit => Ok(SCIPSolved {
+                solved_problem: solved_model,
+                id_for_var: self.id_for_var,
+            }),
             russcip::status::Status::Optimal => Ok(SCIPSolved {
                 solved_problem: solved_model,
                 id_for_var: self.id_for_var,
@@ -335,18 +339,18 @@ impl WithMipGap for SCIPProblem {
     fn mip_gap(&self) -> Option<f32> {
         Some(self.model.real_param("limits/gap") as f32)
     }
-    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, super::MipGapError>
+    fn with_mip_gap(self, mip_gap: f32) -> Result<Self, MipGapError>
     where
         Self: Sized,
     {
         self.try_set_option::<f64>("limits/gap", mip_gap.into())
             .map_err(|e| {
                 if mip_gap.is_sign_negative() {
-                    super::MipGapError::Negative
+                    MipGapError::Negative
                 } else if mip_gap.is_infinite() {
-                    super::MipGapError::Infinite
+                    MipGapError::Infinite
                 } else {
-                    super::MipGapError::Other(format!("cannot set mip gap error: {:?}", e))
+                    MipGapError::Other(format!("cannot set mip gap error: {:?}", e))
                 }
             })
     }
