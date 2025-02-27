@@ -10,6 +10,7 @@ use russcip::model::ProblemCreated;
 use russcip::model::Solved;
 use russcip::variable::VarType;
 use russcip::ProblemOrSolving;
+use russcip::Retcode;
 use russcip::WithSolutions;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
@@ -72,12 +73,116 @@ pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
     problem
 }
 
+/// The heuristic emphasis to use for the solver
+pub enum ScipHeuristics {
+    /// Use default values.
+    Default,
+    /// Set to aggressive settings.
+    Aggressive,
+    /// Set to fast settings.
+    Fast,
+    /// Turn off.
+    Off,
+}
+
 /// A SCIP Model
 pub struct SCIPProblem {
     // the underlying SCIP model representing the problem
     model: Model<ProblemCreated>,
     // map from good_lp variables to SCIP variable ids
     id_for_var: HashMap<Variable, russcip::Variable>,
+}
+
+/// A value that can be read for a SCIP option
+pub trait ScipOptionGetValue {
+    /// Obtains the value of a given model for a given option name
+    fn get_for(model: Model<ProblemCreated>, option: &str) -> Self
+    where
+        Self: Sized;
+}
+
+/// A value that can be set for a SCIP option
+pub trait ScipOptionSetValue {
+    /// Applies the value to a given model for a given option name
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode>
+    where
+        Self: Sized;
+}
+
+impl ScipOptionGetValue for i32 {
+    fn get_for(model: Model<ProblemCreated>, option: &str) -> Self {
+        model.int_param(option)
+    }
+}
+impl ScipOptionSetValue for i32 {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_int_param(option, self)
+    }
+}
+
+impl ScipOptionGetValue for f64 {
+    fn get_for(model: Model<ProblemCreated>, option: &str) -> Self {
+        model.real_param(option)
+    }
+}
+impl ScipOptionSetValue for f64 {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_real_param(option, self)
+    }
+}
+impl ScipOptionGetValue for String {
+    fn get_for(model: Model<ProblemCreated>, option: &str) -> Self {
+        model.str_param(option)
+    }
+}
+impl ScipOptionSetValue for &str {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_str_param(option, &self)
+    }
+}
+impl ScipOptionGetValue for i64 {
+    fn get_for(model: Model<ProblemCreated>, option: &str) -> Self {
+        model.longint_param(option)
+    }
+}
+impl ScipOptionSetValue for i64 {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_longint_param(option, self)
+    }
+}
+impl ScipOptionGetValue for bool {
+    fn get_for(model: Model<ProblemCreated>, option: &str) -> Self {
+        model.bool_param(option)
+    }
+}
+impl ScipOptionSetValue for bool {
+    fn set_for(
+        self,
+        model: Model<ProblemCreated>,
+        option: &str,
+    ) -> Result<Model<ProblemCreated>, Retcode> {
+        model.set_bool_param(option, self)
+    }
 }
 
 impl SCIPProblem {
@@ -89,6 +194,65 @@ impl SCIPProblem {
     /// Get mutable access to the raw russcip model
     pub fn as_inner_mut(&mut self) -> &mut Model<ProblemCreated> {
         &mut self.model
+    }
+
+    /// Sets whether or not SCIP should display verbose logging information to the console
+    pub fn try_set_verbose(mut self, verbose: bool) -> Result<Self, Retcode> {
+        self.model = self
+            .model
+            .set_int_param("display/verblevel", if verbose { 4 } else { 0 })?;
+        Ok(self)
+    }
+
+    /// Tries to set whether or not SCIP should display verbose logging
+    /// information to the console and panics if the operation fails
+    pub fn set_verbose(self, verbose: bool) -> Self {
+        self.try_set_verbose(verbose)
+            .unwrap_or_else(|e| panic!("cound not set verbosity to {}: {:?}", verbose, e))
+    }
+
+    /// Sets the heuristics parameter of the SCIP instance
+    pub fn set_heuristics(mut self, heuristics: ScipHeuristics) -> Self {
+        self.model = self.model.set_heuristics(match heuristics {
+            ScipHeuristics::Default => russcip::ParamSetting::Default,
+            ScipHeuristics::Aggressive => russcip::ParamSetting::Aggressive,
+            ScipHeuristics::Fast => russcip::ParamSetting::Fast,
+            ScipHeuristics::Off => russcip::ParamSetting::Off,
+        });
+        self
+    }
+
+    /// Sets the time limit in seconds
+    pub fn set_time_limit(mut self, time_limit: usize) -> Self {
+        self.model = self.model.set_time_limit(time_limit);
+        self
+    }
+
+    /// Sets the memory limit in MB
+    pub fn set_memory_limit(mut self, memory_limit: usize) -> Self {
+        self.model = self.model.set_memory_limit(memory_limit);
+        self
+    }
+
+    /// Sets a SCIP parameter
+    pub fn try_set_option<T: ScipOptionSetValue>(
+        mut self,
+        option: &str,
+        value: T,
+    ) -> Result<Self, Retcode> {
+        self.model = value.set_for(self.model, option)?;
+        Ok(self)
+    }
+
+    /// Tries to set a SCIP parameter and panics if the operation fails
+    pub fn set_option<T: ScipOptionSetValue>(self, option: &str, value: T) -> Self {
+        self.try_set_option(option, value)
+            .unwrap_or_else(|e| panic!("could not set option '{}': {:?}", option, e))
+    }
+
+    /// Reads a SCIP parameter
+    pub fn get_option<T: ScipOptionGetValue>(self, option: &str) -> T {
+        T::get_for(self.model, option)
     }
 }
 
@@ -176,12 +340,10 @@ pub struct SCIPSolved {
 
 impl Solution for SCIPSolved {
     fn value(&self, var: Variable) -> f64 {
-        let sol = self
-            .solved_problem
+        self.solved_problem
             .best_sol()
-            .expect("This problem is expected to have Optimal status, a ");
-        let id = &self.id_for_var[&var];
-        sol.val(id)
+            .expect("This problem is expected to have Optimal status, a ")
+            .val(&self.id_for_var[&var])
     }
 }
 
@@ -275,6 +437,7 @@ mod tests {
             .using(scip)
             .with(constraint!(2 * x + y == 4))
             .with(constraint!(x + 2 * y <= 5))
+            .set_verbose(true)
             .solve()
             .unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (1., 2.));
@@ -289,5 +452,63 @@ mod tests {
         model.add_cardinality_constraint(&[x, y], 1);
         let solution = model.solve().unwrap();
         assert_eq!((solution.value(x), solution.value(y)), (2., 0.));
+    }
+
+    #[test]
+    fn can_set_int_param() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 1));
+        let model = vars
+            .maximise(x)
+            .using(scip)
+            .set_option("display/verblevel", 2);
+        assert_eq!(model.get_option::<i32>("display/verblevel"), 2);
+    }
+
+    #[test]
+    fn can_set_real_param() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 1));
+        let model = vars.maximise(x).using(scip).set_option("limits/time", 0.);
+        assert_eq!(model.get_option::<f64>("limits/time"), 0.);
+    }
+
+    #[test]
+    fn can_set_str_param() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 1));
+        let model = vars
+            .maximise(x)
+            .using(scip)
+            .set_option("concurrent/paramsetprefix", "custom/path");
+        assert_eq!(
+            &model.get_option::<String>("concurrent/paramsetprefix"),
+            "custom/path"
+        );
+    }
+
+    #[test]
+    fn can_set_longint_param() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 1));
+        let model = vars
+            .maximise(x)
+            .using(scip)
+            .set_option::<i64>("constraints/components/nodelimit", 99);
+        assert_eq!(
+            model.get_option::<i64>("constraints/components/nodelimit"),
+            99
+        );
+    }
+
+    #[test]
+    fn can_set_bool_param() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 1));
+        let model = vars
+            .maximise(x)
+            .using(scip)
+            .set_option("display/allviols", true);
+        assert_eq!(model.get_option::<bool>("display/allviols"), true);
     }
 }
