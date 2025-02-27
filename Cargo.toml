@@ -27,8 +27,8 @@ all_default_solvers = [
     "microlp",
     "lpsolve",
     "highs",
-    "russcip",
-    "russcip/bundled",
+    "scip",
+    "scip_bundled",
     "lp-solvers",
     "clarabel",
 ] # cplex-rs is not included because it is incompatible with lpsolve
