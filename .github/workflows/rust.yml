@@ -41,15 +41,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: install deps
-        run: NO_CPLEX=true ./build/setup.sh && ./build/postsetup.sh
       - name: Build microlp
         run: cargo build --features microlp --tests
       - name: Run tests with microlp
         run: cargo test --no-default-features --features microlp
+
+  test-microlp-wasm:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install deps
+        run: ./build/postsetup.sh
       - name: Run tests with microlp on WASM
         run: wasm-pack test --node --no-default-features --features microlp
 
@@ -124,15 +131,24 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh
+      - name: Build clarabel
+        run: cargo build --features clarabel --tests
+      - name: Run tests with Clarabel
+        run: cargo test --no-default-features --features clarabel
+
+  test-clarabel-wasm:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: install deps
         run: NO_CPLEX=true ./build/setup.sh && ./build/postsetup.sh
-      - name: Build clarabel
-        run: cargo build --features clarabel --tests
-      - name: Run tests with Clarabel
-        run: cargo test --no-default-features --features clarabel
       - name: Run tests with Clarabel on WASM
         run: wasm-pack test --node --no-default-features --features clarabel
 
