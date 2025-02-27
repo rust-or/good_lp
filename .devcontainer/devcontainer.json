@@ -9,7 +9,8 @@
       "extensions": [
         "ms-azuretools.vscode-docker",
         "ms-vscode-remote.remote-containers",
-        "rust-lang.rust-analyzer"
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml"
       ]
     }
   },
