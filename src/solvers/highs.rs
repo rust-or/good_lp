@@ -392,6 +392,7 @@ mod tests {
     use crate::{constraint, variable, variables, Solution, SolverModel, WithInitialSolution};
 
     use super::highs;
+
     #[test]
     fn can_solve_with_inequality() {
         let mut vars = variables!();
