@@ -16,8 +16,8 @@ use russcip::WithSolutions;
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
-    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
-    CardinalityConstraintSolver, WithInitialSolution,
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel},
+    CardinalityConstraintSolver, WithInitialSolution, WithTimeLimit,
 };
 use crate::{Constraint, Variable};
 
@@ -275,7 +275,13 @@ impl SolverModel for SCIPProblem {
         let solved_model = self.model.solve();
         let status = solved_model.status();
         match status {
+            russcip::Status::TimeLimit => Ok(SCIPSolved {
+                status: SolutionStatus::TimeLimit,
+                solved_problem: solved_model,
+                id_for_var: self.id_for_var,
+            }),
             russcip::status::Status::Optimal => Ok(SCIPSolved {
+                status: SolutionStatus::Optimal,
                 solved_problem: solved_model,
                 id_for_var: self.id_for_var,
             }),
@@ -332,13 +338,23 @@ impl WithInitialSolution for SCIPProblem {
     }
 }
 
+impl WithTimeLimit for SCIPProblem {
+    fn with_time_limit<T: Into<f64>>(self, seconds: T) -> Self {
+        self.set_time_limit(seconds.into() as usize)
+    }
+}
+
 /// A wrapper to a solved SCIP problem
 pub struct SCIPSolved {
+    status: SolutionStatus,
     solved_problem: Model<Solved>,
     id_for_var: HashMap<Variable, russcip::Variable>,
 }
 
 impl Solution for SCIPSolved {
+    fn status(&self) -> SolutionStatus {
+        self.status
+    }
     fn value(&self, var: Variable) -> f64 {
         self.solved_problem
             .best_sol()
@@ -350,11 +366,28 @@ impl Solution for SCIPSolved {
 #[cfg(test)]
 mod tests {
     use crate::{
-        constraint, variable, variables, CardinalityConstraintSolver, Solution, SolverModel,
-        WithInitialSolution,
+        constraint, variable, variables, CardinalityConstraintSolver, Solution, SolutionStatus,
+        SolverModel, WithInitialSolution, WithTimeLimit,
     };
 
     use super::scip;
+
+    #[test]
+    fn can_solve_with_time_limit() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(scip)
+            .with((2 * x + y) << 4)
+            .set_verbose(true) // TODO: remove
+            .with_time_limit(0)
+            .solve()
+            .unwrap();
+        assert!(matches!(solution.status(), SolutionStatus::TimeLimit));
+        assert_eq!((solution.value(x), solution.value(y)), (0., 1.))
+    }
 
     #[test]
     fn can_solve_with_inequality() {
