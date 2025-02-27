@@ -198,7 +198,8 @@ impl SCIPProblem {
 
     /// Sets whether or not SCIP should display verbose logging information to the console
     pub fn try_set_verbose(mut self, verbose: bool) -> Result<Self, Retcode> {
-        self.model = std::mem::take(self.as_inner_mut())
+        self.model = self
+            .model
             .set_int_param("display/verblevel", if verbose { 4 } else { 0 })?;
         Ok(self)
     }
@@ -212,7 +213,7 @@ impl SCIPProblem {
 
     /// Sets the heuristics parameter of the SCIP instance
     pub fn set_heuristics(mut self, heuristics: ScipHeuristics) -> Self {
-        self.model = std::mem::take(self.as_inner_mut()).set_heuristics(match heuristics {
+        self.model = self.model.set_heuristics(match heuristics {
             ScipHeuristics::Default => russcip::ParamSetting::Default,
             ScipHeuristics::Aggressive => russcip::ParamSetting::Aggressive,
             ScipHeuristics::Fast => russcip::ParamSetting::Fast,
@@ -223,13 +224,13 @@ impl SCIPProblem {
 
     /// Sets the time limit in seconds
     pub fn set_time_limit(mut self, time_limit: usize) -> Self {
-        self.model = std::mem::take(self.as_inner_mut()).set_time_limit(time_limit);
+        self.model = self.model.set_time_limit(time_limit);
         self
     }
 
     /// Sets the memory limit in MB
     pub fn set_memory_limit(mut self, memory_limit: usize) -> Self {
-        self.model = std::mem::take(self.as_inner_mut()).set_memory_limit(memory_limit);
+        self.model = self.model.set_memory_limit(memory_limit);
         self
     }
 
@@ -239,7 +240,7 @@ impl SCIPProblem {
         option: &str,
         value: T,
     ) -> Result<Self, Retcode> {
-        self.model = value.set_for(std::mem::take(self.as_inner_mut()), option)?;
+        self.model = value.set_for(self.model, option)?;
         Ok(self)
     }
 
