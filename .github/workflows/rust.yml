@@ -88,9 +88,9 @@ jobs:
       - name: install deps
         run: NO_CPLEX=true ./build/setup.sh
       - name: Build lp_solvers
-        run: cargo build --features lp_solvers --tests
+        run: cargo build --features lp-solvers --tests
       - name: Run tests with lp_solvers
-        run: cargo test --no-default-features --features lp_solvers
+        run: cargo test --no-default-features --features lp-solvers
 
   test-scip:  
     runs-on: ubuntu-latest
