@@ -1,8 +1,8 @@
 //! A solver that uses [highs](https://docs.rs/highs), a parallel C++ solver.
 
 use crate::solvers::{
-    MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
-    WithMipGap,
+    MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolutionWithDual,
+    SolverModel, WithMipGap, WithTimeLimit,
 };
 use crate::{
     constraint::ConstraintReference,
@@ -303,7 +303,12 @@ impl SolverModel for HighsProblem {
             HighsModelStatus::Infeasible => Err(ResolutionError::Infeasible),
             HighsModelStatus::Unbounded => Err(ResolutionError::Unbounded),
             HighsModelStatus::UnboundedOrInfeasible => Err(ResolutionError::Infeasible),
+            HighsModelStatus::ReachedTimeLimit => Ok(HighsSolution {
+                status: SolutionStatus::TimeLimit,
+                solution: solved.get_solution(),
+            }),
             _ok_status => Ok(HighsSolution {
+                status: SolutionStatus::Optimal,
                 solution: solved.get_solution(),
             }),
         }
@@ -341,9 +346,16 @@ impl WithInitialSolution for HighsProblem {
     }
 }
 
+impl WithTimeLimit for HighsProblem {
+    fn with_time_limit<T: Into<f64>>(self, seconds: T) -> Self {
+        self.set_time_limit(seconds.into())
+    }
+}
+
 /// The solution to a highs problem
 #[derive(Debug)]
 pub struct HighsSolution {
+    status: SolutionStatus,
     solution: highs::Solution,
 }
 
@@ -355,6 +367,9 @@ impl HighsSolution {
 }
 
 impl Solution for HighsSolution {
+    fn status(&self) -> SolutionStatus {
+        self.status
+    }
     fn value(&self, variable: Variable) -> f64 {
         self.solution.columns()[variable.index()]
     }
@@ -389,9 +404,29 @@ impl WithMipGap for HighsProblem {
 
 #[cfg(test)]
 mod tests {
-    use crate::{constraint, variable, variables, Solution, SolverModel, WithInitialSolution};
+    use crate::{
+        constraint,
+        solvers::{SolutionStatus, WithTimeLimit},
+        variable, variables, Solution, SolverModel, WithInitialSolution,
+    };
 
     use super::highs;
+    #[test]
+    fn can_solve_with_time_limit() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .with_time_limit(0)
+            .solve()
+            .unwrap();
+        assert!(matches!(solution.status(), SolutionStatus::TimeLimit));
+        assert_eq!((solution.value(x), solution.value(y)), (0., 1.))
+    }
+
     #[test]
     fn can_solve_with_inequality() {
         let mut vars = variables!();
