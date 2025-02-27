@@ -5,7 +5,9 @@ use std::convert::TryInto;
 
 use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
 
-use crate::solvers::{MipGapError, ModelWithSOS1, WithInitialSolution, WithMipGap};
+use crate::solvers::{
+    MipGapError, ModelWithSOS1, SolutionStatus, WithInitialSolution, WithMipGap, WithTimeLimit,
+};
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
@@ -137,7 +139,14 @@ impl SolverModel for CoinCbcProblem {
         let solution = self.model.solve();
         let raw = solution.raw();
         match raw.status() {
-            Status::Stopped => Err(ResolutionError::Other("Stopped")),
+            Status::Stopped => {
+                if raw.is_seconds_limit_reached() {
+                    let solution_vec = solution.raw().col_solution().into();
+                    Ok(CoinCbcSolution{ status: SolutionStatus::TimeLimit, solution, solution_vec })
+                } else {
+                    Err(ResolutionError::Other("Stopped"))
+                }
+            },
             Status::Abandoned => Err(ResolutionError::Other("Abandoned")),
             Status::UserEvent => Err(ResolutionError::Other("UserEvent")),
             Status::Finished // The optimization finished, but may not have found a solution
@@ -150,6 +159,7 @@ impl SolverModel for CoinCbcProblem {
                 } else {
                     let solution_vec = solution.raw().col_solution().into();
                     Ok(CoinCbcSolution {
+                        status: SolutionStatus::Optimal,
                         solution,
                         solution_vec,
                     })
@@ -191,6 +201,14 @@ impl WithInitialSolution for CoinCbcProblem {
     }
 }
 
+impl WithTimeLimit for CoinCbcProblem {
+    fn with_time_limit<T: Into<f64>>(mut self, seconds: T) -> Self {
+        self.model
+            .set_parameter("sec", &(seconds.into().ceil() as usize).to_string());
+        self
+    }
+}
+
 /// Unfortunately, the current version of cbc silently ignores
 /// sos constraints on continuous variables.
 /// See <https://github.com/coin-or/Cbc/issues/376>
@@ -209,6 +227,7 @@ impl ModelWithSOS1 for CoinCbcProblem {
 
 /// A coin-cbc problem solution
 pub struct CoinCbcSolution {
+    status: SolutionStatus,
     solution: CbcSolution,
     solution_vec: Vec<f64>, // See: rust-or/good_lp#6
 }
@@ -221,6 +240,9 @@ impl CoinCbcSolution {
 }
 
 impl Solution for CoinCbcSolution {
+    fn status(&self) -> SolutionStatus {
+        self.status
+    }
     fn value(&self, variable: Variable) -> f64 {
         // Our indices should always match those of cbc
         self.solution_vec[variable.index()]
@@ -246,8 +268,30 @@ impl WithMipGap for CoinCbcProblem {
 
 #[cfg(test)]
 mod tests {
-    use crate::{variable, variables, Solution, SolverModel, WithInitialSolution};
+    use crate::{
+        solvers::{SolutionStatus, WithTimeLimit},
+        variable, variables, Expression, Solution, SolverModel, Variable, WithInitialSolution,
+    };
     use float_eq::assert_float_eq;
+
+    #[test]
+    fn solve_problem_with_time_limit() {
+        let n = 10;
+        let mut vars = variables!();
+        let mut v = Vec::with_capacity(n);
+        for _ in 0..n {
+            v.push(vars.add(variable().binary()));
+        }
+        let pb = vars
+            .maximise(v.iter().map(|&v| 3.5 * v).sum::<Expression>())
+            .using(super::coin_cbc)
+            .with_time_limit(0.0);
+        let sol = pb.solve().unwrap();
+        assert!(matches!(sol.status(), SolutionStatus::TimeLimit));
+        for var in v {
+            assert_eq!(sol.value(var), 1.0);
+        }
+    }
 
     #[test]
     fn solve_problem_with_initial_solution() {
