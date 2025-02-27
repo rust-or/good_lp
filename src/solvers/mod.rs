@@ -391,7 +391,7 @@ pub trait WithMipGap {
     ///
     /// use good_lp::*;
     /// # // Not all solvers support setting the MIP gap
-    /// # #[cfg(any(feature = "highs", feature = "coin_cbc"))] {
+    /// # #[cfg(any(feature = "highs", feature = "coin_cbc", feature = "scip"))] {
     /// # let solver = default_solver;
     ///
     /// // (value, cost) of each object
