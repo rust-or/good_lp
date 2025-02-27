@@ -11,42 +11,137 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: cargo fmt -- --check
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
+
+  test-all-default:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: install deps
-        run: ./build/setup.sh && ./build/postsetup.sh
+        run: NO_CPLEX=true ./build/setup.sh
       - name: Build with all default solvers (no cplex)
         run: cargo build --features all_default_solvers --tests
       - name: Run tests with all default solvers (no cplex)
         # test on a single thread. See: https://github.com/KardinalAI/coin_cbc/issues/9
         run: cargo test  --features all_default_solvers -- --test-threads=1
+
+  test-microlp:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh && ./build/postsetup.sh
+      - name: Build microlp
+        run: cargo build --features microlp --tests
       - name: Run tests with microlp
         run: cargo test --no-default-features --features microlp
+      - name: Run tests with microlp on WASM
+        run: wasm-pack test --node --no-default-features --features microlp
+
+  test-lpsolve:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh
+      - name: Build microlp
+        run: cargo build --features lpsolve --tests
       - name: Run tests with lpsolve
         run: cargo test --no-default-features --features lpsolve
+
+  test-highs:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh
+      - name: Build highs
+        run: cargo build --features highs --tests
       - name: Run tests with highs
         run: cargo test --no-default-features --features highs
+
+  test-lpsolvers:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh
+      - name: Build lp_solvers
+        run: cargo build --features lp_solvers --tests
       - name: Run tests with lp_solvers
-        run: cargo test --no-default-features --features lp-solvers
+
+  test-scip:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh
+      - name: Build scip
+        run: cargo build --features "scip,scip_bundled" --tests
       - name: Run tests with SCIP
         run: cargo test --no-default-features --features "scip,scip_bundled"
+
+  test-cplex:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install deps
+        run: ./build/setup.sh
+      - name: Build cplex
+        run: cargo build --features cplex-rs --tests
       - name: Run tests with CPLEX
         run: cargo test --no-default-features --features cplex-rs
+
+  test-clarabel:  
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh && ./build/postsetup.sh
+      - name: Build clarabel
+        run: cargo build --features clarabel --tests
       - name: Run tests with Clarabel
         run: cargo test --no-default-features --features clarabel
       - name: Run tests with Clarabel on WASM
-        run: wasm-pack test --node --no-default-features --features "clarabel"
-      - name: Run tests with microlp on WASM
-        run: wasm-pack test --node --no-default-features --features microlp
-      - run: cargo bench
+        run: wasm-pack test --node --no-default-features --features clarabel
+
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh
+      - name: Run benchmarks
+        run: cargo bench
