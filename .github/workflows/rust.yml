@@ -43,7 +43,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
       - name: install deps
         run: NO_CPLEX=true ./build/setup.sh && ./build/postsetup.sh
       - name: Build microlp
@@ -126,7 +126,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
       - name: install deps
         run: NO_CPLEX=true ./build/setup.sh && ./build/postsetup.sh
       - name: Build clarabel
