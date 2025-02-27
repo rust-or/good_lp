@@ -90,6 +90,7 @@ jobs:
       - name: Build lp_solvers
         run: cargo build --features lp_solvers --tests
       - name: Run tests with lp_solvers
+        run: cargo test --no-default-features --features lp_solvers
 
   test-scip:  
     runs-on: ubuntu-latest
