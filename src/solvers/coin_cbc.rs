@@ -268,9 +268,10 @@ impl WithMipGap for CoinCbcProblem {
 
 #[cfg(test)]
 mod tests {
+    use super::coin_cbc;
     use crate::{
         solvers::{SolutionStatus, WithTimeLimit},
-        variable, variables, Expression, Solution, SolverModel, Variable, WithInitialSolution,
+        variable, variables, Expression, Solution, SolverModel, WithInitialSolution,
     };
     use float_eq::assert_float_eq;
 
@@ -284,7 +285,7 @@ mod tests {
         }
         let pb = vars
             .maximise(v.iter().map(|&v| 3.5 * v).sum::<Expression>())
-            .using(super::coin_cbc)
+            .using(coin_cbc)
             .with_time_limit(0.0);
         let sol = pb.solve().unwrap();
         assert!(matches!(sol.status(), SolutionStatus::TimeLimit));
@@ -301,7 +302,7 @@ mod tests {
             vars:
                 0.0 <= v <= limit;
         };
-        let pb = vars.maximise(v).using(super::coin_cbc);
+        let pb = vars.maximise(v).using(coin_cbc);
         let sol = pb.solve().unwrap();
         assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
         // Recreate problem and solve with initial solution
@@ -312,7 +313,7 @@ mod tests {
         };
         let pb = vars
             .maximise(v)
-            .using(super::coin_cbc)
+            .using(coin_cbc)
             .with_initial_solution(initial_solution);
         let sol = pb.solve().unwrap();
         assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
@@ -326,13 +327,13 @@ mod tests {
             vars:
                 0.0 <= v <= limit;
         };
-        let pb = vars.maximise(v).using(super::coin_cbc);
+        let pb = vars.maximise(v).using(coin_cbc);
         let sol = pb.solve().unwrap();
         assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
         // Recreate problem and solve with initial solution
         let mut vars = variables!();
         let v = vars.add(variable().min(0).max(limit).initial(2));
-        let pb = vars.maximise(v).using(super::coin_cbc);
+        let pb = vars.maximise(v).using(coin_cbc);
         let sol = pb.solve().unwrap();
         assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
     }
