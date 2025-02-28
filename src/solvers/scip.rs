@@ -400,7 +400,7 @@ mod tests {
     use super::scip;
 
     #[test]
-    fn can_solve_with_time_limit() {
+    fn can_solve_with_gap_limit() {
         let (status_optimal, value_optimal) = knapsack_value(None);
         let (status_suboptimal, value_suboptimal) = knapsack_value(Some(0.5));
 
