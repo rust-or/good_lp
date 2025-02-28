@@ -10,6 +10,9 @@ cd "${0%/*}"
 DEBIAN_FRONTEND=noninteractive sudo apt-get install -y coinor-cbc coinor-libcbc-dev libgsl-dev build-essential cmake clang
 
 # Install CPLEX
-curl -LO https://github.com/rust-or/good_lp/releases/download/cplex/cplex.bin
-chmod u+x cplex.bin
-./cplex.bin -f ./response.properties
+if [ -z "$NO_CPLEX" ]
+then 
+    curl -LO https://github.com/rust-or/good_lp/releases/download/cplex/cplex.bin
+    chmod u+x cplex.bin
+    ./cplex.bin -f ./response.properties
+fi

@@ -245,6 +245,9 @@ pub enum SolutionStatus {
     /// The solution is not optimal and it was obtained because the time limit
     /// was reached
     TimeLimit,
+    /// The solution is not optimal and it was obtained because the gap limit
+    /// was reached
+    GapLimit
 }
 
 /// A problem solution
@@ -414,7 +417,7 @@ pub trait WithMipGap {
     ///
     /// use good_lp::*;
     /// # // Not all solvers support setting the MIP gap
-    /// # #[cfg(any(feature = "highs", feature = "coin_cbc"))] {
+    /// # #[cfg(any(feature = "highs", feature = "coin_cbc", feature = "scip"))] {
     /// # let solver = default_solver;
     ///
     /// // (value, cost) of each object
