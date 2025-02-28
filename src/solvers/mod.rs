@@ -247,7 +247,7 @@ pub enum SolutionStatus {
     TimeLimit,
     /// The solution is not optimal and it was obtained because the gap limit
     /// was reached
-    GapLimit
+    GapLimit,
 }
 
 /// A problem solution
