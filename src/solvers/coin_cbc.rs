@@ -142,6 +142,15 @@ impl SolverModel for CoinCbcProblem {
         let solution = self.model.solve();
         let raw = solution.raw();
         match raw.status() {
+            Status::Stopped => {
+                match raw.secondary_status() {
+                    SecondaryStatus::StoppedOnTime => {
+                        let solution_vec = solution.raw().col_solution().into();
+                        Ok(CoinCbcSolution{ status: SolutionStatus::TimeLimit, solution, solution_vec })
+                    },
+                    _ => Err(ResolutionError::Other("Stopped"))
+                }
+            },
             Status::Abandoned => Err(ResolutionError::Other("Abandoned")),
             Status::UserEvent => Err(ResolutionError::Other("UserEvent")),
             Status::Finished // The optimization finished, but may not have found a solution
@@ -153,24 +162,12 @@ impl SolverModel for CoinCbcProblem {
                     Err(ResolutionError::Infeasible)
                 } else {
                     let solution_vec = solution.raw().col_solution().into();
-                    Ok(CoinCbcSolution {
-                        status: SolutionStatus::Optimal,
-                        solution,
-                        solution_vec,
-                    })
-                }
-            },
-            Status::Stopped => {
-                match raw.secondary_status() {
-                    SecondaryStatus::StoppedOnTime => {
-                        let solution_vec = solution.raw().col_solution().into();
-                        Ok(CoinCbcSolution{ status: SolutionStatus::TimeLimit, solution, solution_vec })
-                    },
-                    SecondaryStatus::StoppedOnGap => {
-                        let solution_vec = solution.raw().col_solution().into();
-                        Ok(CoinCbcSolution{ status: SolutionStatus::GapLimit, solution, solution_vec })
-                    },
-                    _ => Err(ResolutionError::Other("Stopped")),
+                    let secondary_status = raw.secondary_status();
+                    match secondary_status {
+                        SecondaryStatus::StoppedOnTime => Ok(CoinCbcSolution{ status: SolutionStatus::TimeLimit, solution, solution_vec }) ,
+                        SecondaryStatus::StoppedOnGap => Ok(CoinCbcSolution{ status: SolutionStatus::GapLimit, solution, solution_vec }) ,
+                        _ => Ok(CoinCbcSolution { status: SolutionStatus::Optimal, solution, solution_vec, }),
+                    }
                 }
             },
         }
