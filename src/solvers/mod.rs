@@ -482,6 +482,12 @@ pub trait WithMipGap {
     ///     model.add_constraint(constraint.leq(budget));
     ///
     ///     let solution = model.solve().unwrap();
+    ///     // The solution status indicates if the solution is optimal
+    ///     if mipgap.is_none() {
+    ///         assert!(matches!(solution.status(), SolutionStatus::Optimal));
+    ///     } else {
+    ///         assert!(matches!(solution.status(), SolutionStatus::GapLimit));
+    ///     }
     ///
     ///     // For this example we're interested only in the total value, not in the objects selected
     ///     objective.eval_with(&solution)
