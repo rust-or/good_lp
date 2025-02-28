@@ -3,7 +3,10 @@
 //! You can disable it an enable another solver instead using cargo features.
 use std::convert::TryInto;
 
-use coin_cbc::{raw::Status, Col, Model, Sense, Solution as CbcSolution};
+use coin_cbc::{
+    raw::{SecondaryStatus, Status},
+    Col, Model, Sense, Solution as CbcSolution,
+};
 
 use crate::solvers::{
     MipGapError, ModelWithSOS1, SolutionStatus, WithInitialSolution, WithMipGap, WithTimeLimit,
@@ -139,14 +142,6 @@ impl SolverModel for CoinCbcProblem {
         let solution = self.model.solve();
         let raw = solution.raw();
         match raw.status() {
-            Status::Stopped => {
-                if raw.is_seconds_limit_reached() {
-                    let solution_vec = solution.raw().col_solution().into();
-                    Ok(CoinCbcSolution{ status: SolutionStatus::TimeLimit, solution, solution_vec })
-                } else {
-                    Err(ResolutionError::Other("Stopped"))
-                }
-            },
             Status::Abandoned => Err(ResolutionError::Other("Abandoned")),
             Status::UserEvent => Err(ResolutionError::Other("UserEvent")),
             Status::Finished // The optimization finished, but may not have found a solution
@@ -163,6 +158,19 @@ impl SolverModel for CoinCbcProblem {
                         solution,
                         solution_vec,
                     })
+                }
+            },
+            Status::Stopped => {
+                match raw.secondary_status() {
+                    SecondaryStatus::StoppedOnTime => {
+                        let solution_vec = solution.raw().col_solution().into();
+                        Ok(CoinCbcSolution{ status: SolutionStatus::TimeLimit, solution, solution_vec })
+                    },
+                    SecondaryStatus::StoppedOnGap => {
+                        let solution_vec = solution.raw().col_solution().into();
+                        Ok(CoinCbcSolution{ status: SolutionStatus::GapLimit, solution, solution_vec })
+                    },
+                    _ => Err(ResolutionError::Other("Stopped")),
                 }
             },
         }
