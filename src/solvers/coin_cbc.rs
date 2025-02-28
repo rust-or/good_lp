@@ -162,8 +162,7 @@ impl SolverModel for CoinCbcProblem {
                     Err(ResolutionError::Infeasible)
                 } else {
                     let solution_vec = solution.raw().col_solution().into();
-                    let secondary_status = raw.secondary_status();
-                    match secondary_status {
+                    match raw.secondary_status() {
                         SecondaryStatus::StoppedOnTime => Ok(CoinCbcSolution{ status: SolutionStatus::TimeLimit, solution, solution_vec }) ,
                         SecondaryStatus::StoppedOnGap => Ok(CoinCbcSolution{ status: SolutionStatus::GapLimit, solution, solution_vec }) ,
                         _ => Ok(CoinCbcSolution { status: SolutionStatus::Optimal, solution, solution_vec, }),
