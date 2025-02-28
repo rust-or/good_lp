@@ -16,8 +16,9 @@ use russcip::WithSolutions;
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
-    solvers::SolutionStatus,
-    solvers::{MipGapError, ObjectiveDirection, ResolutionError, Solution, SolverModel},
+    solvers::{
+        MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel,
+    },
     CardinalityConstraintSolver, WithInitialSolution, WithMipGap, WithTimeLimit,
 };
 use crate::{Constraint, Variable};
