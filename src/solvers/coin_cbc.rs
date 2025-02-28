@@ -311,12 +311,10 @@ mod tests {
     }
 
     fn sat_value(mipgap: Option<f32>) -> (SolutionStatus, f64) {
-        let variable_count = 75;
-
         let mut prob_vars = variables!();
-        let mut vars: Vec<Variable> = Vec::with_capacity(variable_count);
+        let mut vars: Vec<Variable> = Vec::with_capacity(VARIABLE_COUNT);
 
-        for _ in 1..=variable_count {
+        for _ in 0..VARIABLE_COUNT {
             let var = prob_vars.add(variable().binary());
             vars.push(var);
         }
@@ -387,6 +385,7 @@ mod tests {
         assert_float_eq!(sol.value(v), limit, abs <= 1e-8);
     }
 
+    const VARIABLE_COUNT: usize = 75;
     const CLAUSES: &[(i32, i32, i32)] = &[
         (42, 22, 15),
         (73, -22, -24),
