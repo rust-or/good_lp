@@ -307,11 +307,17 @@ impl SolverModel for HighsProblem {
                 status: SolutionStatus::TimeLimit,
                 solution: solved.get_solution(),
             }),
-            _ok_status => Ok(HighsSolution {
-                status: SolutionStatus::Optimal,
-                // TODO: how can we find out if this solution is actually optimal?
-                solution: solved.get_solution(),
-            }),
+            _ok_status => {
+                let gap = solved.mip_gap();
+                Ok(HighsSolution {
+                    status: if gap.is_finite() && gap > 0.0 {
+                        SolutionStatus::GapLimit
+                    } else {
+                        SolutionStatus::Optimal
+                    },
+                    solution: solved.get_solution(),
+                })
+            }
         }
     }
 
@@ -475,7 +481,6 @@ mod tests {
         }
 
         let mut model = prob_vars.maximise(objective.clone()).using(highs);
-        model.set_verbose(true);
 
         if let Some(gap) = mipgap {
             model = model.with_mip_gap(gap).unwrap();
