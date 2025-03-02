@@ -230,8 +230,31 @@ pub trait WithInitialSolution {
     fn with_initial_solution(self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self;
 }
 
+/// A solver than can stop the solving process after some time
+pub trait WithTimeLimit {
+    /// Sets the time limit for the solver
+    fn with_time_limit<T: Into<f64>>(self, seconds: T) -> Self;
+}
+
+/// Information about the status of a solution, such as whether the solution is
+/// optimal
+#[derive(Clone, Copy, Debug)]
+pub enum SolutionStatus {
+    /// The solution is optimal
+    Optimal,
+    /// The solution is not optimal and it was obtained because the time limit
+    /// was reached
+    TimeLimit,
+    /// The solution is not optimal and it was obtained because the gap limit
+    /// was reached
+    GapLimit,
+}
+
 /// A problem solution
 pub trait Solution {
+    /// Returns `true` if this solution is optimal and `false` otherwise
+    fn status(&self) -> SolutionStatus;
+
     /// Get the optimal value of a variable of the problem
     fn value(&self, variable: Variable) -> f64;
 
@@ -260,6 +283,9 @@ pub trait Solution {
 /// If a HashMap doesn't contain the value for a variable,
 /// then [Solution::value] will panic if you try to access it.
 impl<N: Into<f64> + Clone> Solution for HashMap<Variable, N> {
+    fn status(&self) -> SolutionStatus {
+        SolutionStatus::Optimal
+    }
     fn value(&self, variable: Variable) -> f64 {
         self[&variable].clone().into()
     }
@@ -456,6 +482,12 @@ pub trait WithMipGap {
     ///     model.add_constraint(constraint.leq(budget));
     ///
     ///     let solution = model.solve().unwrap();
+    ///     // The solution status indicates if the solution is optimal
+    ///     if mipgap.is_none() {
+    ///         assert!(matches!(solution.status(), SolutionStatus::Optimal));
+    ///     } else {
+    ///         assert!(matches!(solution.status(), SolutionStatus::GapLimit));
+    ///     }
     ///
     ///     // For this example we're interested only in the total value, not in the objects selected
     ///     objective.eval_with(&solution)

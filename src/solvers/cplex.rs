@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::{
     constraint::ConstraintReference, variable::UnsolvedProblem, Constraint, ResolutionError,
-    Solution, SolverModel, Variable, VariableDefinition,
+    Solution, SolutionStatus, SolverModel, Variable, VariableDefinition,
 };
 use cplex_rs::{ConstraintType, Environment, Problem, ProblemType};
 
@@ -164,6 +164,9 @@ pub struct CplexSolved {
 }
 
 impl Solution for CplexSolved {
+    fn status(&self) -> SolutionStatus {
+        SolutionStatus::Optimal
+    }
     fn value(&self, var: Variable) -> f64 {
         let id = &self.id_for_var[&var];
         self.solution.variable_values()[id.into_inner()]

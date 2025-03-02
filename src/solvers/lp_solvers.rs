@@ -10,7 +10,7 @@ pub use lp_solvers::solvers::*;
 use lp_solvers::util::UniqueNameGenerator;
 
 use crate::constraint::ConstraintReference;
-use crate::solvers::{MipGapError, ObjectiveDirection};
+use crate::solvers::{MipGapError, ObjectiveDirection, SolutionStatus};
 use crate::variable::UnsolvedProblem;
 use crate::{
     Constraint, Expression, IntoAffineExpression, ResolutionError, Solution as GoodLpSolution,
@@ -153,6 +153,9 @@ pub struct LpSolution {
 }
 
 impl GoodLpSolution for LpSolution {
+    fn status(&self) -> SolutionStatus {
+        SolutionStatus::Optimal
+    }
     fn value(&self, variable: Variable) -> f64 {
         self.solution[variable.index()]
     }

@@ -6,6 +6,7 @@ use crate::variable::UnsolvedProblem;
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+    SolutionStatus,
 };
 use crate::{Constraint, DualValues, SolutionWithDual, Variable};
 
@@ -163,6 +164,9 @@ impl ClarabelSolution {
 }
 
 impl Solution for ClarabelSolution {
+    fn status(&self) -> SolutionStatus {
+        SolutionStatus::Optimal
+    }
     fn value(&self, variable: Variable) -> f64 {
         self.solution.x[variable.index()]
     }
