@@ -76,6 +76,7 @@ pub use expression::Expression;
     feature = "highs",
     feature = "scip",
     feature = "cplex-rs",
+    feature = "pumpkin-solver",
 )))]
 #[cfg(feature = "clarabel")]
 pub use solvers::clarabel::clarabel as default_solver;
@@ -120,6 +121,9 @@ pub use solvers::microlp::microlp;
 #[cfg(feature = "microlp")]
 /// When the "coin_cbc" cargo feature is absent, microlp is used as the default solver
 pub use solvers::microlp::microlp as default_solver;
+#[cfg(feature = "pumpkin-solver")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pumpkin-solver")))]
+pub use solvers::pumpkin_solver::pumpkin;
 #[cfg(feature = "scip")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::scip::scip;
@@ -161,6 +165,7 @@ pub const default_solver: LpSolver<
     feature = "scip",
     feature = "cplex-rs",
     feature = "clarabel",
+    feature = "pumpkin-solver",
 )))]
 compile_error!(
     "No solver available. \
