@@ -17,9 +17,8 @@ use pumpkin_solver::termination::Indefinite;
 use pumpkin_solver::variables::{DomainId, TransformableVariable};
 use pumpkin_solver::Solver as PumpkinSolver;
 
-use crate::solvers::{
-    ObjectiveDirection, ResolutionError, Solution, SolverModel,
-};
+use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel};
+use crate::IntoAffineExpression;
 use crate::{
     constraint::ConstraintReference,
     expression::Expression,
@@ -27,7 +26,6 @@ use crate::{
     Constraint,
 };
 use crate::{CardinalityConstraintSolver, ModelWithSOS1};
-use crate::IntoAffineExpression;
 
 /// Construct a [`PumpkinProblem`] from a [`UnsolvedProblem`].
 /// You typically call:
@@ -66,8 +64,6 @@ pub struct PumpkinProblem {
 
     /// Next index for constraints
     next_constraint_index: usize,
-    /// Prevent calling `solve()` multiple times
-    solved_once: bool,
 }
 
 impl PumpkinProblem {
@@ -112,7 +108,6 @@ impl PumpkinProblem {
             direction,
             objective,
             next_constraint_index: 0,
-            solved_once: false,
         }
     }
 
@@ -133,12 +128,9 @@ impl SolverModel for PumpkinProblem {
     type Error = ResolutionError;
 
     fn solve(mut self) -> Result<Self::Solution, Self::Error> {
-        if self.solved_once {
-            panic!("PumpkinProblem: solve() called multiple times on same builder");
-        }
-        self.solved_once = true;
-
-        let mut brancher = self.solver.default_brancher_over_all_propositional_variables();
+        let mut brancher = self
+            .solver
+            .default_brancher_over_all_propositional_variables();
         let mut termination = Indefinite;
 
         // If the user’s objective is entirely zero, or if the user only has constant=0,
@@ -157,7 +149,9 @@ impl SolverModel for PumpkinProblem {
                     return Err(ResolutionError::Infeasible);
                 }
                 SatisfactionResult::Unknown => {
-                    return Err(ResolutionError::Other("Pumpkin: Unknown for feasibility check"));
+                    return Err(ResolutionError::Other(
+                        "Pumpkin: Unknown for feasibility check",
+                    ));
                 }
             }
         }
@@ -184,16 +178,17 @@ impl SolverModel for PumpkinProblem {
         // Now do the actual call to `maximise(obj_var)` or `minimise(obj_var)`.
         let result = match self.direction {
             ObjectiveDirection::Maximisation => {
-                self.solver.maximise(&mut brancher, &mut termination, obj_var)
+                self.solver
+                    .maximise(&mut brancher, &mut termination, obj_var)
             }
             ObjectiveDirection::Minimisation => {
-                self.solver.minimise(&mut brancher, &mut termination, obj_var)
+                self.solver
+                    .minimise(&mut brancher, &mut termination, obj_var)
             }
         };
 
         match result {
-            OptimisationResult::Optimal(sol)
-            | OptimisationResult::Satisfiable(sol) => {
+            OptimisationResult::Optimal(sol) | OptimisationResult::Satisfiable(sol) => {
                 // Satisfiable might not be proven optimal, but it is a valid solution
                 Ok(PumpkinSolution {
                     solution: sol,
@@ -222,9 +217,13 @@ impl SolverModel for PumpkinProblem {
         }
 
         if constraint.is_equality {
-            let _ = self.solver.add_constraint(constraints::equals(lhs_terms, rhs)).post();
+            let _ = self
+                .solver
+                .add_constraint(constraints::equals(lhs_terms, rhs))
+                .post();
         } else {
-            let _ = self.solver
+            let _ = self
+                .solver
                 .add_constraint(constraints::less_than_or_equals(lhs_terms, rhs))
                 .post();
         }
@@ -286,16 +285,22 @@ impl ModelWithSOS1 for PumpkinProblem {
         for (var, _) in pair_list {
             let domain_id = self.domain_ids[var.index()];
             // Constrain domain_id <= 1, domain_id >= 0
-            let _ = self.solver
+            let _ = self
+                .solver
                 .add_constraint(constraints::less_than_or_equals(vec![domain_id], 1))
                 .post();
-            let _ = self.solver
-                .add_constraint(constraints::less_than_or_equals(vec![domain_id.scaled(-1)], 0))
+            let _ = self
+                .solver
+                .add_constraint(constraints::less_than_or_equals(
+                    vec![domain_id.scaled(-1)],
+                    0,
+                ))
                 .post();
             domain_ids.push(domain_id);
         }
 
-        let _ = self.solver
+        let _ = self
+            .solver
             .add_constraint(constraints::less_than_or_equals(domain_ids, 1))
             .post();
     }
@@ -311,17 +316,20 @@ impl CardinalityConstraintSolver for PumpkinProblem {
         for &v in vars {
             let d_id = self.domain_ids[v.index()];
             // ensure 0 <= d_id <= 1
-            let _ = self.solver
+            let _ = self
+                .solver
                 .add_constraint(constraints::less_than_or_equals(vec![d_id], 1))
                 .post();
-            let _ = self.solver
+            let _ = self
+                .solver
                 .add_constraint(constraints::less_than_or_equals(vec![d_id.scaled(-1)], 0))
                 .post();
             domain_ids.push(d_id);
         }
 
         // sum_i domain_i <= rhs
-        let _ = self.solver
+        let _ = self
+            .solver
             .add_constraint(constraints::less_than_or_equals(domain_ids, rhs as i32))
             .post();
 
@@ -334,10 +342,7 @@ impl CardinalityConstraintSolver for PumpkinProblem {
 // -------------------------------------------------------------------
 fn i32_or_panic(value: f64, context: &str) -> i32 {
     if !value.is_finite() {
-        panic!(
-            "Pumpkin solver: {} is infinite or NaN: {}",
-            context, value
-        );
+        panic!("Pumpkin solver: {} is infinite or NaN: {}", context, value);
     }
     let rounded = value.round();
     if (rounded - value).abs() > 1e-9 {
@@ -368,14 +373,14 @@ mod tests {
         let mut vars = variables!();
         let x = vars.add(variable().min(0).max(12).integer());
         let y = vars.add(variable().min(0).max(12).integer());
-        
+
         let solution = vars
             .maximise(x + y)
             .using(pumpkin)
             .with(constraint!(x + y == 12))
             .solve()
             .unwrap();
-            
+
         // Because we do "maximise(x+y)" subject to x+y=12, the solver might pick x=12,y=0
         // or y=12,x=0, etc. We only check that x+y==12
         let sum = solution.value(x) + solution.value(y);
