@@ -124,6 +124,18 @@ pub use solvers::microlp::microlp as default_solver;
 #[cfg(feature = "pumpkin-solver")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pumpkin-solver")))]
 pub use solvers::pumpkin_solver::pumpkin;
+#[cfg(not(any(
+    feature = "coin_cbc",
+    feature = "microlp",
+    feature = "lpsolve",
+    feature = "highs",
+    feature = "lp-solvers",
+    feature = "scip",
+    feature = "cplex-rs",
+    feature = "clarabel"
+)))]
+#[cfg(feature = "pumpkin-solver")]
+pub use solvers::pumpkin_solver::pumpkin as default_solver;
 #[cfg(feature = "scip")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::scip::scip;
