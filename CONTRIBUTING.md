@@ -17,8 +17,9 @@ Adding a new solver should not take more than a few hundred lines of code, tests
     You can generally reuse data structures provided by the library for which you are creating a wrapper.
   - implement a function named after your solver that takes an [`UnsolvedProblem`](https://docs.rs/good_lp/latest/good_lp/variable/struct.UnsolvedProblem.html) and returns the struct you defined above.
   - implement the [`SolverModel`](https://docs.rs/good_lp/latest/good_lp/index.html#reexport.SolverModel) trait for your new problem type.
-  - add your solver to `lib.rs` and to the `all_default_solvers` feature in Cargo.toml.
-  - open a [pull request](https://github.com/rust-or/good_lp/pulls)
+- add your solver to `lib.rs` and to the `all_default_solvers` feature in Cargo.toml.
+- run the tests of your solver [in the CI setup]([url](https://github.com/rust-or/good_lp/blob/main/.github/workflows/rust.yml))
+- open a [pull request](https://github.com/rust-or/good_lp/pulls)
 
 ## Dev Container Setup
 
