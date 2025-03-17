@@ -154,6 +154,19 @@ jobs:
       - name: Run tests with Clarabel on WASM
         run: wasm-pack test --node --no-default-features --features clarabel
 
+  test-pumpkin-solver:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install deps
+        run: NO_CPLEX=true ./build/setup.sh
+      - name: Build pumpkin-solver
+        run: cargo build --features pumpkin-solver --tests
+      - name: Run tests with pumpkin-solver
+        run: cargo test --no-default-features --features pumpkin-solver
+
   bench:
     runs-on: ubuntu-latest
     steps:
