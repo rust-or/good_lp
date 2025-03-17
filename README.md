@@ -211,6 +211,20 @@ trait, which allows you to access the dual values of the constraints (the shadow
 
 [clarabel]: https://github.com/oxfordcontrol/Clarabel.rs
 
+### [Pumpkin][pumpkin]
+
+Pumpkin is a combinatorial optimization solver based on lazy clause generation.
+It is written in pure Rust and supports integer variables along with several global constraints,
+including cumulative, arithmetic (linear in/equalities, integer division, integer multiplication,
+maximum, absolute value) and clausal constraints.
+
+It produces certificates of unsatisfiability and can be used as both a library and a command-line
+tool, serving also as a MiniZinc backend. Dual licensed under
+[MIT](https://github.com/ConSol-Lab/pumpkin/blob/main/LICENSE-MIT) and
+[Apache-2.0](https://github.com/ConSol-Lab/pumpkin/blob/main/LICENSE-APACHE).
+
+[pumpkin]: https://github.com/ConSol-Lab/pumpkin
+
 ## Variable types
 
 `good_lp` internally represents all [variable](https://docs.rs/good_lp/latest/good_lp/variable/struct.Variable.html) values and coefficients as `f64`.
