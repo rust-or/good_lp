@@ -5,7 +5,7 @@ use microlp::Error;
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
-    solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
+    solvers::{ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel},
 };
 use crate::{Constraint, Variable};
 
@@ -120,6 +120,9 @@ impl MicroLpSolution {
 }
 
 impl Solution for MicroLpSolution {
+    fn status(&self) -> SolutionStatus {
+        SolutionStatus::Optimal
+    }
     fn value(&self, variable: Variable) -> f64 {
         self.solution[self.variables[variable.index()]]
     }

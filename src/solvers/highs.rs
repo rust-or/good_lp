@@ -1,8 +1,8 @@
 //! A solver that uses [highs](https://docs.rs/highs), a parallel C++ solver.
 
 use crate::solvers::{
-    MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionWithDual, SolverModel,
-    WithMipGap,
+    MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolutionWithDual,
+    SolverModel, WithMipGap, WithTimeLimit,
 };
 use crate::{
     constraint::ConstraintReference,
@@ -303,9 +303,21 @@ impl SolverModel for HighsProblem {
             HighsModelStatus::Infeasible => Err(ResolutionError::Infeasible),
             HighsModelStatus::Unbounded => Err(ResolutionError::Unbounded),
             HighsModelStatus::UnboundedOrInfeasible => Err(ResolutionError::Infeasible),
-            _ok_status => Ok(HighsSolution {
+            HighsModelStatus::ReachedTimeLimit => Ok(HighsSolution {
+                status: SolutionStatus::TimeLimit,
                 solution: solved.get_solution(),
             }),
+            _ok_status => {
+                let gap = solved.mip_gap();
+                Ok(HighsSolution {
+                    status: if gap.is_finite() && gap > 0.0 {
+                        SolutionStatus::GapLimit
+                    } else {
+                        SolutionStatus::Optimal
+                    },
+                    solution: solved.get_solution(),
+                })
+            }
         }
     }
 
@@ -341,9 +353,16 @@ impl WithInitialSolution for HighsProblem {
     }
 }
 
+impl WithTimeLimit for HighsProblem {
+    fn with_time_limit<T: Into<f64>>(self, seconds: T) -> Self {
+        self.set_time_limit(seconds.into())
+    }
+}
+
 /// The solution to a highs problem
 #[derive(Debug)]
 pub struct HighsSolution {
+    status: SolutionStatus,
     solution: highs::Solution,
 }
 
@@ -355,6 +374,9 @@ impl HighsSolution {
 }
 
 impl Solution for HighsSolution {
+    fn status(&self) -> SolutionStatus {
+        self.status
+    }
     fn value(&self, variable: Variable) -> f64 {
         self.solution.columns()[variable.index()]
     }
@@ -389,9 +411,89 @@ impl WithMipGap for HighsProblem {
 
 #[cfg(test)]
 mod tests {
-    use crate::{constraint, variable, variables, Solution, SolverModel, WithInitialSolution};
-
     use super::highs;
+    use crate::{
+        constraint,
+        solvers::{SolutionStatus, WithTimeLimit},
+        variable, variables, Expression, Solution, SolverModel, WithInitialSolution, WithMipGap,
+    };
+
+    #[test]
+    fn can_solve_with_time_limit() {
+        let mut vars = variables!();
+        let x = vars.add(variable().clamp(0, 2));
+        let y = vars.add(variable().clamp(1, 3));
+        let solution = vars
+            .maximise(x + y)
+            .using(highs)
+            .with((2 * x + y) << 4)
+            .with_time_limit(0)
+            .solve()
+            .unwrap();
+        assert!(matches!(solution.status(), SolutionStatus::TimeLimit));
+        assert_eq!((solution.value(x), solution.value(y)), (0., 1.))
+    }
+
+    #[test]
+    fn can_solve_with_gap_limit() {
+        let (status_optimal, value_optimal) = knapsack_value(None);
+        let (status_suboptimal, value_suboptimal) = knapsack_value(Some(0.5));
+
+        assert!(matches!(status_optimal, SolutionStatus::Optimal));
+        assert!(matches!(status_suboptimal, SolutionStatus::GapLimit));
+        assert!(value_suboptimal < value_optimal);
+    }
+
+    fn knapsack_value(mipgap: Option<f32>) -> (SolutionStatus, f64) {
+        // (value, cost) of each object
+        let objects: Vec<(f64, f64)> = vec![
+            (1.87, 6.03),
+            (3.22, 8.03),
+            (9.91, 5.16),
+            (8.31, 1.72),
+            (7.00, 6.33),
+            (5.15, 8.20),
+            (8.01, 4.63),
+            (2.22, 1.50),
+            (7.04, 6.26),
+            (8.99, 9.62),
+            (2.13, 4.00),
+            (8.02, 8.02),
+            (3.07, 1.92),
+            (1.98, 9.03),
+            (7.23, 9.51),
+            (4.08, 3.24),
+            (9.65, 5.13),
+            (6.53, 3.07),
+            (6.76, 3.84),
+            (9.63, 8.33),
+        ];
+
+        let mut prob_vars = variables!();
+        let mut objective = Expression::with_capacity(objects.len());
+        let mut constraint = Expression::with_capacity(objects.len());
+
+        let budget: f64 = 25.0;
+        for (value, cost) in objects {
+            let var = prob_vars.add(variable().binary());
+            objective.add_mul(value, var);
+            constraint.add_mul(cost, var);
+        }
+
+        let mut model = prob_vars.maximise(objective.clone()).using(highs);
+
+        if let Some(gap) = mipgap {
+            model = model.with_mip_gap(gap).unwrap();
+        }
+
+        model.add_constraint(constraint.leq(budget));
+
+        let solution = model.solve().unwrap();
+
+        // For this example we're interested only in the total value, not in the objects selected
+        (solution.status(), objective.eval_with(&solution))
+    }
+
     #[test]
     fn can_solve_with_inequality() {
         let mut vars = variables!();
