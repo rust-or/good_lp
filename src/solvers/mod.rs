@@ -227,7 +227,7 @@ pub trait SolverModel {
 /// A solver that can take an initial solution to a problem before solving it
 pub trait WithInitialSolution {
     /// Sets the initial solution to the problem.
-    /// 
+    ///
     /// Note that calling this may cause some solvers to discard any initial
     /// values set on the variables themselves. It is advisable to rely either
     /// on `with_initial_solution`, or to set initial values on the variables

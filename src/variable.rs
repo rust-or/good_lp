@@ -181,7 +181,7 @@ impl VariableDefinition {
 
     /// Set the initial value of the variable. This may help the solver to find
     /// a solution significantly faster.
-    /// 
+    ///
     /// Note that the given value may be disregarded by some solvers if
     /// `with_initial_solution` is called on the problem instance. It is
     /// advisable to rely either on `with_initial_solution`, or to set initial
