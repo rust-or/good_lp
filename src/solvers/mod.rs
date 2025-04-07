@@ -41,6 +41,10 @@ pub mod lp_solvers;
 #[cfg_attr(docsrs, doc(cfg(feature = "clarabel")))]
 pub mod clarabel;
 
+#[cfg(feature = "pumpkin-solver")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pumpkin-solver")))]
+pub mod pumpkin_solver;
+
 /// An entity that is able to solve linear problems
 pub trait Solver {
     /// The internal model type used by the solver

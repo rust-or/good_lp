@@ -31,6 +31,7 @@ all_default_solvers = [
     "scip_bundled",
     "lp-solvers",
     "clarabel",
+    "pumpkin-solver",
 ] # cplex-rs is not included because it is incompatible with lpsolve
 minilp = [
     "microlp",
@@ -45,6 +46,7 @@ russcip = { version = "0.7.1", optional = true }
 lp-solvers = { version = "1.0.0", features = ["cplex"], optional = true }
 cplex-rs = { version = "0.1", optional = true }
 clarabel = { version = "0.10.0", optional = true, features = [] }
+pumpkin-solver = { version = "0.1.4", optional = true }
 fnv = "1.0.5"
 
 [dev-dependencies]
@@ -66,7 +68,7 @@ all-features = false
 # Use almost the same as all_default_solvers. Similarly, cplex-rs is not
 # included because it is incompatible with lpsolve. Additionally,
 # russcip/bundled is not included because network access is blocked on docs.rs.
-features = ["coin_cbc", "microlp", "lpsolve", "highs", "lp-solvers", "clarabel"]
+features = ["coin_cbc", "microlp", "lpsolve", "highs", "lp-solvers", "clarabel", "pumpkin-solver"]
 default-target = "x86_64-unknown-linux-gnu"
 targets = ["x86_64-unknown-linux-gnu"]
 rustdoc-args = ["--cfg", "docsrs"]

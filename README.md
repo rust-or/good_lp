@@ -69,16 +69,17 @@ You can find a resource allocation problem example in
 This library offers an abstraction over multiple solvers. By default, it uses [cbc][cbc], but
 you can also activate other solvers using cargo features.
 
-| solver feature name    | integer variables | no C compiler\* | no additional libs\*   | fast\* | WASM\* |
-| ---------------------- | ----------------- | --------------- | ---------------------- | ---- | ---- |
-| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   | ❌   |
-| [`highs`][highs]       | ✅                | ❌              | ✅¹                    | ✅   | ❌   |
-| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   | ❌   |
-| [`microlp`][microlp]   | ✅                | ✅              | ✅                     | ❌   | ✅   |
-| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌   |
-| [`scip`][scip]         | ✅                | ✅              | ✅²                    | ✅   | ❌   |
-| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅³                    | ✅   | ❌   |
-| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅   |
+| solver feature name         | integer variables | no C compiler\* | no additional libs\*   | fast\* | WASM\* |
+| --------------------------- | ----------------- | --------------- | ---------------------- | ---- | ---- |
+| [`coin_cbc`][cbc]           | ✅                | ✅              | ❌                     | ✅   | ❌   |
+| [`highs`][highs]            | ✅                | ❌              | ✅¹                    | ✅   | ❌   |
+| [`lpsolve`][lpsolve]        | ✅                | ❌              | ✅                     | ❌   | ❌   |
+| [`microlp`][microlp]        | ✅                | ✅              | ✅                     | ❌   | ✅   |
+| [`lp-solvers`][lps]         | ✅                | ✅              | ✅                     | ❌   | ❌   |
+| [`scip`][scip]              | ✅                | ✅              | ✅²                    | ✅   | ❌   |
+| [`cplex-rs`][cplex]         | ✅                | ❌              | ✅³                    | ✅   | ❌   |
+| [`clarabel`][clarabel]      | ❌                | ✅              | ✅                     | ✅   | ✅   |
+| [`pumpkin-solver`][pumpkin] | ✅                | ✅              | ✅                     | ✅   | ❌   |
 
 - \* *no C compiler*: builds with only cargo, without requiring you to install a C compiler
 - \* *no additional libs*: works without additional libraries at runtime, all the dependencies are statically linked
@@ -209,6 +210,20 @@ It does implement the [SolutionWithDual](https://docs.rs/good_lp/latest/good_lp/
 trait, which allows you to access the dual values of the constraints (the shadow prices).
 
 [clarabel]: https://github.com/oxfordcontrol/Clarabel.rs
+
+### [Pumpkin][pumpkin]
+
+Pumpkin is a combinatorial optimization solver based on lazy clause generation.
+It is written in pure Rust and supports integer variables along with several global constraints,
+including cumulative, arithmetic (linear in/equalities, integer division, integer multiplication,
+maximum, absolute value) and clausal constraints.
+
+It produces certificates of unsatisfiability and can be used as both a library and a command-line
+tool, serving also as a MiniZinc backend. Dual licensed under
+[MIT](https://github.com/ConSol-Lab/pumpkin/blob/main/LICENSE-MIT) and
+[Apache-2.0](https://github.com/ConSol-Lab/pumpkin/blob/main/LICENSE-APACHE).
+
+[pumpkin]: https://github.com/ConSol-Lab/pumpkin
 
 ## Variable types
 
