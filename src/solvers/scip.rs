@@ -256,6 +256,20 @@ impl SCIPProblem {
     pub fn get_option<T: ScipOptionGetValue>(self, option: &str) -> T {
         T::get_for(self.model, option)
     }
+
+    /// Set an initial solution for the problem.
+    /// Returns an error if the solution is not feasible.
+    fn try_with_initial_solution(
+        self,
+        solution: impl IntoIterator<Item = (Variable, f64)>,
+    ) -> Result<Self, russcip::SolError> {
+        let sol = self.model.create_orig_sol();
+        for (var, val) in solution {
+            sol.set_val(&self.id_for_var[&var], val);
+        }
+        self.model.add_sol(sol)?;
+        Ok(self)
+    }
 }
 
 impl CardinalityConstraintSolver for SCIPProblem {
@@ -335,13 +349,14 @@ impl SolverModel for SCIPProblem {
 }
 
 impl WithInitialSolution for SCIPProblem {
+    /// Set an initial solution for the problem.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the solution is not feasible.
     fn with_initial_solution(self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self {
-        let sol = self.model.create_sol();
-        for (var, val) in solution {
-            sol.set_val(&self.id_for_var[&var], val);
-        }
-        self.model.add_sol(sol).expect("could not set solution");
-        self
+        self.try_with_initial_solution(solution)
+            .expect("could not set solution")
     }
 }
 impl WithMipGap for SCIPProblem {
@@ -487,7 +502,7 @@ mod tests {
             .unwrap();
         // Recreate same problem with initial values slightly off
         let initial_x = solution.value(x) - 0.1;
-        let initial_y = solution.value(x) - 1.0;
+        let initial_y = solution.value(y) - 1.0;
         let mut vars = variables!();
         let x = vars.add(variable().clamp(0, 2));
         let y = vars.add(variable().clamp(1, 3));
@@ -516,7 +531,7 @@ mod tests {
             .unwrap();
         // Recreate same problem with initial values slightly off
         let initial_x = solution.value(x) - 0.1;
-        let initial_y = solution.value(x) - 1.0;
+        let initial_y = solution.value(y) - 1.0;
         let mut vars = variables!();
         let x = vars.add(variable().clamp(0, 2).initial(initial_x));
         let y = vars.add(variable().clamp(1, 3).initial(initial_y));
