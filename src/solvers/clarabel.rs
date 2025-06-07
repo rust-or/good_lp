@@ -76,6 +76,7 @@ impl ClarabelProblem {
     }
 
     /// Convert the problem into a clarabel solver
+    /// panics if the problem is not valid
     pub fn into_solver(self) -> DefaultSolver<f64> {
         let settings = self.settings.build().expect("Invalid clarabel settings");
         let quadratic_objective = &CscMatrix::zeros((self.variables, self.variables));
@@ -90,7 +91,7 @@ impl ClarabelProblem {
             constraint_values,
             cones,
             settings,
-        )
+        ).expect("Invalid clarabel problem. This is likely a bug in good_lp. Problems should always have coherent dimensions.")
     }
 }
 
@@ -117,6 +118,7 @@ impl SolverModel for ClarabelProblem {
             SolverStatus::MaxTime => Err(ResolutionError::Other("Time limit reached")),
             SolverStatus::NumericalError => Err(ResolutionError::Other("Numerical error")),
             SolverStatus::InsufficientProgress => Err(ResolutionError::Other("No progress")),
+            SolverStatus::CallbackTerminated => Err(ResolutionError::Other("Callback terminated")),
         }
     }
 
@@ -180,7 +182,7 @@ impl<'a> SolutionWithDual<'a> for ClarabelSolution {
     }
 }
 
-impl<'a> DualValues for &'a ClarabelSolution {
+impl DualValues for &ClarabelSolution {
     fn dual(&self, constraint: ConstraintReference) -> f64 {
         self.solution.z[constraint.index]
     }

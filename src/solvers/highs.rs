@@ -382,7 +382,7 @@ impl Solution for HighsSolution {
     }
 }
 
-impl<'a> DualValues for &'a HighsSolution {
+impl DualValues for &HighsSolution {
     fn dual(&self, constraint: ConstraintReference) -> f64 {
         self.solution.dual_rows()[constraint.index]
     }

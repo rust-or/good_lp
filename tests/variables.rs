@@ -1,4 +1,4 @@
-use good_lp::{constraint, default_solver, variables, Expression, Solution, SolverModel};
+use good_lp::{variables, Expression};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;
@@ -47,6 +47,8 @@ fn debug_format() {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 #[cfg(not(feature = "clarabel"))]
 fn variables_macro_integer() {
+    use good_lp::{constraint, default_solver, variables, Solution, SolverModel};
+
     variables! {
         vars:
                a <= 1;
