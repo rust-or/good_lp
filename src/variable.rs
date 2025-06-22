@@ -5,6 +5,7 @@
 use std::collections::Bound;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
+use std::iter::FromIterator;
 use std::ops::{Div, Mul, Neg, Not, RangeBounds};
 
 use fnv::FnvHashMap as HashMap;
@@ -347,7 +348,7 @@ impl ProblemVariables {
     /// # use float_eq::assert_float_eq;
     /// assert_float_eq!(solution.value(y[3]), 2., abs <= 1e-8);
     /// ```
-    pub fn add_all<T>(&mut self, var_defs: T) -> Vec<Variable>
+    pub fn add_all<T, B: FromIterator<Variable>>(&mut self, var_defs: T) -> B
     where
         T: IntoIterator<Item = VariableDefinition>,
     {
