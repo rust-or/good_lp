@@ -5,6 +5,7 @@
 use std::collections::Bound;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
+use std::iter::{repeat, FromIterator};
 use std::ops::{Div, Mul, Neg, Not, RangeBounds};
 
 use fnv::FnvHashMap as HashMap;
@@ -329,6 +330,37 @@ impl ProblemVariables {
         Variable::at(index)
     }
 
+    /// Adds many variables with the given definitions
+    ///
+    /// ```
+    /// use good_lp::*;
+    /// // Solve a problem with 11 variables: x, y0, y1, ..., y9
+    /// variables!{problem: 2 <= x <= 3;}
+    /// let vars = vec![variable().min(0); 10];
+    /// let y: Vec<Variable> = problem.add_all(vars);
+    /// let objective: Expression = y.iter().sum(); // Minimise sum(y_i for i in [0; 9])
+    /// let mut model = problem.minimise(objective).using(default_solver);
+    /// // for all i, we must have y_i >= x
+    /// for y_i in y.iter() {
+    ///   model = model.with(constraint!(y_i >= x));
+    /// }
+    /// let solution = model.solve().unwrap();
+    /// # use float_eq::assert_float_eq;
+    /// assert_float_eq!(solution.value(y[3]), 2., abs <= 1e-8);
+    /// ```
+    pub fn add_all<T, B: FromIterator<Variable>>(&mut self, var_defs: T) -> B
+    where
+        T: IntoIterator<Item = VariableDefinition>,
+    {
+        let index = self.variables.len();
+        self.variables.extend(var_defs);
+        self.initial_count += self.variables[index..]
+            .iter()
+            .filter(|v| v.initial.is_some())
+            .count();
+        (index..self.variables.len()).map(Variable::at).collect()
+    }
+
     /// Adds a list of variables with the given definition
     ///
     /// ```
@@ -347,7 +379,7 @@ impl ProblemVariables {
     /// assert_float_eq!(solution.value(y[3]), 2., abs <= 1e-8);
     /// ```
     pub fn add_vector(&mut self, var_def: VariableDefinition, len: usize) -> Vec<Variable> {
-        (0..len).map(|_i| self.add(var_def.clone())).collect()
+        self.add_all(repeat(var_def).take(len))
     }
 
     /// Creates an optimization problem with the given objective. Don't solve it immediately.
