@@ -157,6 +157,21 @@ impl VariableDefinition {
         self
     }
 
+    /// Returns `true` the variable has an integer constraint, and `false`
+    /// otherwise. Note that an integer constraint can be set by adding either
+    /// an integer or a binary constraint.
+    ///
+    /// ```
+    /// # use good_lp::variable;
+    /// let var = variable();
+    /// assert_eq!(var.is_integer(), false);
+    /// let var = var.binary();
+    /// assert_eq!(var.is_integer(), true);
+    /// ```
+    pub fn is_integer(&self) -> bool {
+        self.is_integer
+    }
+
     /// Define the variable as an integer that can only take the value 0 or 1.
     ///
     /// **Warning**: not all solvers support integer variables.
@@ -207,6 +222,33 @@ impl VariableDefinition {
         self
     }
 
+    /// Returns the optional initial value of this variable.
+    ///
+    /// ```
+    /// # use good_lp::variable;
+    /// let var = variable();
+    /// assert_eq!(var.get_initial(), None);
+    /// let var = var.initial(42);
+    /// assert_eq!(var.get_initial(), Some(42.0));
+    /// ```
+    pub fn get_initial(&self) -> Option<f64> {
+        self.initial
+    }
+
+    /// Returns `true` the variable has an initial solution, and `false`
+    /// otherwise.
+    ///
+    /// ```
+    /// # use good_lp::variable;
+    /// let var = variable();
+    /// assert_eq!(var.has_initial(), false);
+    /// let var = var.initial(42);
+    /// assert_eq!(var.has_initial(), true);
+    /// ```
+    pub fn has_initial(&self) -> bool {
+        self.initial.is_some()
+    }
+
     /// Set the name of the variable. This is useful in particular when displaying the problem
     /// for debugging purposes.
     ///
@@ -219,6 +261,19 @@ impl VariableDefinition {
     pub fn name<S: Into<String>>(mut self, name: S) -> Self {
         self.name = name.into();
         self
+    }
+
+    /// Returns the name of the variable.
+    ///
+    /// ```
+    /// # use good_lp::variable;
+    /// let var = variable();
+    /// assert_eq!(var.get_name(), "");
+    /// let var = var.name("my variable");
+    /// assert_eq!(var.get_name(), "my variable");
+    /// ```
+    pub fn get_name(&self) -> &str {
+        &self.name
     }
 
     /// Set the lower and/or higher bounds of the variable
@@ -261,10 +316,37 @@ impl VariableDefinition {
         self.min = min.into();
         self
     }
+
+    /// Returns the minimum bound of the variable.
+    ///
+    /// ```
+    /// # use good_lp::variable;
+    /// let var = variable();
+    /// assert_eq!(var.get_min(), f64::NEG_INFINITY);
+    /// let var = var.min(0);
+    /// assert_eq!(var.get_min(), 0.0);
+    /// ```
+    pub fn get_min(&self) -> f64 {
+        self.min
+    }
+
     /// Set the higher bound of the variable
     pub fn max<N: Into<f64>>(mut self, max: N) -> Self {
         self.max = max.into();
         self
+    }
+
+    /// Returns the maximum bound of the variable.
+    ///
+    /// ```
+    /// # use good_lp::variable;
+    /// let var = variable();
+    /// assert_eq!(var.get_max(), f64::INFINITY);
+    /// let var = var.max(0);
+    /// assert_eq!(var.get_max(), 0.0);
+    /// ```
+    pub fn get_max(&self) -> f64 {
+        self.max
     }
 
     /// Set both the lower and higher bounds of the variable
