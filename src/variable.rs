@@ -117,10 +117,15 @@ impl FormatWithVars for Variable {
 /// Defines the properties of a variable, such as its lower and upper bounds.
 #[derive(Clone, PartialEq, Debug)]
 pub struct VariableDefinition {
+    /// The minimum bound of the variable
     pub min: f64,
+    /// The maximum bound of the variable
     pub max: f64,
+    /// The optional initial value of the variable
     pub initial: Option<f64>,
+    /// The name of the variable
     pub name: String,
+    /// Whether or not this variable has an integer constraint
     pub is_integer: bool,
 }
 
