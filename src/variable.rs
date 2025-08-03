@@ -371,7 +371,7 @@ pub fn variable() -> VariableDefinition {
 /// Each problem has a unique type, which prevents using the variables
 /// from one problem inside an other one.
 /// Instances of this type should be created exclusively using the [crate::variables!] macro.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ProblemVariables {
     variables: Vec<VariableDefinition>,
     initial_count: usize,
