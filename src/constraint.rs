@@ -5,6 +5,7 @@ use core::fmt::{Debug, Formatter};
 use std::ops::{Shl, Shr, Sub};
 
 /// A constraint represents a single (in)equality that must hold in the solution.
+#[derive(Clone)]
 pub struct Constraint {
     /// The expression that is constrained to be null or negative
     pub(crate) expression: Expression,
