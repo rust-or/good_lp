@@ -74,6 +74,14 @@ impl FormatWithVars for LinearExpression {
     }
 }
 
+impl Clone for LinearExpression {
+    fn clone(&self) -> Self {
+        LinearExpression {
+            coefficients: self.coefficients.clone(),
+        }
+    }
+}
+
 /// Represents an affine expression, such as `2x + 3` or `x + y + z`
 pub struct Expression {
     pub(crate) linear: LinearExpression,

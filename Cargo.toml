@@ -35,6 +35,7 @@ all_default_solvers = [
 minilp = [
     "microlp",
 ] # minilp is not maintained anymore, we use the microlp fork instead
+enable_quadratic = ["clarabel"] # Enable quadratic programming support (requires clarabel solver)
 
 [dependencies]
 coin_cbc = { version = "0.1", optional = true, default-features = false }
