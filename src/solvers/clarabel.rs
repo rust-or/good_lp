@@ -2,11 +2,11 @@
 
 use crate::affine_expression_trait::IntoAffineExpression;
 use crate::expression::LinearExpression;
-#[cfg(feature = "enable_quadratic")]
-use crate::quadratic_expression::VariablePair;
+use crate::variable::UnsolvedProblem;
 #[cfg(feature = "enable_quadratic")]
 use crate::quadratic_problem::QuadraticUnsolvedProblem;
-use crate::variable::UnsolvedProblem;
+#[cfg(feature = "enable_quadratic")]
+use crate::quadratic_expression::VariablePair;
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
@@ -20,74 +20,152 @@ use clarabel::solver::SupportedConeT::{self, *};
 use clarabel::solver::{DefaultSolution, SolverStatus};
 use clarabel::solver::{DefaultSolver, IPSolver};
 
-impl ClarabelProblemCore {
-    /// Create a new ClarabelProblemCore with common setup
-    fn new(variables_len: usize) -> Self {
-        let mut settings = DefaultSettingsBuilder::default();
-        settings.verbose(false).tol_feas(1e-9);
+/// The [clarabel](https://oxfordcontrol.github.io/ClarabelDocs/stable/) solver,
+/// to be used with [UnsolvedProblem::using].
+pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
+    let UnsolvedProblem {
+        objective,
+        direction,
+        variables,
+    } = to_solve;
+    let coef = if direction == ObjectiveDirection::Maximisation {
+        -1.
+    } else {
+        1.
+    };
+    let mut objective_vector = vec![0.; variables.len()];
+    for (var, obj) in objective.linear_coefficients() {
+        objective_vector[var.index()] = obj * coef;
+    }
+    let constraints_matrix_builder = CscMatrixBuilder::new(variables.len());
+    let mut settings = DefaultSettingsBuilder::default();
+    settings.verbose(false).tol_feas(1e-9);
+    let mut p = ClarabelProblem {
+        objective: objective_vector,
+        constraints_matrix_builder,
+        constraint_values: Vec::new(),
+        variables: variables.len(),
+        settings,
+        cones: Vec::new(),
+    };
+    // add trivial constraints embedded in the variable definitions
+    for (var, def) in variables.iter_variables_with_def() {
+        if def.is_integer {
+            panic!("Clarabel doesn't support integer variables")
+        }
+        if def.min != f64::NEG_INFINITY {
+            p.add_constraint(var >> def.min);
+        }
+        if def.max != f64::INFINITY {
+            p.add_constraint(var << def.max);
+        }
+    }
+    p
+}
 
-        Self {
-            constraints_matrix_builder: CscMatrixBuilder::new(variables_len),
-            constraint_values: Vec::new(),
-            objective: vec![0.; variables_len],
-            variables: variables_len,
+/// The [clarabel](https://clarabel.org/stable/) solver for quadratic problems,
+/// to be used with [QuadraticUnsolvedProblem::using].
+#[cfg(feature = "enable_quadratic")]
+pub fn clarabel_quadratic(to_solve: QuadraticUnsolvedProblem) -> ClarabelQuadraticProblem {
+    let QuadraticUnsolvedProblem {
+        objective,
+        direction,
+        variables,
+    } = to_solve;
+    let coef = if direction == ObjectiveDirection::Maximisation {
+        -1.
+    } else {
+        1.
+    };
+
+    let mut objective_vector = vec![0.; variables.len()];
+    for (var, obj_coeff) in objective.linear.coefficients {
+        objective_vector[var.index()] = obj_coeff * coef;
+    }
+
+    let mut quadratic_matrix_builder = CscQuadraticMatrixBuilder::new(variables.len());
+    for (pair, quad_coeff) in objective.quadratic.quadratic_coefficients {
+        quadratic_matrix_builder.add_term(pair, quad_coeff * coef);
+    }
+
+    let constraints_matrix_builder = CscMatrixBuilder::new(variables.len());
+    let mut settings = DefaultSettingsBuilder::default();
+    settings.verbose(false).tol_feas(1e-9);
+
+    let mut p = ClarabelQuadraticProblem {
+        objective: objective_vector,
+        constraints_matrix_builder,
+        constraint_values: Vec::new(),
+        variables: variables.len(),
+        settings,
+        cones: Vec::new(),
+        quadratic_matrix_builder,
+    };
+
+    // add trivial constraints embedded in the variable definitions
+    for (var, def) in variables.iter_variables_with_def() {
+        if def.is_integer {
+            panic!("Clarabel doesn't support integer variables")
+        }
+        if def.min != f64::NEG_INFINITY {
+            p.add_constraint(var >> def.min);
+        }
+        if def.max != f64::INFINITY {
+            p.add_constraint(var << def.max);
+        }
+    }
+    p
+}
+
+/// A clarabel model
+pub struct ClarabelProblem {
+    constraints_matrix_builder: CscMatrixBuilder,
+    constraint_values: Vec<f64>,
+    objective: Vec<f64>,
+    variables: usize,
+    settings: DefaultSettingsBuilder<f64>,
+    cones: Vec<SupportedConeT<f64>>,
+}
+
+/// A clarabel quadratic model
+#[cfg(feature = "enable_quadratic")]
+pub struct ClarabelQuadraticProblem {
+    constraints_matrix_builder: CscMatrixBuilder,
+    constraint_values: Vec<f64>,
+    objective: Vec<f64>,
+    variables: usize,
+    settings: DefaultSettingsBuilder<f64>,
+    cones: Vec<SupportedConeT<f64>>,
+    quadratic_matrix_builder: CscQuadraticMatrixBuilder,
+}
+
+impl ClarabelProblem {
+    /// Access the problem settings
+    pub fn settings(&mut self) -> &mut DefaultSettingsBuilder<f64> {
+        &mut self.settings
+    }
+
+    /// Convert the problem into a clarabel solver
+    /// panics if the problem is not valid
+    pub fn into_solver(self) -> DefaultSolver<f64> {
+        let settings = self.settings.build().expect("Invalid clarabel settings");
+        let quadratic_objective = &CscMatrix::zeros((self.variables, self.variables));
+        let objective = &self.objective;
+        let constraints = &self.constraints_matrix_builder.build();
+        let constraint_values = &self.constraint_values;
+        let cones = &self.cones;
+        DefaultSolver::new(
+            quadratic_objective,
+            objective,
+            constraints,
+            constraint_values,
+            cones,
             settings,
-            cones: Vec::new(),
-        }
+        ).expect("Invalid clarabel problem. This is likely a bug in good_lp. Problems should always have coherent dimensions.")
     }
 
-    /// Add variable bound constraints from variable definitions
-    fn add_variable_bounds<P: ClarabelProblemLike>(
-        variables: &crate::variable::ProblemVariables,
-        problem: &mut P,
-    ) {
-        for (var, def) in variables.iter_variables_with_def() {
-            if def.is_integer {
-                panic!("Clarabel doesn't support integer variables")
-            }
-            if def.min != f64::NEG_INFINITY {
-                problem.add_constraint(var >> def.min);
-            }
-            if def.max != f64::INFINITY {
-                problem.add_constraint(var << def.max);
-            }
-        }
-    }
-
-    /// Get direction coefficient (-1 for maximization, 1 for minimization)
-    fn direction_coef(direction: ObjectiveDirection) -> f64 {
-        if direction == ObjectiveDirection::Maximisation {
-            -1.
-        } else {
-            1.
-        }
-    }
-
-    /// Common solver status handling
-    fn handle_solver_status(
-        status: SolverStatus,
-        solution: DefaultSolution<f64>,
-    ) -> Result<ClarabelSolution, ResolutionError> {
-        match status {
-            e @ (SolverStatus::PrimalInfeasible | SolverStatus::AlmostPrimalInfeasible) => {
-                eprintln!("Clarabel error: {:?}", e);
-                Err(ResolutionError::Infeasible)
-            }
-            SolverStatus::Solved
-            | SolverStatus::AlmostSolved
-            | SolverStatus::AlmostDualInfeasible
-            | SolverStatus::DualInfeasible => Ok(ClarabelSolution { solution }),
-            SolverStatus::Unsolved => Err(ResolutionError::Other("Unsolved")),
-            SolverStatus::MaxIterations => Err(ResolutionError::Other("Max iterations reached")),
-            SolverStatus::MaxTime => Err(ResolutionError::Other("Time limit reached")),
-            SolverStatus::NumericalError => Err(ResolutionError::Other("Numerical error")),
-            SolverStatus::InsufficientProgress => Err(ResolutionError::Other("No progress")),
-            SolverStatus::CallbackTerminated => Err(ResolutionError::Other("Callback terminated")),
-        }
-    }
-
-    /// Common constraint addition logic
-    fn add_constraint_impl(&mut self, constraint: Constraint) -> ConstraintReference {
+    /// Add a constraint to the problem
+    pub fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
         self.constraints_matrix_builder
             .add_row(constraint.expression.linear);
         let index = self.constraint_values.len();
@@ -109,125 +187,6 @@ impl ClarabelProblemCore {
     }
 }
 
-/// Trait to abstract over different Clarabel problem types
-trait ClarabelProblemLike {
-    fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference;
-}
-
-/// The [clarabel](https://oxfordcontrol.github.io/ClarabelDocs/stable/) solver,
-/// to be used with [UnsolvedProblem::using].
-pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
-    let UnsolvedProblem {
-        objective,
-        direction,
-        variables,
-    } = to_solve;
-    let coef = ClarabelProblemCore::direction_coef(direction);
-    let mut core = ClarabelProblemCore::new(variables.len());
-
-    // Set up linear objective
-    for (var, obj) in objective.linear_coefficients() {
-        core.objective[var.index()] = obj * coef;
-    }
-
-    let mut p = ClarabelProblem { core };
-
-    // Add variable bounds
-    ClarabelProblemCore::add_variable_bounds(&variables, &mut p);
-    p
-}
-
-/// The [clarabel](https://clarabel.org/stable/) solver for quadratic problems,
-/// to be used with [QuadraticUnsolvedProblem::using].
-#[cfg(feature = "enable_quadratic")]
-pub fn clarabel_quadratic(to_solve: QuadraticUnsolvedProblem) -> ClarabelQuadraticProblem {
-    let QuadraticUnsolvedProblem {
-        objective,
-        direction,
-        variables,
-    } = to_solve;
-    let coef = ClarabelProblemCore::direction_coef(direction);
-    let mut core = ClarabelProblemCore::new(variables.len());
-
-    // Set up linear objective
-    for (var, obj_coeff) in objective.linear.coefficients {
-        core.objective[var.index()] = obj_coeff * coef;
-    }
-
-    // Set up quadratic objective matrix
-    let mut quadratic_matrix_builder = CscQuadraticMatrixBuilder::new(variables.len());
-    for (pair, quad_coeff) in objective.quadratic.quadratic_coefficients {
-        quadratic_matrix_builder.add_term(pair, quad_coeff * coef);
-    }
-
-    let mut p = ClarabelQuadraticProblem {
-        core,
-        quadratic_matrix_builder,
-    };
-
-    // Add variable bounds
-    ClarabelProblemCore::add_variable_bounds(&variables, &mut p);
-    p
-}
-
-/// Common fields shared between linear and quadratic Clarabel problems
-struct ClarabelProblemCore {
-    constraints_matrix_builder: CscMatrixBuilder,
-    constraint_values: Vec<f64>,
-    objective: Vec<f64>,
-    variables: usize,
-    settings: DefaultSettingsBuilder<f64>,
-    cones: Vec<SupportedConeT<f64>>,
-}
-
-/// A clarabel model
-pub struct ClarabelProblem {
-    core: ClarabelProblemCore,
-}
-
-/// A clarabel quadratic model
-#[cfg(feature = "enable_quadratic")]
-pub struct ClarabelQuadraticProblem {
-    core: ClarabelProblemCore,
-    quadratic_matrix_builder: CscQuadraticMatrixBuilder,
-}
-
-impl ClarabelProblem {
-    /// Access the problem settings
-    pub fn settings(&mut self) -> &mut DefaultSettingsBuilder<f64> {
-        &mut self.core.settings
-    }
-
-    /// Convert the problem into a clarabel solver
-    /// panics if the problem is not valid
-    pub fn into_solver(self) -> DefaultSolver<f64> {
-        let settings = self
-            .core
-            .settings
-            .build()
-            .expect("Invalid clarabel settings");
-        let quadratic_objective = &CscMatrix::zeros((self.core.variables, self.core.variables));
-        let objective = &self.core.objective;
-        let constraints = &self.core.constraints_matrix_builder.build();
-        let constraint_values = &self.core.constraint_values;
-        let cones = &self.core.cones;
-        DefaultSolver::new(
-            quadratic_objective,
-            objective,
-            constraints,
-            constraint_values,
-            cones,
-            settings,
-        ).expect("Invalid clarabel problem. This is likely a bug in good_lp. Problems should always have coherent dimensions.")
-    }
-}
-
-impl ClarabelProblemLike for ClarabelProblem {
-    fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
-        self.core.add_constraint_impl(constraint)
-    }
-}
-
 impl SolverModel for ClarabelProblem {
     type Solution = ClarabelSolution;
     type Error = ResolutionError;
@@ -235,11 +194,28 @@ impl SolverModel for ClarabelProblem {
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let mut solver = self.into_solver();
         solver.solve();
-        ClarabelProblemCore::handle_solver_status(solver.solution.status, solver.solution)
+        match solver.solution.status {
+            e @ (SolverStatus::PrimalInfeasible | SolverStatus::AlmostPrimalInfeasible) => {
+                eprintln!("Clarabel error: {:?}", e);
+                Err(ResolutionError::Infeasible)
+            }
+            SolverStatus::Solved
+            | SolverStatus::AlmostSolved
+            | SolverStatus::AlmostDualInfeasible
+            | SolverStatus::DualInfeasible => Ok(ClarabelSolution {
+                solution: solver.solution,
+            }),
+            SolverStatus::Unsolved => Err(ResolutionError::Other("Unsolved")),
+            SolverStatus::MaxIterations => Err(ResolutionError::Other("Max iterations reached")),
+            SolverStatus::MaxTime => Err(ResolutionError::Other("Time limit reached")),
+            SolverStatus::NumericalError => Err(ResolutionError::Other("Numerical error")),
+            SolverStatus::InsufficientProgress => Err(ResolutionError::Other("No progress")),
+            SolverStatus::CallbackTerminated => Err(ResolutionError::Other("Callback terminated")),
+        }
     }
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
-        self.core.add_constraint_impl(constraint)
+        self.add_constraint(constraint)
     }
 
     fn name() -> &'static str {
@@ -350,22 +326,18 @@ fn fast_flatten_vecs<T: Copy>(vecs: Vec<Vec<T>>) -> Vec<T> {
 impl ClarabelQuadraticProblem {
     /// Access the problem settings
     pub fn settings(&mut self) -> &mut DefaultSettingsBuilder<f64> {
-        &mut self.core.settings
+        &mut self.settings
     }
 
     /// Convert the problem into a clarabel solver
     /// panics if the problem is not valid
     pub fn into_solver(self) -> DefaultSolver<f64> {
-        let settings = self
-            .core
-            .settings
-            .build()
-            .expect("Invalid clarabel settings");
+        let settings = self.settings.build().expect("Invalid clarabel settings");
         let quadratic_objective = &self.quadratic_matrix_builder.build();
-        let objective = &self.core.objective;
-        let constraints = &self.core.constraints_matrix_builder.build();
-        let constraint_values = &self.core.constraint_values;
-        let cones = &self.core.cones;
+        let objective = &self.objective;
+        let constraints = &self.constraints_matrix_builder.build();
+        let constraint_values = &self.constraint_values;
+        let cones = &self.cones;
         DefaultSolver::new(
             quadratic_objective,
             objective,
@@ -375,12 +347,27 @@ impl ClarabelQuadraticProblem {
             settings,
         ).expect("Invalid clarabel problem. This is likely a bug in good_lp. Problems should always have coherent dimensions.")
     }
-}
 
-#[cfg(feature = "enable_quadratic")]
-impl ClarabelProblemLike for ClarabelQuadraticProblem {
-    fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
-        self.core.add_constraint_impl(constraint)
+    /// Add a constraint to the quadratic problem
+    pub fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        self.constraints_matrix_builder
+            .add_row(constraint.expression.linear);
+        let index = self.constraint_values.len();
+        self.constraint_values.push(-constraint.expression.constant);
+        // Cones indicate the type of constraint. We only support nonnegative and equality constraints.
+        // To avoid creating a new cone for each constraint, we merge them.
+        let next_cone = if constraint.is_equality {
+            ZeroConeT(1)
+        } else {
+            NonnegativeConeT(1)
+        };
+        let prev_cone = self.cones.last_mut();
+        match (prev_cone, next_cone) {
+            (Some(ZeroConeT(a)), ZeroConeT(b)) => *a += b,
+            (Some(NonnegativeConeT(a)), NonnegativeConeT(b)) => *a += b,
+            (_, next_cone) => self.cones.push(next_cone),
+        };
+        ConstraintReference { index }
     }
 }
 
@@ -392,11 +379,28 @@ impl SolverModel for ClarabelQuadraticProblem {
     fn solve(self) -> Result<Self::Solution, Self::Error> {
         let mut solver = self.into_solver();
         solver.solve();
-        ClarabelProblemCore::handle_solver_status(solver.solution.status, solver.solution)
+        match solver.solution.status {
+            e @ (SolverStatus::PrimalInfeasible | SolverStatus::AlmostPrimalInfeasible) => {
+                eprintln!("Clarabel error: {:?}", e);
+                Err(ResolutionError::Infeasible)
+            }
+            SolverStatus::Solved
+            | SolverStatus::AlmostSolved
+            | SolverStatus::AlmostDualInfeasible
+            | SolverStatus::DualInfeasible => Ok(ClarabelSolution {
+                solution: solver.solution,
+            }),
+            SolverStatus::Unsolved => Err(ResolutionError::Other("Unsolved")),
+            SolverStatus::MaxIterations => Err(ResolutionError::Other("Max iterations reached")),
+            SolverStatus::MaxTime => Err(ResolutionError::Other("Time limit reached")),
+            SolverStatus::NumericalError => Err(ResolutionError::Other("Numerical error")),
+            SolverStatus::InsufficientProgress => Err(ResolutionError::Other("No progress")),
+            SolverStatus::CallbackTerminated => Err(ResolutionError::Other("Callback terminated")),
+        }
     }
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
-        self.core.add_constraint_impl(constraint)
+        self.add_constraint(constraint)
     }
 
     fn name() -> &'static str {
