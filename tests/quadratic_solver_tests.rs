@@ -141,7 +141,7 @@ mod quadratic_integration_tests {
             .minimise_quadratic(objective)
             .using(clarabel_quadratic)
             .with((x + y).eq(5.0)) // equality
-            .with((1.0 *x).geq(0.0)) // inequality
+            .with((1.0 * x).geq(0.0)) // inequality
             .solve()
             .expect("Quadratic with mixed constraints should solve");
 
@@ -154,7 +154,6 @@ mod quadratic_integration_tests {
             solution.value(y)
         );
     }
-
 
     #[test]
     fn test_quadratic_maximization_problem() {

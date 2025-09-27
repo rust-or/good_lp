@@ -27,13 +27,19 @@ impl VariablePair {
         if var1.index() <= var2.index() {
             VariablePair { var1, var2 }
         } else {
-            VariablePair { var1: var2, var2: var1 }
+            VariablePair {
+                var1: var2,
+                var2: var1,
+            }
         }
     }
 
     /// Create a variable pair representing a square term (var^2)
     pub fn square(var: Variable) -> Self {
-        VariablePair { var1: var, var2: var }
+        VariablePair {
+            var1: var,
+            var2: var,
+        }
     }
 }
 
@@ -66,24 +72,32 @@ impl QuadraticExpression {
     /// Get the coefficient for a specific variable pair
     pub fn get_quadratic_coefficient(&self, var1: Variable, var2: Variable) -> f64 {
         let pair = VariablePair::new(var1, var2);
-        self.quadratic_coefficients.get(&pair).copied().unwrap_or(0.0)
+        self.quadratic_coefficients
+            .get(&pair)
+            .copied()
+            .unwrap_or(0.0)
     }
 
     /// Check if the expression is empty (all coefficients are zero)
     pub fn is_empty(&self) -> bool {
-        self.quadratic_coefficients.is_empty() || 
-        self.quadratic_coefficients.values().all(|&c| c.abs() < f64::EPSILON)
+        self.quadratic_coefficients.is_empty()
+            || self
+                .quadratic_coefficients
+                .values()
+                .all(|&c| c.abs() < f64::EPSILON)
     }
 
     /// Iterate over all non-zero quadratic terms
     pub fn iter(&self) -> impl Iterator<Item = (VariablePair, f64)> + '_ {
-        self.quadratic_coefficients.iter().filter_map(|(&pair, &coeff)| {
-            if coeff.abs() >= f64::EPSILON {
-                Some((pair, coeff))
-            } else {
-                None
-            }
-        })
+        self.quadratic_coefficients
+            .iter()
+            .filter_map(|(&pair, &coeff)| {
+                if coeff.abs() >= f64::EPSILON {
+                    Some((pair, coeff))
+                } else {
+                    None
+                }
+            })
     }
 
     /// Evaluate the quadratic expression given variable values
@@ -138,7 +152,10 @@ impl QuadraticAffineExpression {
         QuadraticAffineExpression {
             quadratic: QuadraticExpression::with_capacity(quadratic_capacity),
             linear: LinearExpression {
-                coefficients: HashMap::with_capacity_and_hasher(linear_capacity, Default::default()),
+                coefficients: HashMap::with_capacity_and_hasher(
+                    linear_capacity,
+                    Default::default(),
+                ),
             },
             constant: 0.0,
         }
@@ -150,7 +167,9 @@ impl QuadraticAffineExpression {
         let linear_coeffs = expr.linear_coefficients().into_iter().collect();
         QuadraticAffineExpression {
             quadratic: QuadraticExpression::new(),
-            linear: LinearExpression { coefficients: linear_coeffs },
+            linear: LinearExpression {
+                coefficients: linear_coeffs,
+            },
             constant,
         }
     }
@@ -198,8 +217,7 @@ impl QuadraticAffineExpression {
 
     /// Evaluate the complete expression
     pub fn eval_with<S: Solution>(&self, values: &S) -> f64 {
-        self.quadratic.eval_with(values) +
-        self.linear_part().eval_with(values)
+        self.quadratic.eval_with(values) + self.linear_part().eval_with(values)
     }
 
     /// Get the coefficient of a quadratic term
@@ -305,7 +323,9 @@ impl From<Variable> for QuadraticAffineExpression {
         linear_coeffs.insert(var, 1.0);
         QuadraticAffineExpression {
             quadratic: QuadraticExpression::new(),
-            linear: LinearExpression { coefficients: linear_coeffs },
+            linear: LinearExpression {
+                coefficients: linear_coeffs,
+            },
             constant: 0.0,
         }
     }
@@ -532,17 +552,17 @@ impl Mul<Expression> for Variable {
     fn mul(self, rhs: Expression) -> Self::Output {
         let mut result = QuadraticAffineExpression::new();
         let constant = rhs.constant;
-        
+
         // Linear term (constant * variable)
         if constant.abs() >= f64::EPSILON {
             result.add_linear_term(self, constant);
         }
-        
+
         // Quadratic terms (variable * other_variables)
         for (var, coeff) in rhs.linear.coefficients {
             result.add_quadratic_term(self, var, coeff);
         }
-        
+
         result
     }
 }
@@ -561,30 +581,30 @@ impl Mul<Expression> for Expression {
 
     fn mul(self, rhs: Expression) -> Self::Output {
         let mut result = QuadraticAffineExpression::new();
-        
+
         let c1 = self.constant;
         let c2 = rhs.constant;
-        
+
         // Constant term (c1 * c2)
         result.constant = c1 * c2;
-        
+
         // Linear terms from self * constant of rhs
         for (var, coeff) in self.linear.coefficients.iter() {
             result.add_linear_term(*var, *coeff * c2);
         }
-        
+
         // Linear terms from constant of self * rhs
         for (var, coeff) in rhs.linear.coefficients.iter() {
             result.add_linear_term(*var, c1 * *coeff);
         }
-        
+
         // Quadratic terms (variable from self * variable from rhs)
         for (var1, coeff1) in self.linear.coefficients.iter() {
             for (var2, coeff2) in rhs.linear.coefficients.iter() {
                 result.add_quadratic_term(*var1, *var2, *coeff1 * *coeff2);
             }
         }
-        
+
         result
     }
 }
@@ -626,11 +646,11 @@ impl FormatWithVars for QuadraticExpression {
             } else {
                 write!(f, " + ")?;
             }
-            
+
             if (coeff - 1.).abs() > f64::EPSILON {
                 write!(f, "{} ", coeff)?;
             }
-            
+
             if pair.var1 == pair.var2 {
                 // Square term: x^2
                 variable_format(f, pair.var1)?;
@@ -642,7 +662,7 @@ impl FormatWithVars for QuadraticExpression {
                 variable_format(f, pair.var2)?;
             }
         }
-        
+
         if first {
             write!(f, "0")?;
         }
@@ -664,19 +684,19 @@ impl FormatWithVars for QuadraticAffineExpression {
         let has_quadratic = !self.quadratic.is_empty();
         let has_linear = !self.linear.coefficients.is_empty();
         let has_constant = self.constant.abs() >= f64::EPSILON;
-        
+
         if !has_quadratic && !has_linear && !has_constant {
             return write!(f, "0");
         }
-        
+
         let mut first = true;
-        
+
         // Write quadratic terms
         if has_quadratic {
             self.quadratic.format_with(f, &mut variable_format)?;
             first = false;
         }
-        
+
         // Write linear terms
         for (&var, &coeff) in &self.linear.coefficients {
             if coeff.abs() >= f64::EPSILON {
@@ -684,14 +704,14 @@ impl FormatWithVars for QuadraticAffineExpression {
                     write!(f, " + ")?;
                 }
                 first = false;
-                
+
                 if (coeff - 1.).abs() > f64::EPSILON {
                     write!(f, "{} ", coeff)?;
                 }
                 variable_format(f, var)?;
             }
         }
-        
+
         // Write constant term
         if has_constant {
             if !first {
@@ -699,7 +719,7 @@ impl FormatWithVars for QuadraticAffineExpression {
             }
             write!(f, "{}", self.constant)?;
         }
-        
+
         Ok(())
     }
 }

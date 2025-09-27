@@ -1,6 +1,6 @@
 use crate::quadratic_expression::QuadraticAffineExpression;
-use crate::variable::ProblemVariables;
 use crate::solvers::ObjectiveDirection;
+use crate::variable::ProblemVariables;
 
 /// A problem with a quadratic objective function
 pub struct QuadraticUnsolvedProblem {
@@ -46,12 +46,16 @@ impl ProblemVariables {
         let objective_expr = objective.into_quadratic_expression();
         // Validate that objective variables are within bounds
         for (var, _) in objective_expr.linear.coefficients.iter() {
-            assert!(var.index() < self.len(),
-                "Variable in objective function is not part of this problem");
+            assert!(
+                var.index() < self.len(),
+                "Variable in objective function is not part of this problem"
+            );
         }
         for (pair, _) in objective_expr.quadratic.quadratic_coefficients.iter() {
-            assert!(pair.var1.index() < self.len() && pair.var2.index() < self.len(),
-                "Variable in quadratic objective function is not part of this problem");
+            assert!(
+                pair.var1.index() < self.len() && pair.var2.index() < self.len(),
+                "Variable in quadratic objective function is not part of this problem"
+            );
         }
         QuadraticUnsolvedProblem {
             objective: objective_expr,
@@ -69,12 +73,16 @@ impl ProblemVariables {
         let objective_expr = objective.into_quadratic_expression();
         // Validate that objective variables are within bounds
         for (var, _) in objective_expr.linear.coefficients.iter() {
-            assert!(var.index() < self.len(),
-                "Variable in objective function is not part of this problem");
+            assert!(
+                var.index() < self.len(),
+                "Variable in objective function is not part of this problem"
+            );
         }
         for (pair, _) in objective_expr.quadratic.quadratic_coefficients.iter() {
-            assert!(pair.var1.index() < self.len() && pair.var2.index() < self.len(),
-                "Variable in quadratic objective function is not part of this problem");
+            assert!(
+                pair.var1.index() < self.len() && pair.var2.index() < self.len(),
+                "Variable in quadratic objective function is not part of this problem"
+            );
         }
         QuadraticUnsolvedProblem {
             objective: objective_expr,
