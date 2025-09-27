@@ -420,10 +420,9 @@ impl CscQuadraticMatrixBuilder {
             self.rowval[j].push(i);
             self.nzval[j].push(2.0 * coeff);
         } else {
-            // Off-diagonal term: the coefficient coeff represents the full cross term coeff * x_i * x_j
-            // In matrix form, this becomes coeff/2 * (P_ij + P_ji) * x_i * x_j
-            // Since P is symmetric (P_ij = P_ji), we get coeff * P_ij * x_i * x_j
-            // But Clarabel uses 1/2 * x^T * P * x, so we need P_ij = 2 * coeff
+            // Off-diagonal term: add the coefficient to both (i,j) and (j,i) positions
+            // to create a symmetric matrix. Each entry gets the original coefficient
+            // since Clarabel multiplies the entire quadratic form by 1/2.
             self.rowval[j].push(i);
             self.nzval[j].push(coeff);
             
