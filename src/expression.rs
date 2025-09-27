@@ -82,6 +82,14 @@ impl Clone for LinearExpression {
     }
 }
 
+impl Debug for LinearExpression {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LinearExpression")
+            .field("coefficients", &self.coefficients)
+            .finish()
+    }
+}
+
 /// Represents an affine expression, such as `2x + 3` or `x + y + z`
 pub struct Expression {
     pub(crate) linear: LinearExpression,
