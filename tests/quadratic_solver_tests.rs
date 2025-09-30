@@ -3,10 +3,7 @@
 
 #[cfg(all(feature = "clarabel", feature = "enable_quadratic"))]
 mod quadratic_integration_tests {
-    use good_lp::{
-        clarabel_quadratic, variables, QuadraticAffineExpression, ResolutionError, Solution,
-        SolverModel,
-    };
+    use good_lp::{clarabel, variables, Expression, ResolutionError, Solution, SolverModel};
 
     #[test]
     fn test_constrained_quadratic_with_bounds() {
@@ -16,7 +13,7 @@ mod quadratic_integration_tests {
         }
 
         // Minimize x^2 - x
-        let mut objective = QuadraticAffineExpression::new();
+        let mut objective = Expression::default();
 
         objective.add_quadratic_term(x, x, 1.0);
         objective.add_linear_term(x, -1.0);
@@ -25,8 +22,8 @@ mod quadratic_integration_tests {
         println!("Objective: {:?}", objective);
 
         let solution = vars
-            .minimise_quadratic(objective)
-            .using(clarabel_quadratic)
+            .minimise(objective)
+            .using(clarabel)
             .solve()
             .expect("Bounded quadratic should solve");
 
@@ -46,14 +43,14 @@ mod quadratic_integration_tests {
         }
 
         // Minimize x^2 + y^2 + z^2 subject to x + y + z = 6 and x - y + 2z = 4
-        let mut objective = QuadraticAffineExpression::new();
+        let mut objective = Expression::default();
         objective.add_quadratic_term(x, x, 1.0);
         objective.add_quadratic_term(y, y, 1.0);
         objective.add_quadratic_term(z, z, 1.0);
 
         let solution = vars
-            .minimise_quadratic(objective)
-            .using(clarabel_quadratic)
+            .minimise(objective)
+            .using(clarabel)
             .with((x + y + z).eq(6.0)) // First equality constraint
             .with((x - y + 2.0 * z).eq(4.0)) // Second equality constraint
             .solve()
@@ -88,6 +85,34 @@ mod quadratic_integration_tests {
     }
 
     #[test]
+    fn test_with_many_variables() {
+        let mut objective = Expression::default();
+        let mut problem_vars = variables!();
+        let mut vars = vec![];
+
+        for i in 0..1_000 {
+            let var = problem_vars.add_variable();
+            vars.push(var);
+
+            // Build (var - i)^2 = var^2 - 2*i*var + i^2 manually
+            objective.add_quadratic_term(var, var, 1.0); // var^2
+            objective.add_linear_term(var, -2.0 * i as f64); // -2*i*var
+            objective.add_constant((i as f64) * (i as f64)); // i^2
+        }
+
+        let solution = problem_vars
+            .minimise(objective)
+            .using(clarabel)
+            .solve()
+            .expect("Quadratic with many variables should solve");
+
+        for i in 0..1_000 {
+            let var = vars[i];
+            assert!((solution.value(var) - i as f64).abs() < 1e-3);
+        }
+    }
+
+    #[test]
     fn test_quadratic_with_inequality_constraints() {
         variables! {
             vars:
@@ -96,13 +121,13 @@ mod quadratic_integration_tests {
         }
 
         // Minimize x^2 + y^2 subject to x + y ≥ 4
-        let mut objective = QuadraticAffineExpression::new();
+        let mut objective = Expression::default();
         objective.add_quadratic_term(x, x, 1.0);
         objective.add_quadratic_term(y, y, 1.0);
 
         let solution = vars
-            .minimise_quadratic(objective)
-            .using(clarabel_quadratic)
+            .minimise(objective)
+            .using(clarabel)
             .with((x + y).geq(4.0)) // inequality constraint
             .solve()
             .expect("Quadratic with inequality should solve");
@@ -130,7 +155,7 @@ mod quadratic_integration_tests {
         }
 
         // Minimize (x-1)^2 + (y-3)^2 subject to x + y = 5, x ≥ 0
-        let mut objective = QuadraticAffineExpression::new();
+        let mut objective = Expression::default();
         objective.add_quadratic_term(x, x, 1.0);
         objective.add_quadratic_term(y, y, 1.0);
         objective.add_linear_term(x, -2.0);
@@ -138,8 +163,8 @@ mod quadratic_integration_tests {
         objective.add_constant(10.0);
 
         let solution = vars
-            .minimise_quadratic(objective)
-            .using(clarabel_quadratic)
+            .minimise(objective)
+            .using(clarabel)
             .with((x + y).eq(5.0)) // equality
             .with((1.0 * x).geq(0.0)) // inequality
             .solve()
@@ -164,15 +189,15 @@ mod quadratic_integration_tests {
         }
 
         // Maximize a concave quadratic: -x^2 - y^2 + 8x + 6y
-        let mut objective = QuadraticAffineExpression::new();
+        let mut objective = Expression::default();
         objective.add_quadratic_term(x, x, -1.0); // -x^2 (concave)
         objective.add_quadratic_term(y, y, -1.0); // -y^2 (concave)
         objective.add_linear_term(x, 8.0); // +8x
         objective.add_linear_term(y, 6.0); // +6y
 
         let solution = vars
-            .maximise_quadratic(objective)
-            .using(clarabel_quadratic)
+            .maximise(objective)
+            .using(clarabel)
             .solve()
             .expect("Quadratic maximization should solve");
 
@@ -195,14 +220,14 @@ mod quadratic_integration_tests {
                 y;
         }
 
-        let mut objective = QuadraticAffineExpression::new();
+        let mut objective = Expression::default();
         objective.add_quadratic_term(x, x, 1.0);
         objective.add_quadratic_term(y, y, 1.0);
 
         // Create conflicting constraints: x + y >= 5 and x + y <= 2
         let result = vars
-            .minimise_quadratic(objective)
-            .using(clarabel_quadratic)
+            .minimise(objective)
+            .using(clarabel)
             .with(x + y >> 5.0) // x + y >= 5
             .with(x + y << 2.0) // x + y <= 2 (conflicts with above)
             .solve();
@@ -226,13 +251,13 @@ mod quadratic_integration_tests {
         }
 
         // Large-scale problem: minimize 1000000*x^2 + 1000000*y^2
-        let mut objective = QuadraticAffineExpression::new();
+        let mut objective = Expression::default();
         objective.add_quadratic_term(x, x, 1_000_000.0);
         objective.add_quadratic_term(y, y, 1_000_000.0);
 
         let solution = vars
-            .minimise_quadratic(objective)
-            .using(clarabel_quadratic)
+            .minimise(objective)
+            .using(clarabel)
             .with(x + y >> 1e-3) // Very small constraint
             .solve()
             .expect("Scaled quadratic should solve");

@@ -70,11 +70,9 @@ pub use cardinality_constraint_solver_trait::CardinalityConstraintSolver;
 pub use constraint::Constraint;
 pub use expression::Expression;
 #[cfg(feature = "enable_quadratic")]
-pub use quadratic_expression::{
-    QuadraticAffineExpression, QuadraticConstraint, QuadraticExpression, VariablePair,
-};
+pub use expression::VariablePair;
 #[cfg(feature = "enable_quadratic")]
-pub use quadratic_problem::{IntoQuadraticExpression, QuadraticUnsolvedProblem};
+pub use quadratic_expression_trait::IntoQuadraticExpression;
 #[cfg(not(any(
     feature = "coin_cbc",
     feature = "microlp",
@@ -92,8 +90,6 @@ pub use solvers::clarabel::clarabel;
     docsrs,
     doc(cfg(all(feature = "clarabel", feature = "enable_quadratic")))
 )]
-#[cfg(all(feature = "clarabel", feature = "enable_quadratic"))]
-pub use solvers::clarabel::clarabel_quadratic;
 #[cfg_attr(docsrs, doc(cfg(feature = "coin_cbc")))]
 #[cfg(feature = "coin_cbc")]
 pub use solvers::coin_cbc::coin_cbc;
@@ -200,11 +196,9 @@ pub mod variable;
 mod affine_expression_trait;
 mod cardinality_constraint_solver_trait;
 pub mod constraint;
-/// Quadratic expression types and operations
 #[cfg(feature = "enable_quadratic")]
-pub mod quadratic_expression;
+mod quadratic_expression_trait;
+
 /// Quadratic problem definition and solving
-#[cfg(feature = "enable_quadratic")]
-pub mod quadratic_problem;
 pub mod solvers;
 mod variables_macro;

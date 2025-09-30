@@ -33,7 +33,7 @@ fn debug_format() {
     let mut vars = variables!();
     let a = vars.add_variable();
     let b = vars.add_variable();
-    let expr_str = format!("{:?}", (9 * (1. + a + b / 3)).leq(a + 1));
+    let expr_str = format!("{:?}", (9_i32 * (1.0_f64 + a + b / 3.0_f64)).leq(a + 1));
     let possibilities = vec!["3 v1 + 8 v0 <= -8", "8 v0 + 3 v1 <= -8"];
     assert!(
         possibilities.contains(&expr_str.as_str()),
