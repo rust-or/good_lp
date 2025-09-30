@@ -5,9 +5,9 @@ use fnv::FnvHashMap as HashMap;
 
 use crate::affine_expression_trait::IntoAffineExpression;
 use crate::constraint;
+use crate::variable::{FormatWithVars, Variable};
 #[cfg(feature = "enable_quadratic")]
 use crate::IntoQuadraticExpression;
-use crate::variable::{FormatWithVars, Variable};
 use crate::{Constraint, Solution};
 
 /// Represents a pair of variables in a quadratic term
@@ -495,7 +495,7 @@ impl FormatWithVars for Expression {
         FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result,
     {
         let mut has_terms = false;
-        
+
         // Format linear terms first
         for (&var, &coeff) in &self.linear.coefficients {
             if coeff != 0f64 {
@@ -509,7 +509,7 @@ impl FormatWithVars for Expression {
                 has_terms = true;
             }
         }
-        
+
         // Format quadratic terms
         #[cfg(feature = "enable_quadratic")]
         {
@@ -528,7 +528,7 @@ impl FormatWithVars for Expression {
                 }
             }
         }
-        
+
         // Format constant
         if self.constant.abs() >= f64::EPSILON {
             if has_terms {
@@ -539,7 +539,7 @@ impl FormatWithVars for Expression {
         } else if !has_terms {
             write!(f, "0")?;
         }
-        
+
         Ok(())
     }
 }
@@ -594,14 +594,14 @@ macro_rules! impl_extended_num_ops {
                 Expression::from(self) + rhs
             }
         }
-        
+
         impl Sub<Variable> for $num {
             type Output = Expression;
             fn sub(self, rhs: Variable) -> Self::Output {
                 Expression::from(self) - rhs
             }
         }
-        
+
         impl Sub<Expression> for $num {
             type Output = Expression;
             fn sub(self, rhs: Expression) -> Self::Output {
@@ -655,7 +655,6 @@ impl Sub<Expression> for Expression {
         self
     }
 }
-
 
 macro_rules! impl_var_num_ops {
     ($($num:ty),*) => {$(
@@ -870,7 +869,7 @@ mod tests {
         let mut values = HashMap::new();
         values.insert(a, 100);
         values.insert(b, -1);
-        assert_eq!((a + 3.0_f64 * (b + 3.0_f64 )).eval_with(&values), 106.)
+        assert_eq!((a + 3.0_f64 * (b + 3.0_f64)).eval_with(&values), 106.)
     }
 
     #[cfg(feature = "enable_quadratic")]
@@ -884,9 +883,7 @@ mod tests {
         assert_eq!(expression_0_str, "-1 v0 + -1 v1*v1 + 3");
         println!("{:?}", expression_0);
         println!("{:?}", expression_1);
-        assert_eq!(
-            expression_0, expression_1
-        );
+        assert_eq!(expression_0, expression_1);
         let values = HashMap::from([(v0, 100.), (v1, -1.)]);
         assert_eq!(expression_0.eval_with(&values), -98.0)
     }

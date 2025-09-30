@@ -2,10 +2,10 @@
 
 use crate::affine_expression_trait::IntoAffineExpression;
 #[cfg(feature = "enable_quadratic")]
-use crate::expression::VariablePair;
+use crate::expression::Expression;
 use crate::expression::LinearExpression;
 #[cfg(feature = "enable_quadratic")]
-use crate::expression::Expression;
+use crate::expression::VariablePair;
 use crate::variable::UnsolvedProblem;
 use crate::{
     constraint::ConstraintReference,
@@ -257,7 +257,7 @@ impl CscMatrixBuilder {
             is_quadratic: false,
         }
     }
-    
+
     /// Create a new builder for a square matrix (used for quadratic matrices)
     #[cfg(feature = "enable_quadratic")]
     fn new_square(n_vars: usize) -> Self {
@@ -269,7 +269,7 @@ impl CscMatrixBuilder {
             is_quadratic: true,
         }
     }
-    
+
     fn add_row(&mut self, row: LinearExpression) {
         for (var, value) in row.linear_coefficients() {
             self.rowval[var.index()].push(self.n_rows);
@@ -277,7 +277,7 @@ impl CscMatrixBuilder {
         }
         self.n_rows += 1;
     }
-    
+
     /// Add a quadratic term to the matrix (for quadratic objectives)
     #[cfg(feature = "enable_quadratic")]
     fn add_quadratic_term(&mut self, pair: VariablePair, coeff: f64) {
@@ -300,7 +300,7 @@ impl CscMatrixBuilder {
             self.nzval[i].push(coeff);
         }
     }
-    
+
     fn build(mut self) -> clarabel::algebra::CscMatrix {
         // For quadratic matrices, sort columns to maintain proper CSC format
         #[cfg(feature = "enable_quadratic")]
@@ -317,7 +317,7 @@ impl CscMatrixBuilder {
                 self.nzval[col] = pairs.iter().map(|&(_, val)| val).collect();
             }
         }
-        
+
         let mut colptr = Vec::with_capacity(self.n_cols + 1);
         colptr.push(0);
         for col in &self.rowval {
@@ -350,8 +350,6 @@ fn fast_flatten_vecs<T: Copy>(vecs: Vec<Vec<T>>) -> Vec<T> {
     }
     result
 }
-
-
 
 #[cfg(test)]
 mod tests {

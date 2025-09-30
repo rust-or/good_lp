@@ -508,7 +508,7 @@ impl ProblemVariables {
     pub fn optimise_quadratic<E: IntoQuadraticExpression>(
         self,
         direction: ObjectiveDirection,
-        objective: E
+        objective: E,
     ) -> UnsolvedProblem {
         let objective = Expression::from_other_quadratic(objective);
         // todo, correct assert check
