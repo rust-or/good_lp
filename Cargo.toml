@@ -39,7 +39,7 @@ minilp = [
 [dependencies]
 coin_cbc = { version = "0.1", optional = true, default-features = false }
 microlp = { version = "0.2.11", optional = true }
-lpsolve = { version = "0.1", optional = true }
+lpsolve = { git = "https://gitlab.com/jk2997/rust_lpsolve_fork", optional = true }
 highs = { version = "1.11.0", optional = true }
 russcip = { version = "0.8.2", optional = true }
 lp-solvers = { version = "1.0.0", features = ["cplex"], optional = true }

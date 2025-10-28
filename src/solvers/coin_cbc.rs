@@ -283,6 +283,7 @@ mod tests {
 
     #[test]
     fn solve_problem_with_time_limit() {
+        eprintln!("Testing time limit...");
         let n = 10;
         let mut vars = variables!();
         let mut v = Vec::with_capacity(n);

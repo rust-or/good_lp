@@ -124,6 +124,13 @@ impl SolverModel for LpSolveProblem {
     }
 }
 
+impl WithTimeLimit for LpSolveProblem {
+    fn with_time_limit<T: Into<f64>>(mut self, seconds: T) -> Self {
+        self.0.set_timeout(seconds as i64);
+        self
+    }
+}
+
 impl ModelWithSOS1 for LpSolveProblem {
     fn add_sos1<I: IntoAffineExpression>(&mut self, variables: I) {
         let iter = variables.linear_coefficients().into_iter();
