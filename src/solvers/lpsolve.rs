@@ -126,7 +126,7 @@ impl SolverModel for LpSolveProblem {
 
 impl WithTimeLimit for LpSolveProblem {
     fn with_time_limit<T: Into<f64>>(mut self, seconds: T) -> Self {
-        self.0.set_timeout(seconds as i64);
+        self.0.set_timeout(seconds.into().ceil() as i64);
         self
     }
 }
