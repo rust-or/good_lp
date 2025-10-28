@@ -238,7 +238,9 @@ pub trait WithInitialSolution {
 /// A solver than can stop the solving process after some time
 pub trait WithTimeLimit {
     /// Sets the time limit for the solver
-    fn with_time_limit<T: Into<f64>>(self, seconds: T) -> Self;
+    fn with_time_limit<T: Into<f64>>(self, seconds: T) -> Self {
+        self
+    };
 }
 
 /// Information about the status of a solution, such as whether the solution is
