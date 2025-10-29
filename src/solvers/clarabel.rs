@@ -103,8 +103,7 @@ impl SolverModel for ClarabelProblem {
         let mut solver = self.into_solver();
         solver.solve();
         match solver.solution.status {
-            e @ (SolverStatus::PrimalInfeasible | SolverStatus::AlmostPrimalInfeasible) => {
-                eprintln!("Clarabel error: {:?}", e);
+            SolverStatus::PrimalInfeasible | SolverStatus::AlmostPrimalInfeasible => {
                 Err(ResolutionError::Infeasible)
             }
             SolverStatus::Solved
