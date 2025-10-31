@@ -103,7 +103,7 @@
 /// You should never create expressions with variables that come from different
 /// [ProblemVariables](crate::variable::ProblemVariables) instances.
 ///
-/// ```should_panic
+/// ```should_panic,ignore-wasm
 /// use good_lp::{variables, default_solver, SolverModel};
 ///
 /// variables!{pb1: a;}
