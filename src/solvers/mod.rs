@@ -235,14 +235,6 @@ pub trait WithInitialSolution {
     fn with_initial_solution(self, solution: impl IntoIterator<Item = (Variable, f64)>) -> Self;
 }
 
-/// A solver than can stop the solving process after some time
-pub trait WithTimeLimit {
-    /// Sets the time limit for the solver
-    fn with_time_limit<T: Into<f64>>(self, seconds: T) -> Self {
-        self
-    };
-}
-
 /// Information about the status of a solution, such as whether the solution is
 /// optimal
 #[derive(Clone, Copy, Debug)]

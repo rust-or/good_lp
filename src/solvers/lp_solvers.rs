@@ -139,7 +139,7 @@ impl<T> crate::solvers::WithTimeLimit for Model<T>
 where
     T: lp_solvers::solvers::WithMaxSeconds<T>,
 {
-    fn with_time_limit<U: Into<f64>>(self, seconds: U) -> Self {
+    fn with_time_limit<U: Into<f64>>(mut self, seconds: U) -> Self {
         self.solver = self.solver.with_max_seconds(seconds.into() as u32);
         self
     }
