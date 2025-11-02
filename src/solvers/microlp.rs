@@ -6,6 +6,7 @@ use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel},
+    WithTimeLimit,
 };
 use crate::{Constraint, Variable};
 
@@ -93,6 +94,13 @@ impl SolverModel for MicroLpProblem {
 
     fn name() -> &'static str {
         "Microlp"
+    }
+}
+
+impl WithTimeLimit for MicroLpProblem {
+    fn with_time_limit<T: Into<f64>>(self, _seconds: T) -> Self {
+        // microlp does not support time limits yet
+        self
     }
 }
 
