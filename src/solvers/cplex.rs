@@ -162,7 +162,7 @@ impl SolverModel for CPLEXProblem {
 impl WithTimeLimit for CPLEXProblem {
     fn with_time_limit<T: Into<f64>>(mut self, seconds: T) -> Self {
         self.model
-            .env
+            .env()
             .set_parameter(TimeLimit(Duration::from_secs_f64(seconds.into())))
             .expect("Failed to set CPLEX time limit");
         self
