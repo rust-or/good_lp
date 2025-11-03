@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use crate::{
     constraint::ConstraintReference, variable::UnsolvedProblem, Constraint, ResolutionError,
-    Solution, SolutionStatus, SolverModel, Variable, VariableDefinition,
+    Solution, SolutionStatus, SolverModel, Variable, VariableDefinition, WithTimeLimit,
 };
 use cplex_rs::parameters::TimeLimit;
 use cplex_rs::{ConstraintType, Environment, Problem, ProblemType};
