@@ -48,15 +48,17 @@ pub fn lp_solve(to_solve: UnsolvedProblem) -> LpSolveProblem {
 
     let cols = to_c(variables.len());
     let mut model = Problem::new(0, cols).expect("Unable to create problem");
-    let (obj_coefs, obj_idx, _const) = expr_to_scatter_vec(objective);
-    assert!(model.scatter_objective_function(&obj_coefs, &obj_idx));
+    let (mut obj_coefs, mut obj_idx, _const) = expr_to_scatter_vec(objective);
+    model
+        .scatter_objective_function(obj_coefs.as_mut_slice(), obj_idx.as_mut_slice())
+        .unwrap();
     for (i, v) in variables.into_iter().enumerate() {
         let col = to_c(i + 1);
-        assert!(model.set_integer(col, v.is_integer));
+        model.set_integer(col, v.is_integer).unwrap();
         if v.min.is_finite() || v.max.is_finite() {
-            assert!(model.set_bounds(col, v.min, v.max));
+            model.set_bounds(col, v.min, v.max).unwrap();
         } else {
-            assert!(model.set_unbounded(col));
+            model.set_unbounded(col).unwrap();
         }
     }
     LpSolveProblem(model)
@@ -114,8 +116,10 @@ impl SolverModel for LpSolveProblem {
         } else {
             ConstraintType::Le
         };
-        let success = self.0.add_constraint(&coeffs, target, constraint_type);
-        assert!(success, "could not add constraint. memory error.");
+        let success = self
+            .0
+            .add_constraint(coeffs.as_mut_slice(), target, constraint_type);
+        assert!(success.is_ok(), "could not add constraint. memory error.");
         ConstraintReference { index }
     }
 
@@ -135,8 +139,13 @@ impl ModelWithSOS1 for LpSolveProblem {
             variables.push(var.index().try_into().expect("too many vars"));
         }
         let name = CString::new("sos").unwrap();
-        self.0
-            .add_sos_constraint(&name, SOSType::Type1, 1, &weights, &variables);
+        self.0.add_sos_constraint(
+            &name,
+            SOSType::Type1,
+            1,
+            weights.as_mut_slice(),
+            variables.as_mut_slice(),
+        );
     }
 }
 
