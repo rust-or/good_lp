@@ -1,6 +1,8 @@
 //! lp_solve is a free ([LGPL](https://lpsolve.sourceforge.net/5.5/LGPL.htm)) linear (integer) programming solver written in C and based on the revised simplex method.
 //! good_lp uses the [lpsolve crate](https://docs.rs/lpsolve/) to call lpsolve. You will need a C compiler, but you won't have to install any additional library.
-use crate::solvers::{ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel, WithTimeLimit};
+use crate::solvers::{
+    ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel, WithTimeLimit,
+};
 use crate::variable::UnsolvedProblem;
 use crate::{
     affine_expression_trait::IntoAffineExpression, constraint::ConstraintReference, ModelWithSOS1,
