@@ -1,11 +1,13 @@
 //! A solver that uses the [CPLEX](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer) solver.
 
 use std::collections::HashMap;
+use std::time::Duration;
 
 use crate::{
     constraint::ConstraintReference, variable::UnsolvedProblem, Constraint, ResolutionError,
-    Solution, SolutionStatus, SolverModel, Variable, VariableDefinition,
+    Solution, SolutionStatus, SolverModel, Variable, VariableDefinition, WithTimeLimit,
 };
+use cplex_rs::parameters::TimeLimit;
 use cplex_rs::{ConstraintType, Environment, Problem, ProblemType};
 
 use super::ObjectiveDirection;
@@ -154,6 +156,16 @@ impl SolverModel for CPLEXProblem {
 
     fn name() -> &'static str {
         "CPLEX"
+    }
+}
+
+impl WithTimeLimit for CPLEXProblem {
+    fn with_time_limit<T: Into<f64>>(mut self, seconds: T) -> Self {
+        self.model
+            .env_mut()
+            .set_parameter(TimeLimit(Duration::from_secs_f64(seconds.into())))
+            .expect("Failed to set CPLEX time limit");
+        self
     }
 }
 

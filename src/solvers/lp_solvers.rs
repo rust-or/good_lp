@@ -10,7 +10,7 @@ pub use lp_solvers::solvers::*;
 use lp_solvers::util::UniqueNameGenerator;
 
 use crate::constraint::ConstraintReference;
-use crate::solvers::{MipGapError, ObjectiveDirection, SolutionStatus};
+use crate::solvers::{MipGapError, ObjectiveDirection, SolutionStatus, WithTimeLimit};
 use crate::variable::UnsolvedProblem;
 use crate::{
     Constraint, Expression, IntoAffineExpression, ResolutionError, Solution as GoodLpSolution,
@@ -132,6 +132,16 @@ impl<T: SolverTrait> SolverModel for Model<T> {
 
     fn name() -> &'static str {
         "External Solver (through lp_solvers)"
+    }
+}
+
+impl<T> crate::solvers::WithTimeLimit for Model<T>
+where
+    T: lp_solvers::solvers::WithMaxSeconds<T>,
+{
+    fn with_time_limit<U: Into<f64>>(mut self, seconds: U) -> Self {
+        self.solver = self.solver.with_max_seconds(seconds.into() as u32);
+        self
     }
 }
 
