@@ -10,7 +10,7 @@ use crate::{
     variable::{UnsolvedProblem, VariableDefinition},
 };
 use crate::{Constraint, IntoAffineExpression, Variable, WithInitialSolution};
-use highs::HighsModelStatus;
+use highs::{HighsModelStatus, HighsSolutionStatus};
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
@@ -292,32 +292,43 @@ impl SolverModel for HighsProblem {
         }
 
         let solved = model.solve();
-        match solved.status() {
-            HighsModelStatus::NotSet => Err(ResolutionError::Other("NotSet")),
-            HighsModelStatus::LoadError => Err(ResolutionError::Other("LoadError")),
-            HighsModelStatus::ModelError => Err(ResolutionError::Other("ModelError")),
-            HighsModelStatus::PresolveError => Err(ResolutionError::Other("PresolveError")),
-            HighsModelStatus::SolveError => Err(ResolutionError::Other("SolveError")),
-            HighsModelStatus::PostsolveError => Err(ResolutionError::Other("PostsolveError")),
-            HighsModelStatus::ModelEmpty => Err(ResolutionError::Other("ModelEmpty")),
-            HighsModelStatus::Infeasible => Err(ResolutionError::Infeasible),
-            HighsModelStatus::Unbounded => Err(ResolutionError::Unbounded),
-            HighsModelStatus::UnboundedOrInfeasible => Err(ResolutionError::Infeasible),
-            HighsModelStatus::ReachedTimeLimit => Ok(HighsSolution {
-                status: SolutionStatus::TimeLimit,
-                solution: solved.get_solution(),
-            }),
-            _ok_status => {
-                let gap = solved.mip_gap();
-                Ok(HighsSolution {
-                    status: if gap.is_finite() && gap > 0.0 {
-                        SolutionStatus::GapLimit
-                    } else {
-                        SolutionStatus::Optimal
-                    },
-                    solution: solved.get_solution(),
-                })
+        let status = match solved.status() {
+            HighsModelStatus::NotSet => return Err(ResolutionError::Other("NotSet")),
+            HighsModelStatus::LoadError => return Err(ResolutionError::Other("LoadError")),
+            HighsModelStatus::ModelError => return Err(ResolutionError::Other("ModelError")),
+            HighsModelStatus::PresolveError => return Err(ResolutionError::Other("PresolveError")),
+            HighsModelStatus::SolveError => return Err(ResolutionError::Other("SolveError")),
+            HighsModelStatus::PostsolveError => {
+                return Err(ResolutionError::Other("PostsolveError"));
             }
+            HighsModelStatus::ModelEmpty => return Err(ResolutionError::Other("ModelEmpty")),
+            HighsModelStatus::Infeasible => return Err(ResolutionError::Infeasible),
+            HighsModelStatus::Unbounded => return Err(ResolutionError::Unbounded),
+            HighsModelStatus::UnboundedOrInfeasible => return Err(ResolutionError::Infeasible),
+            HighsModelStatus::ReachedTimeLimit
+            | HighsModelStatus::ReachedSolutionLimit
+            | HighsModelStatus::ReachedInterrupt
+            | HighsModelStatus::ReachedIterationLimit
+            | HighsModelStatus::ReachedMemoryLimit => SolutionStatus::TimeLimit,
+            HighsModelStatus::Optimal
+            | HighsModelStatus::ObjectiveBound
+            | HighsModelStatus::ObjectiveTarget => {
+                let gap = solved.mip_gap();
+                if gap.is_finite() && gap > 0.0 {
+                    SolutionStatus::GapLimit
+                } else {
+                    SolutionStatus::Optimal
+                }
+            }
+            _ => return Err(ResolutionError::Other("Unknown")),
+        };
+        if solved.primal_solution_status() == HighsSolutionStatus::Feasible {
+            Ok(HighsSolution {
+                status,
+                solution: solved.get_solution(),
+            })
+        } else {
+            Err(ResolutionError::Other("NoSolutionFound"))
         }
     }
 
