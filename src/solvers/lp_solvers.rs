@@ -3,6 +3,7 @@
 //! A solver binary will need to be present on the user's computer at runtime.
 
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 use lp_solvers::lp_format::LpObjective;
 use lp_solvers::problem::StrExpression;
@@ -155,6 +156,42 @@ fn linear_coefficients_str(
             .collect::<Vec<String>>()
             .join(" "),
     )
+}
+
+impl<T> crate::solvers::WithInitialSolution for Model<T>
+where
+    T: WithMipStart<T>,
+{
+    fn with_initial_solution(
+        mut self,
+        solution: impl IntoIterator<Item = (Variable, f64)>,
+    ) -> Self {
+        let mut start: HashMap<String, f32> = HashMap::new();
+
+        for (v, val) in solution {
+            if !val.is_finite() {
+                continue;
+            }
+
+            let idx = v.index();
+            let Some(lp_var) = self.problem.variables.get(idx) else {
+                continue;
+            };
+
+            let val_f32 = val as f32;
+            if !val_f32.is_finite() {
+                continue;
+            }
+
+            start.insert(lp_var.name.clone(), val_f32);
+        }
+
+        if let Ok(solver) = self.solver.with_mip_start(&start) {
+            self.solver = solver;
+        }
+
+        self
+    }
 }
 
 /// A solution
