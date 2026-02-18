@@ -38,7 +38,7 @@ minilp = [
 
 [dependencies]
 coin_cbc = { version = "0.1", optional = true, default-features = false }
-microlp = { version = "0.2.11", optional = true }
+microlp = { version = "0.3.0", optional = true }
 lpsolve = { version = "1.0.1", optional = true }
 highs = { version = "2.0.0", optional = true }
 russcip = { version = "0.9.1", optional = true }

@@ -102,6 +102,7 @@ impl From<microlp::Error> for ResolutionError {
             microlp::Error::Unbounded => Self::Unbounded,
             microlp::Error::Infeasible => Self::Infeasible,
             microlp::Error::InternalError(s) => Self::Str(s),
+            microlp::Error::Limit => Self::Str("Execution Limit reached".to_string()),
         }
     }
 }
@@ -124,7 +125,7 @@ impl Solution for MicroLpSolution {
         SolutionStatus::Optimal
     }
     fn value(&self, variable: Variable) -> f64 {
-        self.solution[self.variables[variable.index()]]
+        self.solution.var_value(self.variables[variable.index()])
     }
 }
 
