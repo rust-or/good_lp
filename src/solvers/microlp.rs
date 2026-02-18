@@ -102,7 +102,7 @@ impl From<microlp::Error> for ResolutionError {
             microlp::Error::Unbounded => Self::Unbounded,
             microlp::Error::Infeasible => Self::Infeasible,
             microlp::Error::InternalError(s) => Self::Str(s),
-            microlp::Error::Limit => Self::Str("Execution Limit reached".to_string()),
+            microlp::Error::Limit => Self::Other("Execution Limit reached"),
         }
     }
 }
