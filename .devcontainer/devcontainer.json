@@ -14,5 +14,12 @@
       ]
     }
   },
-  "postCreateCommand": "./build/postsetup.sh && P=~/.local/share/bash-completion/completions && mkdir -p $P && rustup completions bash > $P/rustup && rustup completions bash cargo > $P/cargo"
+  "runArgs": [
+    "--security-opt",
+    "label=disable"
+  ],
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly"
+  ],
+  "postCreateCommand": "bash ./build/postsetup.sh && P=~/.local/share/bash-completion/completions && mkdir -p $P && rustup completions bash > $P/rustup && rustup completions bash cargo > $P/cargo"
 }
