@@ -5,7 +5,7 @@
 use std::collections::Bound;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
-use std::iter::{repeat, FromIterator};
+use std::iter::{repeat_n, FromIterator};
 use std::ops::{Div, Mul, Neg, Not, RangeBounds};
 
 use fnv::FnvHashMap as HashMap;
@@ -461,7 +461,7 @@ impl ProblemVariables {
     /// assert_float_eq!(solution.value(y[3]), 2., abs <= 1e-8);
     /// ```
     pub fn add_vector(&mut self, var_def: VariableDefinition, len: usize) -> Vec<Variable> {
-        self.add_all(repeat(var_def).take(len))
+        self.add_all(repeat_n(var_def, len))
     }
 
     /// Creates an optimization problem with the given objective. Don't solve it immediately.
