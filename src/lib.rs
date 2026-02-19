@@ -133,11 +133,11 @@ pub use solvers::scip::scip;
 pub use solvers::scip::scip as default_solver;
 
 pub use solvers::{
-    solver_name, DualValues, ModelWithSOS1, ObjectiveDirection, ResolutionError, Solution,
-    SolutionStatus, SolutionWithDual, Solver, SolverModel, StaticSolver, WithInitialSolution,
-    WithMipGap, WithTimeLimit,
+    DualValues, ModelWithSOS1, ObjectiveDirection, ResolutionError, Solution, SolutionStatus,
+    SolutionWithDual, Solver, SolverModel, StaticSolver, WithInitialSolution, WithMipGap,
+    WithTimeLimit, solver_name,
 };
-pub use variable::{variable, ProblemVariables, Variable, VariableDefinition};
+pub use variable::{ProblemVariables, Variable, VariableDefinition, variable};
 
 #[cfg(not(any(
     feature = "coin_cbc",

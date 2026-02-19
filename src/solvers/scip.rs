@@ -3,23 +3,23 @@
 
 use std::collections::HashMap;
 
+use russcip::ProblemOrSolving;
+use russcip::Retcode;
+use russcip::WithSolutions;
 use russcip::model::Model;
 use russcip::model::ModelWithProblem;
 use russcip::model::ObjSense;
 use russcip::model::ProblemCreated;
 use russcip::model::Solved;
 use russcip::variable::VarType;
-use russcip::ProblemOrSolving;
-use russcip::Retcode;
-use russcip::WithSolutions;
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
+    CardinalityConstraintSolver, WithInitialSolution, WithMipGap, WithTimeLimit,
     constraint::ConstraintReference,
     solvers::{
         MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel,
     },
-    CardinalityConstraintSolver, WithInitialSolution, WithMipGap, WithTimeLimit,
 };
 use crate::{Constraint, Variable};
 
@@ -408,8 +408,8 @@ impl Solution for SCIPSolved {
 #[cfg(test)]
 mod tests {
     use crate::{
-        constraint, variable, variables, CardinalityConstraintSolver, Expression, Solution,
-        SolutionStatus, SolverModel, WithInitialSolution, WithMipGap,
+        CardinalityConstraintSolver, Expression, Solution, SolutionStatus, SolverModel,
+        WithInitialSolution, WithMipGap, constraint, variable, variables,
     };
 
     use super::scip;

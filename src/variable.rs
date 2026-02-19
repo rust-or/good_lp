@@ -5,7 +5,7 @@
 use std::collections::Bound;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
-use std::iter::{repeat_n, FromIterator};
+use std::iter::{FromIterator, repeat_n};
 use std::ops::{Div, Mul, Neg, Not, RangeBounds};
 
 use fnv::FnvHashMap as HashMap;

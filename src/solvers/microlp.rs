@@ -5,13 +5,13 @@ use std::time::Duration;
 use microlp::{Error, StopReason};
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{Constraint, Variable};
 use crate::{
     constraint::ConstraintReference,
     solvers::{
         ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel, WithTimeLimit,
     },
 };
-use crate::{Constraint, Variable};
 
 /// The [microlp](https://docs.rs/microlp) solver,
 /// to be used with [UnsolvedProblem::using].
@@ -146,7 +146,7 @@ impl Solution for MicroLpSolution {
 
 #[cfg(test)]
 mod tests {
-    use crate::{variable, variables, Solution, SolverModel};
+    use crate::{Solution, SolverModel, variable, variables};
 
     use super::microlp;
 

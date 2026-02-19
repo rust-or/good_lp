@@ -4,12 +4,12 @@ use crate::solvers::{
     MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolutionWithDual,
     SolverModel, WithMipGap, WithTimeLimit,
 };
+use crate::{Constraint, IntoAffineExpression, Variable, WithInitialSolution};
 use crate::{
     constraint::ConstraintReference,
     solvers::DualValues,
     variable::{UnsolvedProblem, VariableDefinition},
 };
-use crate::{Constraint, IntoAffineExpression, Variable, WithInitialSolution};
 use highs::{HighsModelStatus, HighsSolutionStatus};
 use std::collections::HashMap;
 use std::iter::FromIterator;
@@ -424,9 +424,9 @@ impl WithMipGap for HighsProblem {
 mod tests {
     use super::highs;
     use crate::{
-        constraint,
+        Expression, Solution, SolverModel, WithInitialSolution, WithMipGap, constraint,
         solvers::{SolutionStatus, WithTimeLimit},
-        variable, variables, Expression, Solution, SolverModel, WithInitialSolution, WithMipGap,
+        variable, variables,
     };
 
     #[test]

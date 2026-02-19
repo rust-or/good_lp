@@ -1,7 +1,7 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 
-use good_lp::{default_solver, variable, variables, Expression, Solution, SolverModel};
+use good_lp::{Expression, Solution, SolverModel, default_solver, variable, variables};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("sum((2 x_i + 1) for i in [1..100_000])", |b| {

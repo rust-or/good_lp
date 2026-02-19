@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::{
-    constraint::ConstraintReference, variable::UnsolvedProblem, Constraint, ResolutionError,
-    Solution, SolutionStatus, SolverModel, Variable, VariableDefinition, WithTimeLimit,
+    Constraint, ResolutionError, Solution, SolutionStatus, SolverModel, Variable,
+    VariableDefinition, WithTimeLimit, constraint::ConstraintReference, variable::UnsolvedProblem,
 };
 use cplex_rs::parameters::TimeLimit;
 use cplex_rs::{ConstraintType, Environment, Problem, ProblemType};
@@ -118,7 +118,7 @@ impl SolverModel for CPLEXProblem {
             }
             Err(cplex_rs::Error::Cplex(cplex_rs::errors::Cplex::Other { message, .. }))
             | Err(cplex_rs::Error::Input(cplex_rs::errors::Input { message })) => {
-                return Err(ResolutionError::Str(message))
+                return Err(ResolutionError::Str(message));
             }
         };
 
@@ -189,7 +189,7 @@ impl Solution for CplexSolved {
 mod tests {
     use cplex_rs::Environment;
 
-    use crate::{constraint, variable, variables, Solution, SolverModel};
+    use crate::{Solution, SolverModel, constraint, variable, variables};
 
     use super::cplex_with_env;
 

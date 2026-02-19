@@ -5,9 +5,9 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-use crate::variable::UnsolvedProblem;
 use crate::Constraint;
-use crate::{constraint::ConstraintReference, IntoAffineExpression, Variable};
+use crate::variable::UnsolvedProblem;
+use crate::{IntoAffineExpression, Variable, constraint::ConstraintReference};
 
 #[cfg(feature = "cplex-rs")]
 #[cfg_attr(docsrs, doc(cfg(feature = "cplex-rs")))]
@@ -127,14 +127,24 @@ pub enum ResolutionError {
 impl Display for ResolutionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ResolutionError::Unbounded =>
-                write!(f, "Unbounded: The objective can be made infinitely large without violating any constraints."),
-            ResolutionError::Infeasible =>
-                write!(f, "Infeasible: The problem contains contradictory constraints. No solution exists."),
-            ResolutionError::Other(s) =>
-                write!(f, "An unexpected error occurred while running the optimizer: {}.", s),
-            ResolutionError::Str(s) =>
-                write!(f, "An unexpected error occurred while running the optimizer: {}.", s)
+            ResolutionError::Unbounded => write!(
+                f,
+                "Unbounded: The objective can be made infinitely large without violating any constraints."
+            ),
+            ResolutionError::Infeasible => write!(
+                f,
+                "Infeasible: The problem contains contradictory constraints. No solution exists."
+            ),
+            ResolutionError::Other(s) => write!(
+                f,
+                "An unexpected error occurred while running the optimizer: {}.",
+                s
+            ),
+            ResolutionError::Str(s) => write!(
+                f,
+                "An unexpected error occurred while running the optimizer: {}.",
+                s
+            ),
         }
     }
 }

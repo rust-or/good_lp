@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use good_lp::{constraint, default_solver, variables, Solution, SolverModel};
+use good_lp::{Solution, SolverModel, constraint, default_solver, variables};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;
 

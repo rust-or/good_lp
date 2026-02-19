@@ -1,9 +1,9 @@
 use float_eq::assert_float_eq;
 
 use good_lp::{
-    constraint,
+    Solution, Solver, SolverModel, constraint,
     solvers::{DualValues, SolutionWithDual},
-    variable, variables, Solution, Solver, SolverModel,
+    variable, variables,
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;

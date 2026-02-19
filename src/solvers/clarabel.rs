@@ -3,16 +3,16 @@
 use crate::affine_expression_trait::IntoAffineExpression;
 use crate::expression::LinearExpression;
 use crate::variable::UnsolvedProblem;
+use crate::{Constraint, DualValues, SolutionWithDual, Variable};
 use crate::{
+    SolutionStatus,
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
-    SolutionStatus,
 };
-use crate::{Constraint, DualValues, SolutionWithDual, Variable};
 
 use clarabel::algebra::CscMatrix;
-use clarabel::solver::implementations::default::DefaultSettingsBuilder;
 use clarabel::solver::SupportedConeT::{self, *};
+use clarabel::solver::implementations::default::DefaultSettingsBuilder;
 use clarabel::solver::{DefaultSolution, SolverStatus};
 use clarabel::solver::{DefaultSolver, IPSolver};
 

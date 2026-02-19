@@ -1,4 +1,4 @@
-use good_lp::{constraint, variables, Solution, SolverModel, StaticSolver};
+use good_lp::{Solution, SolverModel, StaticSolver, constraint, variables};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;
 // See: https://github.com/rust-or/good_lp/pull/5

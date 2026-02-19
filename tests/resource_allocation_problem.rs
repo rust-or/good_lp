@@ -14,8 +14,8 @@
 
 use good_lp::variable::ProblemVariables;
 use good_lp::{
-    constraint, default_solver, variable, variables, Constraint, Expression, Solution, SolverModel,
-    Variable,
+    Constraint, Expression, Solution, SolverModel, Variable, constraint, default_solver, variable,
+    variables,
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;

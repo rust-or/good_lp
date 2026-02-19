@@ -1,6 +1,7 @@
 use good_lp::{
+    Solver,
     solvers::{MipGapError, WithMipGap},
-    variables, Solver,
+    variables,
 };
 
 #[cfg(feature = "coin_cbc")]
@@ -10,7 +11,7 @@ use good_lp::coin_cbc;
 use good_lp::highs;
 
 #[cfg(feature = "lp-solvers")]
-use good_lp::{solvers::lp_solvers::GlpkSolver, LpSolver};
+use good_lp::{LpSolver, solvers::lp_solvers::GlpkSolver};
 
 #[allow(dead_code)] // used only with some features
 fn generic_mipgap_set<S>(solver: S)

@@ -4,10 +4,10 @@ use crate::solvers::{
     ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel, WithTimeLimit,
 };
 use crate::variable::UnsolvedProblem;
-use crate::{
-    affine_expression_trait::IntoAffineExpression, constraint::ConstraintReference, ModelWithSOS1,
-};
 use crate::{Constraint, Variable};
+use crate::{
+    ModelWithSOS1, affine_expression_trait::IntoAffineExpression, constraint::ConstraintReference,
+};
 use lpsolve::{ConstraintType, Problem, SOSType, SolveStatus};
 use std::convert::TryInto;
 use std::ffi::CString;

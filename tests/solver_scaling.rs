@@ -1,5 +1,5 @@
 use float_eq::assert_float_eq;
-use good_lp::{constraint, default_solver, variable, variables, Expression, Solution, SolverModel};
+use good_lp::{Expression, Solution, SolverModel, constraint, default_solver, variable, variables};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::*;
 const BIG_NUM: usize = 1000; // <- Set this higher to test how good_lp and the solvers scale

@@ -4,20 +4,20 @@
 use std::convert::TryInto;
 
 use coin_cbc::{
-    raw::{SecondaryStatus, Status},
     Col, Model, Sense, Solution as CbcSolution,
+    raw::{SecondaryStatus, Status},
 };
 
 use crate::solvers::{
     MipGapError, ModelWithSOS1, SolutionStatus, WithInitialSolution, WithMipGap, WithTimeLimit,
 };
 use crate::variable::{UnsolvedProblem, VariableDefinition};
+use crate::{Constraint, Variable};
 use crate::{
+    IntoAffineExpression,
     constraint::ConstraintReference,
     solvers::{ObjectiveDirection, ResolutionError, Solution, SolverModel},
-    IntoAffineExpression,
 };
-use crate::{Constraint, Variable};
 
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
 /// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)
@@ -274,10 +274,9 @@ impl WithMipGap for CoinCbcProblem {
 mod tests {
     use super::coin_cbc;
     use crate::{
-        constraint,
+        Expression, Solution, SolverModel, Variable, WithInitialSolution, WithMipGap, constraint,
         solvers::{SolutionStatus, WithTimeLimit},
-        variable, variables, Expression, Solution, SolverModel, Variable, WithInitialSolution,
-        WithMipGap,
+        variable, variables,
     };
     use float_eq::assert_float_eq;
 

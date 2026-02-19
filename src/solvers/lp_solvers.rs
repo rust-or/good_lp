@@ -30,12 +30,12 @@ impl<T: lp_solvers::solvers::SolverTrait + Clone> Solver for LpSolver<T> {
             ObjectiveDirection::Maximisation => LpObjective::Maximize,
             ObjectiveDirection::Minimisation => LpObjective::Minimize,
         };
-        let mut gen = UniqueNameGenerator::default();
+        let mut generator = UniqueNameGenerator::default();
         let variables: Vec<lp_solvers::problem::Variable> = problem
             .variables
             .into_iter()
             .map(|def| lp_solvers::problem::Variable {
-                name: gen.add_variable(&def.name).to_string(),
+                name: generator.add_variable(&def.name).to_string(),
                 is_integer: def.is_integer,
                 lower_bound: def.min,
                 upper_bound: def.max,
