@@ -2,7 +2,7 @@
 name = "good_lp"
 version = "1.15.0"
 authors = ["Ophir LOJKINE <contact@ophir.dev>"]
-edition = "2018"
+edition = "2024"
 repository = "https://github.com/rust-or/good_lp"
 documentation = "https://docs.rs/good_lp"
 description = " Mixed Integer Linear Programming for Rust, with an user-friendly API. This crate allows modeling LP problems, and lets you solve them with various solvers."
@@ -51,7 +51,7 @@ fnv = "1.0.5"
 float_eq = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-criterion = "0.7"
+criterion = "0.8"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen-test = "0.3.0"
