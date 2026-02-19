@@ -148,13 +148,16 @@ impl ModelWithSOS1 for LpSolveProblem {
             variables.push(var.index().try_into().expect("too many vars"));
         }
         let name = CString::new("sos").unwrap();
-        debug_assert_eq!(self.0.add_sos_constraint(
-            &name,
-            SOSType::Type1,
-            1,
-            weights.as_mut_slice(),
-            variables.as_mut_slice(),
-        ), Ok(()));
+        debug_assert_eq!(
+            self.0.add_sos_constraint(
+                &name,
+                SOSType::Type1,
+                1,
+                weights.as_mut_slice(),
+                variables.as_mut_slice(),
+            ),
+            Ok(())
+        );
     }
 }
 

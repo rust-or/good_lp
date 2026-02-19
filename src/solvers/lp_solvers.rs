@@ -136,7 +136,7 @@ impl<T: SolverTrait> SolverModel for Model<T> {
     }
 }
 
-impl<T> crate::solvers::WithTimeLimit for Model<T>
+impl<T> WithTimeLimit for Model<T>
 where
     T: lp_solvers::solvers::WithMaxSeconds<T>,
 {
