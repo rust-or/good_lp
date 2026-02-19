@@ -1,11 +1,15 @@
 //! A solver that uses [microlp](https://docs.rs/microlp), a pure rust solver.
 
-use microlp::Error;
+use std::time::Duration;
+
+use microlp::{Error, StopReason};
 
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     constraint::ConstraintReference,
-    solvers::{ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel},
+    solvers::{
+        ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel, WithTimeLimit,
+    },
 };
 use crate::{Constraint, Variable};
 
@@ -63,6 +67,14 @@ impl MicroLpProblem {
     }
 }
 
+impl WithTimeLimit for MicroLpProblem {
+    fn with_time_limit<T: Into<f64>>(mut self, seconds: T) -> Self {
+        self.problem
+            .set_time_limit(Duration::from_secs_f64(seconds.into()));
+        self
+    }
+}
+
 impl SolverModel for MicroLpProblem {
     type Solution = MicroLpSolution;
     type Error = ResolutionError;
@@ -102,7 +114,6 @@ impl From<microlp::Error> for ResolutionError {
             microlp::Error::Unbounded => Self::Unbounded,
             microlp::Error::Infeasible => Self::Infeasible,
             microlp::Error::InternalError(s) => Self::Str(s),
-            microlp::Error::Limit => Self::Other("Execution Limit reached"),
         }
     }
 }
@@ -122,7 +133,11 @@ impl MicroLpSolution {
 
 impl Solution for MicroLpSolution {
     fn status(&self) -> SolutionStatus {
-        SolutionStatus::Optimal
+        let solution_kind = self.solution.stop_reason();
+        match solution_kind {
+            StopReason::Finished => SolutionStatus::Optimal,
+            StopReason::Limit => SolutionStatus::TimeLimit,
+        }
     }
     fn value(&self, variable: Variable) -> f64 {
         self.solution.var_value(self.variables[variable.index()])
