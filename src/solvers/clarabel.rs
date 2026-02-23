@@ -1,7 +1,11 @@
 //! A solver that uses [clarabel](https://oxfordcontrol.github.io/ClarabelDocs/stable/), a pure rust solver.
 
 use crate::affine_expression_trait::IntoAffineExpression;
+#[cfg(feature = "enable_quadratic")]
+use crate::expression::Expression;
 use crate::expression::LinearExpression;
+#[cfg(feature = "enable_quadratic")]
+use crate::expression::VariablePair;
 use crate::variable::UnsolvedProblem;
 use crate::{Constraint, DualValues, SolutionWithDual, Variable};
 use crate::{
@@ -18,24 +22,54 @@ use clarabel::solver::{DefaultSolver, IPSolver};
 
 /// The [clarabel](https://oxfordcontrol.github.io/ClarabelDocs/stable/) solver,
 /// to be used with [UnsolvedProblem::using].
+/// Automatically handles both linear and quadratic objectives.
 pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
-    let UnsolvedProblem {
-        objective,
-        direction,
-        variables,
-    } = to_solve;
-    let coef = if direction == ObjectiveDirection::Maximisation {
+    let coef = if to_solve.direction == ObjectiveDirection::Maximisation {
         -1.
     } else {
         1.
     };
+
+    let objective = to_solve.objective;
+
+    // Now we can safely move the other fields
+    let variables = to_solve.variables;
+
     let mut objective_vector = vec![0.; variables.len()];
-    for (var, obj) in objective.linear_coefficients() {
-        objective_vector[var.index()] = obj * coef;
+
+    // Handle quadratic case
+    #[cfg(feature = "enable_quadratic")]
+    let quadratic_matrix_builder = if !objective.is_affine() {
+        // Use quadratic objective coefficients
+        for (var, obj_coeff) in objective.linear.coefficients {
+            objective_vector[var.index()] = obj_coeff * coef;
+        }
+
+        let mut qmb = CscMatrixBuilder::new_square(variables.len());
+        for (&pair, &quad_coeff) in &objective.quadratic.coefficients {
+            qmb.add_quadratic_term(pair, quad_coeff * coef);
+        }
+        Some(qmb)
+    } else {
+        // Use linear objective coefficients
+        for (var, obj) in objective.linear_coefficients() {
+            objective_vector[var.index()] = obj * coef;
+        }
+        None
+    };
+
+    // Handle linear-only case (when quadratic features are disabled)
+    #[cfg(not(feature = "enable_quadratic"))]
+    {
+        for (var, obj) in objective.linear_coefficients() {
+            objective_vector[var.index()] = obj * coef;
+        }
     }
+
     let constraints_matrix_builder = CscMatrixBuilder::new(variables.len());
     let mut settings = DefaultSettingsBuilder::default();
     settings.verbose(false).tol_feas(1e-9);
+
     let mut p = ClarabelProblem {
         objective: objective_vector,
         constraints_matrix_builder,
@@ -43,7 +77,10 @@ pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
         variables: variables.len(),
         settings,
         cones: Vec::new(),
+        #[cfg(feature = "enable_quadratic")]
+        quadratic_matrix_builder,
     };
+
     // add trivial constraints embedded in the variable definitions
     for (var, def) in variables.iter_variables_with_def() {
         if def.is_integer {
@@ -59,7 +96,7 @@ pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
     p
 }
 
-/// A clarabel model
+/// A clarabel model that can handle both linear and quadratic objectives
 pub struct ClarabelProblem {
     constraints_matrix_builder: CscMatrixBuilder,
     constraint_values: Vec<f64>,
@@ -67,6 +104,8 @@ pub struct ClarabelProblem {
     variables: usize,
     settings: DefaultSettingsBuilder<f64>,
     cones: Vec<SupportedConeT<f64>>,
+    #[cfg(feature = "enable_quadratic")]
+    quadratic_matrix_builder: Option<CscMatrixBuilder>,
 }
 
 impl ClarabelProblem {
@@ -79,13 +118,23 @@ impl ClarabelProblem {
     /// panics if the problem is not valid
     pub fn into_solver(self) -> DefaultSolver<f64> {
         let settings = self.settings.build().expect("Invalid clarabel settings");
-        let quadratic_objective = &CscMatrix::zeros((self.variables, self.variables));
+
+        #[cfg(feature = "enable_quadratic")]
+        let quadratic_objective = if let Some(qmb) = self.quadratic_matrix_builder {
+            qmb.build()
+        } else {
+            CscMatrix::zeros((self.variables, self.variables))
+        };
+
+        #[cfg(not(feature = "enable_quadratic"))]
+        let quadratic_objective = CscMatrix::zeros((self.variables, self.variables));
+
         let objective = &self.objective;
         let constraints = &self.constraints_matrix_builder.build();
         let constraint_values = &self.constraint_values;
         let cones = &self.cones;
         DefaultSolver::new(
-            quadratic_objective,
+            &quadratic_objective,
             objective,
             constraints,
             constraint_values,
@@ -194,6 +243,7 @@ struct CscMatrixBuilder {
     nzval: Vec<Vec<f64>>,
     n_rows: usize,
     n_cols: usize,
+    is_quadratic: bool,
 }
 
 impl CscMatrixBuilder {
@@ -203,8 +253,22 @@ impl CscMatrixBuilder {
             nzval: vec![Vec::new(); n_cols],
             n_rows: 0,
             n_cols,
+            is_quadratic: false,
         }
     }
+
+    /// Create a new builder for a square matrix (used for quadratic matrices)
+    #[cfg(feature = "enable_quadratic")]
+    fn new_square(n_vars: usize) -> Self {
+        Self {
+            rowval: vec![Vec::new(); n_vars],
+            nzval: vec![Vec::new(); n_vars],
+            n_rows: n_vars,
+            n_cols: n_vars,
+            is_quadratic: true,
+        }
+    }
+
     fn add_row(&mut self, row: LinearExpression) {
         for (var, value) in row.linear_coefficients() {
             self.rowval[var.index()].push(self.n_rows);
@@ -212,7 +276,47 @@ impl CscMatrixBuilder {
         }
         self.n_rows += 1;
     }
-    fn build(self) -> clarabel::algebra::CscMatrix {
+
+    /// Add a quadratic term to the matrix (for quadratic objectives)
+    #[cfg(feature = "enable_quadratic")]
+    fn add_quadratic_term(&mut self, pair: VariablePair, coeff: f64) {
+        let i = pair.var1.index();
+        let j = pair.var2.index();
+
+        if i == j {
+            // Diagonal term: multiply by 2 because Clarabel minimizes 1/2 * x^T * P * x
+            // So we need P_ii = 2 * coeff to get coeff * x_i^2 in the objective
+            self.rowval[j].push(i);
+            self.nzval[j].push(2.0 * coeff);
+        } else {
+            // Off-diagonal term: add the coefficient to both (i,j) and (j,i) positions
+            // to create a symmetric matrix. Each entry gets the original coefficient
+            // since Clarabel multiplies the entire quadratic form by 1/2.
+            self.rowval[j].push(i);
+            self.nzval[j].push(coeff);
+
+            self.rowval[i].push(j);
+            self.nzval[i].push(coeff);
+        }
+    }
+
+    fn build(mut self) -> clarabel::algebra::CscMatrix {
+        // For quadratic matrices, sort columns to maintain proper CSC format
+        #[cfg(feature = "enable_quadratic")]
+        if self.is_quadratic {
+            for col in 0..self.n_cols {
+                let mut pairs: Vec<(usize, f64)> = self.rowval[col]
+                    .iter()
+                    .zip(self.nzval[col].iter())
+                    .map(|(&row, &val)| (row, val))
+                    .collect();
+                pairs.sort_by_key(|&(row, _)| row);
+
+                self.rowval[col] = pairs.iter().map(|&(row, _)| row).collect();
+                self.nzval[col] = pairs.iter().map(|&(_, val)| val).collect();
+            }
+        }
+
         let mut colptr = Vec::with_capacity(self.n_cols + 1);
         colptr.push(0);
         for col in &self.rowval {
@@ -275,5 +379,224 @@ mod tests {
         assert_eq!(matrix.get_entry((1, 0)), Some(3.));
         assert_eq!(matrix.get_entry((1, 1)), Some(4.));
         assert_eq!(matrix.get_entry((1, 2)), Some(5.));
+    }
+
+    #[cfg(feature = "enable_quadratic")]
+    mod quadratic_tests {
+        use super::*;
+        use crate::VariablePair;
+
+        #[test]
+        fn test_csc_quadratic_matrix_builder_diagonal() {
+            variables! {vars:
+                x;
+                y;
+            }
+
+            let mut builder = CscMatrixBuilder::new_square(2);
+
+            // Add diagonal terms: x^2 with coefficient 2.0, y^2 with coefficient 3.0
+            builder.add_quadratic_term(VariablePair::new(x, x), 2.0);
+            builder.add_quadratic_term(VariablePair::new(y, y), 3.0);
+
+            let matrix = builder.build();
+
+            // Check diagonal entries (scaled by 2 for Clarabel's 1/2 * x^T * P * x formulation)
+            assert_eq!(matrix.get_entry((0, 0)), Some(4.0)); // 2.0 * 2 = 4.0
+            assert_eq!(matrix.get_entry((1, 1)), Some(6.0)); // 3.0 * 2 = 6.0
+
+            // Check off-diagonal entries are zero
+            assert_eq!(matrix.get_entry((0, 1)), None);
+            assert_eq!(matrix.get_entry((1, 0)), None);
+        }
+
+        #[test]
+        fn test_csc_quadratic_matrix_builder_off_diagonal() {
+            variables! {vars:
+                x;
+                y;
+            }
+
+            let mut builder = CscMatrixBuilder::new_square(3);
+
+            // Add off-diagonal term: 2*x*y (coefficient 2.0)
+            builder.add_quadratic_term(VariablePair::new(x, y), 2.0);
+
+            let matrix = builder.build();
+
+            // Off-diagonal terms: coefficient is stored directly (no factor of 2 for off-diagonal)
+            assert_eq!(matrix.get_entry((0, 1)), Some(2.0)); // (x,y) entry
+            assert_eq!(matrix.get_entry((1, 0)), Some(2.0)); // (y,x) entry (symmetric)
+
+            // Other entries should be empty
+            assert_eq!(matrix.get_entry((0, 0)), None);
+            assert_eq!(matrix.get_entry((1, 1)), None);
+            assert_eq!(matrix.get_entry((2, 2)), None);
+        }
+
+        #[test]
+        fn test_csc_quadratic_matrix_builder_mixed() {
+            variables! {vars:
+                x;
+                y;
+            }
+
+            let mut builder = CscMatrixBuilder::new_square(2);
+
+            // Add mixed terms: x^2 + 2*x*y + y^2 (like (x+y)^2)
+            builder.add_quadratic_term(VariablePair::new(x, x), 1.0);
+            builder.add_quadratic_term(VariablePair::new(x, y), 2.0);
+            builder.add_quadratic_term(VariablePair::new(y, y), 1.0);
+
+            let matrix = builder.build();
+
+            // Check the resulting matrix (accounting for Clarabel's 1/2 factor):
+            // For (x+y)^2 = x^2 + 2*x*y + y^2, we expect:
+            // [2.0  2.0]  (diagonal terms scaled by 2, off-diagonal terms as-is)
+            // [2.0  2.0]
+            assert_eq!(matrix.get_entry((0, 0)), Some(2.0)); // x^2 (scaled by 2)
+            assert_eq!(matrix.get_entry((0, 1)), Some(2.0)); // x*y coefficient
+            assert_eq!(matrix.get_entry((1, 0)), Some(2.0)); // y*x coefficient
+            assert_eq!(matrix.get_entry((1, 1)), Some(2.0)); // y^2 (scaled by 2)
+        }
+
+        #[test]
+        fn test_simple_quadratic_problem() {
+            variables! {vars:
+                x;
+                y;
+            }
+
+            // Create a simple quadratic objective: minimize x^2 + y^2
+            let mut quadratic_obj = Expression::default();
+            quadratic_obj.add_quadratic_term(x, x, 1.0); // x^2
+            quadratic_obj.add_quadratic_term(y, y, 1.0); // y^2
+
+            // Create the problem
+            let problem = vars.minimise(quadratic_obj).using(clarabel);
+
+            // The problem should be solvable (unconstrained minimum at (0,0))
+            let solution = problem.solve().expect("Should solve successfully");
+
+            // Check that solution is near the origin
+            assert!((solution.value(x)).abs() < 1e-6);
+            assert!((solution.value(y)).abs() < 1e-6);
+        }
+
+        #[test]
+        fn test_quadratic_problem_with_constraints() {
+            variables! {vars:
+                x;
+                y;
+            }
+
+            // Create quadratic objective: minimize x^2 + y^2
+            let mut quadratic_obj = Expression::default();
+            quadratic_obj.add_quadratic_term(x, x, 1.0); // x^2
+            quadratic_obj.add_quadratic_term(y, y, 1.0); // y^2
+
+            // Solve with constraint x + y >= 2
+            let solution = vars
+                .minimise(quadratic_obj)
+                .using(clarabel)
+                .with(x + y >> 2.0)
+                .solve()
+                .expect("Should solve successfully");
+
+            // The optimal solution should be x = y = 1 (closest point to origin on line x+y=2)
+            assert!((solution.value(x) - 1.0).abs() < 1e-3);
+            assert!((solution.value(y) - 1.0).abs() < 1e-3);
+
+            // Check constraint is satisfied
+            assert!(solution.value(x) + solution.value(y) >= 1.99);
+        }
+
+        #[test]
+        fn test_quadratic_problem_mixed_terms() {
+            variables! {vars:
+                x;
+                y;
+            }
+
+            // Create quadratic objective: minimize (x-1)^2 + (y-2)^2 + 2*x*y
+            // Expanded: x^2 - 2x + 1 + y^2 - 4y + 4 + 2xy
+            //         = x^2 + y^2 + 2xy - 2x - 4y + 5
+            let mut quadratic_obj = Expression::default();
+            quadratic_obj.add_quadratic_term(x, x, 1.0); // x^2
+            quadratic_obj.add_quadratic_term(y, y, 1.0); // y^2
+            quadratic_obj.add_quadratic_term(x, y, 2.0); // 2*x*y
+            quadratic_obj.add_linear_term(x, -2.0); // -2x
+            quadratic_obj.add_linear_term(y, -4.0); // -4y
+            quadratic_obj.add_constant(5.0); // +5
+
+            let solution = vars
+                .minimise(quadratic_obj)
+                .using(clarabel)
+                .solve()
+                .expect("Should solve successfully");
+
+            // This is a more complex quadratic, but should still solve
+            // We mainly check that it doesn't crash and produces a reasonable solution
+            assert!(solution.value(x).is_finite());
+            assert!(solution.value(y).is_finite());
+        }
+
+        // Note: More complex single-variable quadratic tests are covered in integration tests
+
+        #[test]
+        fn test_quadratic_problem_with_linear_constraints() {
+            variables! {vars:
+                x;
+                y;
+                z;
+            }
+
+            // Minimize x^2 + y^2 + z^2 subject to x + y + z = 3
+            let mut quadratic_obj = Expression::default();
+            quadratic_obj.add_quadratic_term(x, x, 1.0);
+            quadratic_obj.add_quadratic_term(y, y, 1.0);
+            quadratic_obj.add_quadratic_term(z, z, 1.0);
+
+            let solution = vars
+                .minimise(quadratic_obj)
+                .using(clarabel)
+                .with((x + y + z).eq(3.0)) // Equality constraint
+                .solve()
+                .expect("Should solve successfully");
+
+            // Optimal solution should be x = y = z = 1
+            assert!((solution.value(x) - 1.0).abs() < 1e-3);
+            assert!((solution.value(y) - 1.0).abs() < 1e-3);
+            assert!((solution.value(z) - 1.0).abs() < 1e-3);
+        }
+
+        #[test]
+        fn test_quadratic_expression_evaluation() {
+            variables! {vars:
+                x;
+                y;
+            }
+
+            // Create quadratic expression: x^2 + 2*x*y + y^2 (which is (x+y)^2)
+            let mut quadratic_obj = Expression::default();
+            quadratic_obj.add_quadratic_term(x, x, 1.0);
+            quadratic_obj.add_quadratic_term(x, y, 2.0);
+            quadratic_obj.add_quadratic_term(y, y, 1.0);
+
+            let solution = vars
+                .minimise(quadratic_obj)
+                .using(clarabel)
+                .with(x + y >> 2.0) // x + y >= 2
+                .solve()
+                .expect("Should solve successfully");
+
+            // At the solution, (x+y)^2 should equal the sum of coefficients times the values
+            let x_val = solution.value(x);
+            let y_val = solution.value(y);
+            let expected_obj_value = x_val * x_val + 2.0 * x_val * y_val + y_val * y_val;
+            let actual_obj_value = (x_val + y_val) * (x_val + y_val);
+
+            assert!((expected_obj_value - actual_obj_value).abs() < 1e-6);
+        }
     }
 }

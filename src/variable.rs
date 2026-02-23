@@ -8,10 +8,16 @@ use std::hash::Hash;
 use std::iter::{FromIterator, repeat_n};
 use std::ops::{Div, Mul, Neg, Not, RangeBounds};
 
+#[cfg(feature = "enable_quadratic")]
+use crate::expression::QuadraticExpression;
+#[cfg(feature = "enable_quadratic")]
+use crate::IntoQuadraticExpression;
+
 use fnv::FnvHashMap as HashMap;
 
 use crate::affine_expression_trait::IntoAffineExpression;
 use crate::expression::{Expression, LinearExpression};
+
 use crate::solvers::{ObjectiveDirection, Solver};
 
 /// A variable in a problem. Use variables to create [expressions](Expression),
@@ -497,6 +503,22 @@ impl ProblemVariables {
         }
     }
 
+    /// Creates an optimization problem with the given quadratic objective. Don't solve it immediately.
+    #[cfg(feature = "enable_quadratic")]
+    pub fn optimise_quadratic<E: IntoQuadraticExpression>(
+        self,
+        direction: ObjectiveDirection,
+        objective: E,
+    ) -> UnsolvedProblem {
+        let objective = Expression::from_other_quadratic(objective);
+        // todo, correct assert check
+        UnsolvedProblem {
+            objective,
+            direction,
+            variables: self,
+        }
+    }
+
     /// Creates an maximization problem with the given objective. Don't solve it immediately
     ///
     /// ```
@@ -506,6 +528,20 @@ impl ProblemVariables {
     /// # use float_eq::assert_float_eq;
     /// assert_float_eq!(solution.value(x), 7., abs <= 1e-8);
     /// ```
+    #[cfg(feature = "enable_quadratic")]
+    pub fn maximise<E: IntoQuadraticExpression>(self, objective: E) -> UnsolvedProblem {
+        self.optimise_quadratic(ObjectiveDirection::Maximisation, objective)
+    }
+    /// Creates an maximization problem with the given objective. Don't solve it immediately
+    ///
+    /// ```
+    /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
+    /// variables!{problem: x <= 7;}
+    /// let solution = problem.maximise(x).using(default_solver).solve().unwrap();
+    /// # use float_eq::assert_float_eq;
+    /// assert_float_eq!(solution.value(x), 7., abs <= 1e-8);
+    /// ```
+    #[cfg(not(feature = "enable_quadratic"))]
     pub fn maximise<E: IntoAffineExpression>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Maximisation, objective)
     }
@@ -518,6 +554,20 @@ impl ProblemVariables {
     /// # use float_eq::assert_float_eq;
     /// assert_float_eq!(solution.value(x), -8., abs <= 1e-8);
     /// ```
+    #[cfg(feature = "enable_quadratic")]
+    pub fn minimise<E: IntoQuadraticExpression>(self, objective: E) -> UnsolvedProblem {
+        self.optimise_quadratic(ObjectiveDirection::Minimisation, objective)
+    }
+
+    /// Creates an minimization problem with the given objective. Don't solve it immediately
+    /// ```
+    /// use good_lp::{variables, variable, default_solver, SolverModel, Solution};
+    /// variables!{problem: x >= -8;}
+    /// let solution = problem.minimise(x).using(default_solver).solve().unwrap();
+    /// # use float_eq::assert_float_eq;
+    /// assert_float_eq!(solution.value(x), -8., abs <= 1e-8);
+    /// ```
+    #[cfg(not(feature = "enable_quadratic"))]
     pub fn minimise<E: IntoAffineExpression>(self, objective: E) -> UnsolvedProblem {
         self.optimise(ObjectiveDirection::Minimisation, objective)
     }
@@ -612,6 +662,12 @@ impl UnsolvedProblem {
     pub fn using<S: Solver>(self, mut solver: S) -> S::Model {
         solver.create_model(self)
     }
+
+    /// Check if this problem has quadratic terms
+    #[cfg(feature = "enable_quadratic")]
+    pub fn is_quadratic(&self) -> bool {
+        !self.objective.is_affine()
+    }
 }
 
 impl<N: Into<f64>> Mul<N> for Variable {
@@ -621,6 +677,8 @@ impl<N: Into<f64>> Mul<N> for Variable {
         let mut coefficients = HashMap::with_capacity_and_hasher(1, Default::default());
         coefficients.insert(self, rhs.into());
         Expression {
+            #[cfg(feature = "enable_quadratic")]
+            quadratic: QuadraticExpression::new(),
             linear: LinearExpression { coefficients },
             constant: 0.0,
         }
@@ -634,6 +692,8 @@ impl Mul<Variable> for f64 {
         let mut coefficients = HashMap::with_capacity_and_hasher(1, Default::default());
         coefficients.insert(rhs, self);
         Expression {
+            #[cfg(feature = "enable_quadratic")]
+            quadratic: QuadraticExpression::new(),
             linear: LinearExpression { coefficients },
             constant: 0.0,
         }

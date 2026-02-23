@@ -27,6 +27,11 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         direction,
         variables,
     } = to_solve;
+
+    #[cfg(feature = "enable_quadratic")]
+    if !objective.is_affine() {
+        panic!("coin_cbc does not support quadratic objectives");
+    }
     let mut model = Model::default();
     let mut initial_solution = Vec::with_capacity(variables.initial_solution_len());
     let columns: Vec<Col> = variables

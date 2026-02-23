@@ -16,6 +16,9 @@ use crate::{
 /// The [microlp](https://docs.rs/microlp) solver,
 /// to be used with [UnsolvedProblem::using].
 pub fn microlp(to_solve: UnsolvedProblem) -> MicroLpProblem {
+    #[cfg(feature = "enable_quadratic")]
+    panic!("microlp does not support quadratic objectives");
+
     let UnsolvedProblem {
         objective,
         direction,

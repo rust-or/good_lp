@@ -2,9 +2,14 @@
 //! You can implement this trait if you want to implement your own
 //! variant of the [Expression](crate::Expression) type, optimized for your use case.
 use crate::expression::LinearExpression;
+#[cfg(feature = "enable_quadratic")]
+use crate::expression::QuadraticExpression;
 use crate::{Expression, Solution, Variable};
 
 /// An element that can be expressed as a linear combination of variables plus a constant
+///
+/// This trait can only be used with expressions that contain no quadratic terms.
+/// Attempting to use it with an Expression containing quadratic terms will panic.
 pub trait IntoAffineExpression {
     /// The iterator returned by [`linear_coefficients`](IntoAffineExpression::linear_coefficients).
     type Iter: IntoIterator<Item = (Variable, f64)>;
@@ -26,9 +31,13 @@ pub trait IntoAffineExpression {
         Self: Sized,
     {
         let constant = self.constant();
-        let coefficients = self.linear_coefficients().into_iter().collect();
+        let linear_coefficients = self.linear_coefficients().into_iter().collect();
         Expression {
-            linear: LinearExpression { coefficients },
+            #[cfg(feature = "enable_quadratic")]
+            quadratic: QuadraticExpression::new(),
+            linear: LinearExpression {
+                coefficients: linear_coefficients,
+            },
             constant,
         }
     }
@@ -92,6 +101,8 @@ macro_rules! impl_affine_for_num {
 
             fn into_expression(self) -> Expression {
                 Expression {
+                    #[cfg(feature = "enable_quadratic")]
+                    quadratic: QuadraticExpression::new(),
                     linear: LinearExpression { coefficients: std::default::Default::default() },
                     constant: f64::from(self),
                 }
