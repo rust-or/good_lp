@@ -29,6 +29,18 @@ impl Constraint {
         self.name = Some(name);
         self
     }
+
+    pub fn expression(&self) -> &Expression {
+        &self.expression
+    }
+
+    pub fn is_equality(&self) -> bool {
+        self.is_equality
+    }
+    
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
 }
 
 impl FormatWithVars for Constraint {
