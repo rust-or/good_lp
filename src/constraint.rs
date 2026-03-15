@@ -30,14 +30,17 @@ impl Constraint {
         self
     }
 
+    /// The expression that is constrained to be null or negative
     pub fn expression(&self) -> &Expression {
         &self.expression
     }
 
+    /// if is_equality, represents expression == 0, otherwise, expression <= 0
     pub fn is_equality(&self) -> bool {
         self.is_equality
     }
-    
+
+    /// get the constraint name, if it exists.
     pub fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
