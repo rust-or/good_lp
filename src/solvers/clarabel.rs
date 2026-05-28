@@ -11,6 +11,7 @@ use crate::{
 };
 
 use clarabel::algebra::CscMatrix;
+use clarabel::solver::SolverError;
 use clarabel::solver::SupportedConeT::{self, *};
 use clarabel::solver::implementations::default::DefaultSettingsBuilder;
 use clarabel::solver::{DefaultSolution, SolverStatus};
@@ -75,15 +76,26 @@ impl ClarabelProblem {
         &mut self.settings
     }
 
-    /// Convert the problem into a clarabel solver
-    /// panics if the problem is not valid
+    /// Convert the problem into a clarabel solver.
+    /// Panics if the problem is not valid.
     pub fn into_solver(self) -> DefaultSolver<f64> {
-        let settings = self.settings.build().expect("Invalid clarabel settings");
+        self.try_into_solver()
+            .expect("Invalid clarabel problem. This is likely a bug in good_lp. Problems should always have coherent dimensions.")
+    }
+
+    /// Convert the problem into a clarabel solver.
+    pub fn try_into_solver(self) -> Result<DefaultSolver<f64>, ResolutionError> {
+        let settings = self
+            .settings
+            .build()
+            .map_err(|e| ResolutionError::Str(format!("Invalid clarabel settings: {e}")))?;
+
         let quadratic_objective = &CscMatrix::zeros((self.variables, self.variables));
         let objective = &self.objective;
         let constraints = &self.constraints_matrix_builder.build();
         let constraint_values = &self.constraint_values;
         let cones = &self.cones;
+
         DefaultSolver::new(
             quadratic_objective,
             objective,
@@ -91,7 +103,8 @@ impl ClarabelProblem {
             constraint_values,
             cones,
             settings,
-        ).expect("Invalid clarabel problem. This is likely a bug in good_lp. Problems should always have coherent dimensions.")
+        )
+        .map_err(|error| ResolutionError::Str(error.to_string()))
     }
 }
 
@@ -100,7 +113,7 @@ impl SolverModel for ClarabelProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        let mut solver = self.into_solver();
+        let mut solver = self.try_into_solver()?;
         solver.solve();
         match solver.solution.status {
             SolverStatus::PrimalInfeasible | SolverStatus::AlmostPrimalInfeasible => {

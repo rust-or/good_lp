@@ -188,9 +188,16 @@ pub struct HighsProblem {
 }
 
 impl HighsProblem {
-    /// Get a highs model for this problem
+    /// Get a highs model for this problem. Panics if the problem is invalid.
     pub fn into_inner(self) -> highs::Model {
-        self.highs_problem.optimise(self.sense)
+        self.try_into_inner().expect("HiGHS error: invalid problem")
+    }
+
+    /// Build a highs model for this problem.
+    pub fn try_into_inner(self) -> Result<highs::Model, ResolutionError> {
+        self.highs_problem
+            .try_optimise(self.sense)
+            .map_err(|e| ResolutionError::Str(format!("HiGHS error while building model: {e:?}")))
     }
 
     /// Sets whether or not HiGHS should display verbose logging information to the console
@@ -272,26 +279,53 @@ impl SolverModel for HighsProblem {
                 })
         });
 
-        let mut model = self.into_inner();
+        let mut model = self.try_into_inner()?;
+
         if verbose {
-            model.set_option(&b"output_flag"[..], true);
-            model.set_option(&b"log_to_console"[..], true);
-            model.set_option(&b"log_dev_level"[..], 2);
+            model
+                .try_set_option(&b"output_flag"[..], true)
+                .map_err(|_| {
+                    ResolutionError::Str("HiGHS error while setting option output_flag".into())
+                })?;
+            model
+                .try_set_option(&b"log_to_console"[..], true)
+                .map_err(|_| {
+                    ResolutionError::Str("HiGHS error while setting option log_to_console".into())
+                })?;
+            model
+                .try_set_option(&b"log_dev_level"[..], 2)
+                .map_err(|_| {
+                    ResolutionError::Str("HiGHS error while setting option log_dev_level".into())
+                })?;
         }
+
         for (k, v) in options {
-            match v {
-                HighsOptionValue::String(v) => model.set_option(k, v.as_str()),
-                HighsOptionValue::Float(v) => model.set_option(k, v),
-                HighsOptionValue::Bool(v) => model.set_option(k, v),
-                HighsOptionValue::Int(v) => model.set_option(k, v),
-            }
+            let result = match v {
+                HighsOptionValue::String(v) => model.try_set_option(k.as_str(), v.as_str()),
+                HighsOptionValue::Float(v) => model.try_set_option(k.as_str(), v),
+                HighsOptionValue::Bool(v) => model.try_set_option(k.as_str(), v),
+                HighsOptionValue::Int(v) => model.try_set_option(k.as_str(), v),
+            };
+
+            result.map_err(|_| {
+                ResolutionError::Str(format!("HiGHS error while setting option {k}"))
+            })?;
         }
 
-        if initial_solution.is_some() {
-            model.set_solution(initial_solution.as_deref(), None, None, None);
+        if let Some(solution) = initial_solution.as_deref() {
+            model
+                .try_set_solution(Some(solution), None, None, None)
+                .map_err(|e| {
+                    ResolutionError::Str(format!(
+                        "HiGHS error while setting initial solution: {e:?}"
+                    ))
+                })?;
         }
 
-        let solved = model.solve();
+        let solved = model
+            .try_solve()
+            .map_err(|e| ResolutionError::Str(format!("HiGHS error while solving model: {e:?}")))?;
+
         let status = match solved.status() {
             HighsModelStatus::NotSet => return Err(ResolutionError::Other("NotSet")),
             HighsModelStatus::LoadError => return Err(ResolutionError::Other("LoadError")),

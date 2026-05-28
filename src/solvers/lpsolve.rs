@@ -92,12 +92,11 @@ impl SolverModel for LpSolveProblem {
                 let truncated = self
                     .0
                     .get_solution_variables(&mut solution)
-                    .expect("internal error: invalid solution array length");
-                assert_eq!(
-                    truncated.len(),
-                    solution.len(),
-                    "The solution doesn't have the expected number of variables"
-                );
+                    .ok_or(ResolutionError::Other(
+                        "Failed to read solution variables from lp_solve",
+                    ))
+                    .map(|truncated| truncated.to_vec());
+
                 Ok(LpSolveSolution {
                     problem: self.0,
                     solution,
