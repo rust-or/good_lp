@@ -279,24 +279,12 @@ impl SolverModel for HighsProblem {
                 })
         });
 
-        let mut model = self.try_into_inner()?;
+        let mut model = self.try_into_inner();
 
         if verbose {
-            model
-                .try_set_option(&b"output_flag"[..], true)
-                .map_err(|_| {
-                    ResolutionError::Str("HiGHS error while setting option output_flag".into())
-                })?;
-            model
-                .try_set_option(&b"log_to_console"[..], true)
-                .map_err(|_| {
-                    ResolutionError::Str("HiGHS error while setting option log_to_console".into())
-                })?;
-            model
-                .try_set_option(&b"log_dev_level"[..], 2)
-                .map_err(|_| {
-                    ResolutionError::Str("HiGHS error while setting option log_dev_level".into())
-                })?;
+            model.set_option(&b"output_flag"[..], true);
+            model.set_option(&b"log_to_console"[..], true);
+            model.set_option(&b"log_dev_level"[..], 2);
         }
 
         for (k, v) in options {
@@ -312,14 +300,8 @@ impl SolverModel for HighsProblem {
             })?;
         }
 
-        if let Some(solution) = initial_solution.as_deref() {
-            model
-                .try_set_solution(Some(solution), None, None, None)
-                .map_err(|e| {
-                    ResolutionError::Str(format!(
-                        "HiGHS error while setting initial solution: {e:?}"
-                    ))
-                })?;
+        if initial_solution.is_some() {
+            model.set_solution(initial_solution.as_deref(), None, None, None);
         }
 
         let solved = model
