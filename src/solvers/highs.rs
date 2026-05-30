@@ -279,7 +279,7 @@ impl SolverModel for HighsProblem {
                 })
         });
 
-        let mut model = self.try_into_inner();
+        let mut model = self.try_into_inner()?;
 
         if verbose {
             model.set_option(&b"output_flag"[..], true);

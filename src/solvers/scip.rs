@@ -288,16 +288,7 @@ impl SolverModel for SCIPProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        let solved_model =
-            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.model.solve())) {
-                Ok(model) => model,
-                Err(_) => {
-                    return Err(ResolutionError::Str(
-                        "SCIP failed to solve the problem".into(),
-                    ));
-                }
-            };
-
+        let solved_model = self.model.solve();
         let status = solved_model.status();
         match status {
             russcip::Status::TimeLimit => Ok(SCIPSolved {
