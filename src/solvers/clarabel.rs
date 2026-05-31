@@ -11,7 +11,6 @@ use crate::{
 };
 
 use clarabel::algebra::CscMatrix;
-use clarabel::solver::SolverError;
 use clarabel::solver::SupportedConeT::{self, *};
 use clarabel::solver::implementations::default::DefaultSettingsBuilder;
 use clarabel::solver::{DefaultSolution, SolverStatus};
