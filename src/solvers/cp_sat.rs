@@ -98,11 +98,10 @@ pub fn cp_sat(to_solve: UnsolvedProblem) -> CpSatProblem {
 }
 
 /// Rounds `f64` to `i64` with saturation at the numeric limits.
-/// NaN is logged to stderr and treated as 0.
+/// Panics on NaN.
 fn round_i64(x: f64) -> i64 {
     if x.is_nan() {
-        eprintln!("Warning: CP-SAT received NaN, treating as 0.");
-        0
+        panic!("CP-SAT received NaN");
     } else if x >= i64::MAX as f64 {
         i64::MAX
     } else if x <= i64::MIN as f64 {
@@ -114,7 +113,7 @@ fn round_i64(x: f64) -> i64 {
 
 /// Translates a good_lp `VariableDefinition` into a CP-SAT `IntVar`.
 ///
-/// Bound mapping: `min`/`max` from `VariableDefinition` → CP-SAT domain interval `(lo, hi)`.
+/// Bound mapping: `min`/`max` from `VariableDefinition` to CP-SAT domain interval `(lo, hi)`.
 /// Non-finite bounds (infinity) map to `i64::MIN` / `i64::MAX`.
 fn create_cp_sat_var(
     model: &mut CpModelBuilder,
@@ -271,7 +270,7 @@ impl CpSatProblem {
     ///
     /// This can be useful if you want to clear the warm-start hints without
     /// modifying the model structure.
-    pub fn del_hints(&mut self) {
+    pub fn clear_hints(&mut self) {
         self.model.del_hints();
     }
 

@@ -69,17 +69,17 @@ You can find a resource allocation problem example in
 This library offers an abstraction over multiple solvers. By default, it uses [cbc][cbc], but
 you can also activate other solvers using cargo features.
 
-| solver feature name    | integer variables | no C compiler\* | no additional libs\*   | fast\* | WASM\* |
-| ---------------------- | ----------------- | --------------- | ---------------------- | ---- | ---- |
-| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   | ❌   |
-| [`highs`][highs]       | ✅                | ❌              | ✅¹                    | ✅   | ❌   |
-| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   | ❌   |
-| [`microlp`][microlp]   | ✅                | ✅              | ✅                     | ❌   | ✅   |
-| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌   |
-| [`scip`][scip]         | ✅                | ✅              | ✅²                    | ✅   | ❌   |
-| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅³                    | ✅   | ❌   |
-| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅   |
-| [`cp_sat`][cp_sat]     | ✅                | ❌              | ❌                     | ✅   | ❌   |
+| solver feature name    | integer variables | continuous variables | no C compiler\* | no additional libs\*   | fast\* | WASM\* |
+| ---------------------- | ----------------- | -------------------- | --------------- | ---------------------- | ---- | ---- |
+| [`coin_cbc`][cbc]      | ✅                | ✅                   | ✅              | ❌                     | ✅   | ❌   |
+| [`highs`][highs]       | ✅                | ✅                   | ❌              | ✅¹                    | ✅   | ❌   |
+| [`lpsolve`][lpsolve]   | ✅                | ✅                   | ❌              | ✅                     | ❌   | ❌   |
+| [`microlp`][microlp]   | ✅                | ✅                   | ✅              | ✅                     | ❌   | ✅   |
+| [`lp-solvers`][lps]    | ✅                | ✅                   | ✅              | ✅                     | ❌   | ❌   |
+| [`scip`][scip]         | ✅                | ✅                   | ✅              | ✅²                    | ✅   | ❌   |
+| [`cplex-rs`][cplex]    | ✅                | ✅                   | ❌              | ✅³                    | ✅   | ❌   |
+| [`clarabel`][clarabel] | ❌                | ✅                   | ✅              | ✅                     | ✅   | ✅   |
+| [`cp_sat`][cp_sat]     | ✅                | ❌                   | ❌              | ❌                     | ✅   | ❌   |
 
 - \* *no C compiler*: builds with only cargo, without requiring you to install a C compiler
 - \* *no additional libs*: works without additional libraries at runtime, all the dependencies are statically linked
@@ -216,7 +216,7 @@ trait, which allows you to access the dual values of the constraints (the shadow
 [CP-SAT](https://developers.google.com/optimization/cp/cp_solver) is Google's fast constraint programming solver,
 part of [OR-Tools](https://developers.google.com/optimization). It is one of the fastest open-source solvers
 for combinatorial (integer) optimization problems, supporting both integer and boolean variables.
-CP-SAT does not support continuous (floating-point) variables; using a non-integer variable will cause a panic.
+CP-SAT does **not** support continuous (floating-point) variables; using a non-integer variable will cause a panic.
 
 good_lp uses the [cp_sat crate](https://crates.io/crates/cp_sat) to call the OR-Tools CP-SAT solver
 through its C++ API.
