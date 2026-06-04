@@ -213,7 +213,7 @@ trait, which allows you to access the dual values of the constraints (the shadow
 
 ### [CP-SAT][cp_sat]
 
-[CP-SAT](https://developers.google.com/optimization/cp/cp_solver) is Google's constraint programming solver,
+[CP-SAT](https://developers.google.com/optimization/cp/cp_solver) is Google's fast constraint programming solver,
 part of [OR-Tools](https://developers.google.com/optimization). It is one of the fastest open-source solvers
 for combinatorial (integer) optimization problems, supporting both integer and boolean variables.
 CP-SAT does not support continuous (floating-point) variables; using a non-integer variable will cause a panic.
