@@ -1,14 +1,11 @@
-//! A solver that uses the Google OR-Tools CP-SAT solver.
-//! This solver is activated using the `cp_sat` feature.
-//! You need to have the OR-Tools library installed on your system.
+//! A solver bridge to the Google OR-Tools CP-SAT solver, activated via the `cp_sat` feature.
 //!
 //! # Limitations
 //!
-//! - CP-SAT only supports **integer** and **binary** variables.
-//!   Continuous (floating-point) variables are not supported.
-//!   Using a non-integer variable will cause a panic at model creation.
-//! - All coefficients and constants are rounded to `i64` values,
-//!   which is a limitation of the underlying CP-SAT solver.
+//! - CP-SAT only supports **integer** and **binary** variables. Continuous (floating-point)
+//!   variables cause a panic at model creation.
+//! - All coefficients and constants are rounded to `i64`, a consequence of CP-SAT's
+//!   integer-only arithmetic.
 
 use cp_sat::builder::{CpModelBuilder, IntVar, LinearExpr};
 use cp_sat::ffi;
@@ -100,15 +97,11 @@ pub fn cp_sat(to_solve: UnsolvedProblem) -> CpSatProblem {
     problem
 }
 
-/// Rounds an f64 value to i64, clamping to the i64 range.
-/// Warns via `eprintln!` when encountering NaN, which indicates a likely
-/// programming error (e.g., uninitialized coefficient or constant).
+/// Rounds `f64` to `i64` with saturation at the numeric limits.
+/// NaN is logged to stderr and treated as 0.
 fn round_i64(x: f64) -> i64 {
     if x.is_nan() {
-        eprintln!(
-            "Warning: CP-SAT received a NaN value, treating as 0. \
-             This may indicate an uninitialized coefficient or constant in the model."
-        );
+        eprintln!("Warning: CP-SAT received NaN, treating as 0.");
         0
     } else if x >= i64::MAX as f64 {
         i64::MAX
@@ -119,7 +112,10 @@ fn round_i64(x: f64) -> i64 {
     }
 }
 
-/// Creates an IntVar in the model from a VariableDefinition.
+/// Translates a good_lp `VariableDefinition` into a CP-SAT `IntVar`.
+///
+/// Bound mapping: `min`/`max` from `VariableDefinition` → CP-SAT domain interval `(lo, hi)`.
+/// Non-finite bounds (infinity) map to `i64::MIN` / `i64::MAX`.
 fn create_cp_sat_var(
     model: &mut CpModelBuilder,
     def: &VariableDefinition,
@@ -156,7 +152,11 @@ fn create_cp_sat_var(
     model.new_int_var_with_name(domain, name)
 }
 
-/// A CP-SAT model
+/// A CP-SAT model wrapping `CpModelBuilder`, with a linear objective,
+/// variable mappings, and solver parameters. Constructed via [`cp_sat()`].
+///
+/// See the [module-level documentation](self) for constraint translation
+/// semantics and status mapping details.
 pub struct CpSatProblem {
     model: CpModelBuilder,
     cp_sat_vars: Vec<IntVar>,
@@ -164,16 +164,13 @@ pub struct CpSatProblem {
 }
 
 impl CpSatProblem {
-    /// Get the inner CP-SAT model
+    /// Returns a shared reference to the inner CP-SAT model for inspection.
+    ///
+    /// This is useful for accessing read-only model data (e.g., [`CpModelBuilder::proto`]).
+    /// To customize solver parameters, use [`params`](Self::params) or [`params_mut`](Self::params_mut)
+    /// instead.
     pub fn as_inner(&self) -> &CpModelBuilder {
         &self.model
-    }
-
-    /// Get a mutable version of the inner CP-SAT model.
-    /// good_lp will crash (but should stay memory-safe) if you change the structure of the problem
-    /// itself using this method.
-    pub fn as_inner_mut(&mut self) -> &mut CpModelBuilder {
-        &mut self.model
     }
 
     /// Builds a `LinearExpr` from a good_lp `Constraint`'s expression,
@@ -410,7 +407,13 @@ impl WithMipGap for CpSatProblem {
     }
 }
 
-/// A CP-SAT problem solution
+/// The result of solving a CP-SAT model.
+///
+/// Wraps a `CpSolverResponse` and provides access to variable values via the
+/// [`Solution`] trait, as well as solver metadata (statistics, logs, additional solutions).
+///
+/// See the [module-level documentation](self) for the status mapping from
+/// `CpSolverStatus` to [`SolutionStatus`] / [`ResolutionError`].
 pub struct CpSatSolution {
     response: CpSolverResponse,
     status: SolutionStatus,
@@ -506,13 +509,7 @@ mod tests {
         let sol = pb.solve().unwrap();
         assert_eq!(sol.status(), SolutionStatus::Optimal);
 
-        // Optimal: x=10, y=0 gives obj=10 (but x+2y<=10, so with x>=1:
-        //   x=2, y=4 gives 2+8=10, obj=6
-        //   x=4, y=3 gives 4+6=10, obj=7
-        //   x=6, y=2 gives 6+4=10, obj=8
-        //   x=8, y=1 gives 8+2=10, obj=9
-        //   x=10, y=0 gives 10+0=10, obj=10
-        // So optimal is x=10, y=0, obj=10
+        // x=10, y=0 attains the upper bound 10 of x+2y≤10, maximizing x+y.
         assert_eq!(sol.value(x), 10.0);
         assert_eq!(sol.value(y), 0.0);
     }
