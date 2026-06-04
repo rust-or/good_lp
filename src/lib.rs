@@ -3,6 +3,19 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 //!  A Linear Programming modeler that is easy to use, performant with large problems, and well-typed.
 //!
+//! # Solvers
+//!
+//! The following solvers are available:
+//!
+//! - [`coin_cbc`](solvers::coin_cbc) - [COIN-OR CBC](https://www.coin-or.org/Cbc/) (enabled by default)
+//! - [`cp_sat`](solvers::cp_sat) - [Google OR-Tools CP-SAT](https://developers.google.com/optimization/cp/cp_solver) (requires `cp_sat` feature)
+//! - [`microlp`](solvers::microlp) - A lightweight LP solver
+//! - [`lpsolve`](solvers::lpsolve) - [LpSolve](http://lpsolve.sourceforge.net/)
+//! - [`highs`](solvers::highs) - [HiGHS](https://highs.dev/)
+//! - [`scip`](solvers::scip) - [SCIP](https://scipopt.org/)
+//! - [`lp-solvers`](solvers::lp_solvers) - A wrapper around several LP solvers
+//! - [`clarabel`](solvers::clarabel) - [Clarabel](https://github.com/oxfordcontrol/Clarabel.rs)
+//!
 //!  ```rust
 //!  use good_lp::{variables, variable, default_solver, SolverModel, Solution};
 //!
@@ -123,6 +136,10 @@ pub use solvers::microlp::microlp as default_solver;
 #[cfg(feature = "scip")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::scip::scip;
+
+#[cfg(feature = "cp_sat")]
+#[cfg_attr(docsrs, doc(cfg(feature = "cp_sat")))]
+pub use solvers::cp_sat::cp_sat;
 #[cfg(not(any(
     feature = "coin_cbc",
     feature = "microlp",
@@ -131,6 +148,17 @@ pub use solvers::scip::scip;
 )))]
 #[cfg(feature = "scip")]
 pub use solvers::scip::scip as default_solver;
+
+#[cfg(not(any(
+    feature = "coin_cbc",
+    feature = "microlp",
+    feature = "lpsolve",
+    feature = "highs",
+    feature = "scip",
+)))]
+#[cfg(feature = "cp_sat")]
+/// When the "cp_sat" cargo feature is present, cp_sat is used as the default solver
+pub use solvers::cp_sat::cp_sat as default_solver;
 
 pub use solvers::{
     DualValues, ModelWithSOS1, ObjectiveDirection, ResolutionError, Solution, SolutionStatus,
@@ -162,6 +190,7 @@ pub const default_solver: LpSolver<
     feature = "scip",
     feature = "cplex-rs",
     feature = "clarabel",
+    feature = "cp_sat",
 )))]
 compile_error!(
     "No solver available. \
