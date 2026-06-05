@@ -118,22 +118,16 @@ fn round_i64(x: f64) -> i64 {
 fn create_cp_sat_var(
     model: &mut CpModelBuilder,
     def: &VariableDefinition,
-    var: Variable,
+    _var: Variable,
 ) -> IntVar {
-    let name = if def.name.is_empty() {
-        format!("v{}", var.index())
-    } else {
-        def.name.clone()
-    };
-
     // Translate bounds to CP-SAT domain
     let domain_lower = if def.min.is_finite() {
-        round_i64(def.min)
+        def.min.ceil() as i64
     } else {
         i64::MIN
     };
     let domain_upper = if def.max.is_finite() {
-        round_i64(def.max)
+        def.max.floor() as i64
     } else {
         i64::MAX
     };
@@ -141,14 +135,16 @@ fn create_cp_sat_var(
     // Validate: lower bound must not exceed upper bound
     assert!(
         domain_lower <= domain_upper,
-        "Invalid variable bounds: lower={} > upper={} for variable '{}'",
+        "Invalid variable bounds: lower={} > upper={}",
         def.min,
-        def.max,
-        name
+        def.max
     );
 
     let domain = [(domain_lower, domain_upper)];
-    model.new_int_var_with_name(domain, name)
+    match def.name.as_str() {
+        "" => model.new_int_var(domain),
+        name => model.new_int_var_with_name(domain, name),
+    }
 }
 
 /// A CP-SAT model wrapping `CpModelBuilder`, with a linear objective,
