@@ -378,18 +378,15 @@ impl SolverModel for CpSatProblem {
                 let has_gap_limit = self.solver_params.relative_gap_limit.is_some()
                     || self.solver_params.absolute_gap_limit.is_some();
 
-                let status = response.status();
-                let status_from_limits = || {
-                    if has_time_limit {
-                        SolutionStatus::TimeLimit
-                    } else if has_gap_limit {
-                        SolutionStatus::GapLimit
-                    } else {
-                        SolutionStatus::Optimal
-                    }
+                let status_from_limits = if has_time_limit {
+                    SolutionStatus::TimeLimit
+                } else if has_gap_limit {
+                    SolutionStatus::GapLimit
+                } else {
+                    SolutionStatus::Optimal
                 };
 
-                match status {
+                match response.status() {
                     CpSolverStatus::Optimal => Ok(CpSatSolution {
                         response,
                         status: SolutionStatus::Optimal,
@@ -397,7 +394,7 @@ impl SolverModel for CpSatProblem {
                     }),
                     CpSolverStatus::Feasible => Ok(CpSatSolution {
                         response,
-                        status: status_from_limits(),
+                        status: status_from_limits,
                         cp_sat_vars,
                     }),
                     CpSolverStatus::Infeasible => Err(ResolutionError::Infeasible),
@@ -405,7 +402,7 @@ impl SolverModel for CpSatProblem {
                         if !response.solution.is_empty() {
                             Ok(CpSatSolution {
                                 response,
-                                status: status_from_limits(),
+                                status: status_from_limits,
                                 cp_sat_vars,
                             })
                         } else if has_time_limit {

@@ -3,19 +3,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 //!  A Linear Programming modeler that is easy to use, performant with large problems, and well-typed.
 //!
-//! # Solvers
-//!
-//! The following solvers are available:
-//!
-//! - [`coin_cbc`](solvers::coin_cbc) - [COIN-OR CBC](https://www.coin-or.org/Cbc/) (enabled by default)
-//! - [`cp_sat`](solvers::cp_sat) - [Google OR-Tools CP-SAT](https://developers.google.com/optimization/cp/cp_solver) (requires `cp_sat` feature)
-//! - [`microlp`](solvers::microlp) - A lightweight LP solver
-//! - [`lpsolve`](solvers::lpsolve) - [LpSolve](http://lpsolve.sourceforge.net/)
-//! - [`highs`](solvers::highs) - [HiGHS](https://highs.dev/)
-//! - [`scip`](solvers::scip) - [SCIP](https://scipopt.org/)
-//! - [`lp-solvers`](solvers::lp_solvers) - A wrapper around several LP solvers
-//! - [`clarabel`](solvers::clarabel) - [Clarabel](https://github.com/oxfordcontrol/Clarabel.rs)
-//!
 //!  ```rust
 //!  use good_lp::{variables, variable, default_solver, SolverModel, Solution};
 //!
