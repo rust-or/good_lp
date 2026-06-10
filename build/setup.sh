@@ -16,3 +16,13 @@ then
     chmod u+x cplex.bin
     ./cplex.bin -f ./response.properties
 fi
+
+# Install OR-Tools for CP-SAT
+if [ -z "$NO_CPSAT" ]
+then
+    cd /tmp
+    curl -LO 'https://github.com/google/or-tools/releases/download/v9.15/or-tools_amd64_ubuntu-24.04_cpp_v9.15.6755.tar.gz'
+    sudo mkdir -p /opt/ortools
+    sudo tar -xzf or-tools_amd64_ubuntu-24.04_cpp_v9.15.6755.tar.gz -C /opt/ortools --strip-components=1
+    cd /opt/ortools && sudo make test
+fi

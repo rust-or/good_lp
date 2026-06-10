@@ -123,6 +123,10 @@ pub use solvers::microlp::microlp as default_solver;
 #[cfg(feature = "scip")]
 #[cfg_attr(docsrs, doc(cfg(feature = "highs")))]
 pub use solvers::scip::scip;
+
+#[cfg(feature = "cp_sat")]
+#[cfg_attr(docsrs, doc(cfg(feature = "cp_sat")))]
+pub use solvers::cp_sat::cp_sat;
 #[cfg(not(any(
     feature = "coin_cbc",
     feature = "microlp",
@@ -131,6 +135,17 @@ pub use solvers::scip::scip;
 )))]
 #[cfg(feature = "scip")]
 pub use solvers::scip::scip as default_solver;
+
+#[cfg(not(any(
+    feature = "coin_cbc",
+    feature = "microlp",
+    feature = "lpsolve",
+    feature = "highs",
+    feature = "scip",
+)))]
+#[cfg(feature = "cp_sat")]
+/// When the "cp_sat" cargo feature is present, cp_sat is used as the default solver
+pub use solvers::cp_sat::cp_sat as default_solver;
 
 pub use solvers::{
     DualValues, ModelWithSOS1, ObjectiveDirection, ResolutionError, Solution, SolutionStatus,
@@ -162,6 +177,7 @@ pub const default_solver: LpSolver<
     feature = "scip",
     feature = "cplex-rs",
     feature = "clarabel",
+    feature = "cp_sat",
 )))]
 compile_error!(
     "No solver available. \
