@@ -22,7 +22,6 @@ default = ["coin_cbc", "singlethread-cbc"]
 singlethread-cbc = ["coin_cbc?/singlethread-cbc"]
 scip = ["russcip"]
 scip_bundled = ["russcip?/bundled"]
-cp_sat = ["dep:cp_sat"]
 all_default_solvers = [
     "coin_cbc",
     "microlp",
