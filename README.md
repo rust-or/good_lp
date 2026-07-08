@@ -222,22 +222,9 @@ good_lp uses the [cp_sat crate](https://crates.io/crates/cp_sat) to call the OR-
 through its C++ API.
 
 To use CP-SAT, you must install the OR-Tools shared library on your system.
-On Ubuntu 24.04, you can install it as follows:
-
-```bash
-curl -LO 'https://github.com/google/or-tools/releases/download/v9.15/or-tools_amd64_ubuntu-24.04_cpp_v9.15.6755.tar.gz'
-sudo mkdir -p /opt/ortools
-sudo tar -xzf or-tools_amd64_ubuntu-24.04_cpp_v9.15.6755.tar.gz -C /opt/ortools --strip-components=1
-cd /opt/ortools && sudo make test
-```
-
-Then set the following environment variables when building and running:
-
-```bash
-export ORTOOLS_PREFIX=/opt/ortools
-export RUSTFLAGS="-L /opt/ortools/lib -lprotobuf"
-export LD_LIBRARY_PATH=/opt/ortools/lib
-```
+See the [OR-Tools installation guide](https://developers.google.com/optimization/install) for instructions.
+The cp_sat crate automatically discovers OR-Tools installed in standard locations (`/usr/local`, `/usr`,
+`/opt/ortools`, etc.) or via the `ORTOOLS_PREFIX` environment variable.
 
 [cp_sat]: https://developers.google.com/optimization/cp/cp_solver
 
