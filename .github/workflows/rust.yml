@@ -164,16 +164,8 @@ jobs:
         run: NO_CPLEX=true ./build/setup.sh
       - name: Build cp_sat
         run: cargo build --features cp_sat --tests
-        env:
-          ORTOOLS_PREFIX: /opt/ortools
-          RUSTFLAGS: -L /opt/ortools/lib -lprotobuf
-          LD_LIBRARY_PATH: /opt/ortools/lib
       - name: Run tests with cp_sat
         run: cargo test --no-default-features --features cp_sat --lib -- cp_sat
-        env:
-          ORTOOLS_PREFIX: /opt/ortools
-          RUSTFLAGS: -L /opt/ortools/lib -lprotobuf
-          LD_LIBRARY_PATH: /opt/ortools/lib
 
   bench:
     runs-on: ubuntu-latest
