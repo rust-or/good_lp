@@ -226,6 +226,8 @@ See the [OR-Tools installation guide](https://developers.google.com/optimization
 The cp_sat crate automatically discovers OR-Tools installed in standard locations (`/usr/local`, `/usr`,
 `/opt/ortools`, etc.) or via the `ORTOOLS_PREFIX` environment variable.
 
+If you get a runtime error like `error while loading shared libraries: libortools.so.9`, add your OR-Tools library directory to `LD_LIBRARY_PATH`, or configure the runtime linker via `ldconfig`. The `cp_sat` crate's build script embeds the OR-Tools library path into the binary, but due to a [cargo limitation](https://github.com/rust-lang/cargo/issues/12843) this does not propagate to downstream projects, causing problems on systems where the installation location is not in the default search path.
+
 [cp_sat]: https://developers.google.com/optimization/cp/cp_solver
 
 ## Variable types
