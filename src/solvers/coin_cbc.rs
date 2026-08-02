@@ -28,6 +28,7 @@ pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
         variables,
     } = to_solve;
     let mut model = Model::default();
+    model.set_log_level(0);
     let mut initial_solution = Vec::with_capacity(variables.initial_solution_len());
     let columns: Vec<Col> = variables
         .iter_variables_with_def()
@@ -110,6 +111,11 @@ impl CoinCbcProblem {
     /// ```
     pub fn set_parameter(&mut self, key: &str, value: &str) {
         self.model.set_parameter(key, value);
+    }
+
+    /// Set CBC's log level. A level of `0` suppresses normal solver output.
+    pub fn set_log_level(&mut self, log_level: i32) {
+        self.model.set_log_level(log_level);
     }
 }
 
