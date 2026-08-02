@@ -359,6 +359,11 @@ impl SolverModel for HighsProblem {
         if constraint.is_equality {
             self.highs_problem
                 .add_row(upper_bound..=upper_bound, factors);
+        } else if constraint.is_greater_than_or_equal {
+            self.highs_problem.add_row(
+                -upper_bound..,
+                factors.map(|(variable, factor)| (variable, -factor)),
+            );
         } else {
             self.highs_problem.add_row(..=upper_bound, factors);
         }

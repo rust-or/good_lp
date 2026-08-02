@@ -11,6 +11,8 @@ pub struct Constraint {
     pub(crate) expression: Expression,
     /// if is_equality, represents expression == 0, otherwise, expression <= 0
     pub(crate) is_equality: bool,
+    /// Whether the constraint was originally expressed as greater than or equal.
+    pub(crate) is_greater_than_or_equal: bool,
     /// Optional constraint name
     pub(crate) name: Option<String>,
 }
@@ -20,6 +22,7 @@ impl Constraint {
         Constraint {
             expression,
             is_equality,
+            is_greater_than_or_equal: false,
             name: None,
         }
     }
@@ -75,7 +78,9 @@ pub fn leq<B, A: Sub<B, Output = Expression>>(a: A, b: B) -> Constraint {
 
 /// greater than or equal
 pub fn geq<A, B: Sub<A, Output = Expression>>(a: A, b: B) -> Constraint {
-    leq(b, a)
+    let mut constraint = leq(b, a);
+    constraint.is_greater_than_or_equal = true;
+    constraint
 }
 
 macro_rules! impl_shifts {

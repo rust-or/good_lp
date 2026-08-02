@@ -40,6 +40,7 @@ pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
         objective: objective_vector,
         constraints_matrix_builder,
         constraint_values: Vec::new(),
+        is_greater_than_or_equal: Vec::new(),
         variables: variables.len(),
         settings,
         cones: Vec::new(),
@@ -63,6 +64,7 @@ pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
 pub struct ClarabelProblem {
     constraints_matrix_builder: CscMatrixBuilder,
     constraint_values: Vec<f64>,
+    is_greater_than_or_equal: Vec<bool>,
     objective: Vec<f64>,
     variables: usize,
     settings: DefaultSettingsBuilder<f64>,
@@ -112,7 +114,9 @@ impl SolverModel for ClarabelProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
-        let mut solver = self.try_into_solver()?;
+        let mut problem = self;
+        let is_greater_than_or_equal = std::mem::take(&mut problem.is_greater_than_or_equal);
+        let mut solver = problem.try_into_solver()?;
         solver.solve();
         match solver.solution.status {
             SolverStatus::PrimalInfeasible | SolverStatus::AlmostPrimalInfeasible => {
@@ -123,6 +127,7 @@ impl SolverModel for ClarabelProblem {
             | SolverStatus::AlmostDualInfeasible
             | SolverStatus::DualInfeasible => Ok(ClarabelSolution {
                 solution: solver.solution,
+                is_greater_than_or_equal,
             }),
             SolverStatus::Unsolved => Err(ResolutionError::Other("Unsolved")),
             SolverStatus::MaxIterations => Err(ResolutionError::Other("Max iterations reached")),
@@ -138,6 +143,8 @@ impl SolverModel for ClarabelProblem {
             .add_row(constraint.expression.linear);
         let index = self.constraint_values.len();
         self.constraint_values.push(-constraint.expression.constant);
+        self.is_greater_than_or_equal
+            .push(constraint.is_greater_than_or_equal);
         // Cones indicate the type of constraint. We only support nonnegative and equality constraints.
         // To avoid creating a new cone for each constraint, we merge them.
         let next_cone = if constraint.is_equality {
@@ -162,6 +169,7 @@ impl SolverModel for ClarabelProblem {
 /// The solution to a clarabel problem
 pub struct ClarabelSolution {
     solution: DefaultSolution<f64>,
+    is_greater_than_or_equal: Vec<bool>,
 }
 
 impl ClarabelSolution {
@@ -195,7 +203,12 @@ impl<'a> SolutionWithDual<'a> for ClarabelSolution {
 
 impl DualValues for &ClarabelSolution {
     fn dual(&self, constraint: ConstraintReference) -> f64 {
-        self.solution.z[constraint.index]
+        let dual = self.solution.z[constraint.index];
+        if self.is_greater_than_or_equal[constraint.index] {
+            -dual
+        } else {
+            dual
+        }
     }
 }
 
