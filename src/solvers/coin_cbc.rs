@@ -176,7 +176,7 @@ impl SolverModel for CoinCbcProblem {
         let index = self.model.num_rows().try_into().unwrap();
         let row = self.model.add_row();
         let constant = -constraint.expression.constant;
-        if constraint.is_equality {
+        if constraint.is_equality() {
             self.model.set_row_equal(row, constant);
         } else {
             self.model.set_row_upper(row, constant);

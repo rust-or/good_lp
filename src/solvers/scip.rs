@@ -317,7 +317,7 @@ impl SolverModel for SCIPProblem {
 
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
         let constant = -c.expression.constant;
-        let lhs = match c.is_equality {
+        let lhs = match c.is_equality() {
             true => constant,
             false => -f64::INFINITY,
         };

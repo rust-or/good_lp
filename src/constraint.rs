@@ -9,20 +9,28 @@ use std::ops::{Shl, Shr, Sub};
 pub struct Constraint {
     /// The expression that is constrained to be null or negative
     pub(crate) expression: Expression,
-    /// if is_equality, represents expression == 0, otherwise, expression <= 0
-    pub(crate) is_equality: bool,
-    /// Whether the constraint was originally expressed as greater than or equal.
-    pub(crate) is_greater_than_or_equal: bool,
+    /// The kind of constraint represented by the expression.
+    pub(crate) kind: ConstraintKind,
     /// Optional constraint name
     pub(crate) name: Option<String>,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum ConstraintKind {
+    LessOrEqual,
+    GreaterOrEqual,
+    Equal,
 }
 
 impl Constraint {
     fn new(expression: Expression, is_equality: bool) -> Constraint {
         Constraint {
             expression,
-            is_equality,
-            is_greater_than_or_equal: false,
+            kind: if is_equality {
+                ConstraintKind::Equal
+            } else {
+                ConstraintKind::LessOrEqual
+            },
             name: None,
         }
     }
@@ -40,7 +48,11 @@ impl Constraint {
 
     /// if is_equality, represents expression == 0, otherwise, expression <= 0
     pub fn is_equality(&self) -> bool {
-        self.is_equality
+        matches!(self.kind, ConstraintKind::Equal)
+    }
+
+    pub(crate) fn is_greater_than_or_equal(&self) -> bool {
+        matches!(self.kind, ConstraintKind::GreaterOrEqual)
     }
 
     /// get the constraint name, if it exists.
@@ -55,7 +67,7 @@ impl FormatWithVars for Constraint {
         FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result,
     {
         self.expression.linear.format_with(f, variable_format)?;
-        write!(f, " {} ", if self.is_equality { "=" } else { "<=" })?;
+        write!(f, " {} ", if self.is_equality() { "=" } else { "<=" })?;
         write!(f, "{}", -self.expression.constant)
     }
 }
@@ -79,7 +91,7 @@ pub fn leq<B, A: Sub<B, Output = Expression>>(a: A, b: B) -> Constraint {
 /// greater than or equal
 pub fn geq<A, B: Sub<A, Output = Expression>>(a: A, b: B) -> Constraint {
     let mut constraint = leq(b, a);
-    constraint.is_greater_than_or_equal = true;
+    constraint.kind = ConstraintKind::GreaterOrEqual;
     constraint
 }
 

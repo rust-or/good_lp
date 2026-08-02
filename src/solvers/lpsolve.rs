@@ -112,7 +112,7 @@ impl SolverModel for LpSolveProblem {
         for (var, coeff) in constraint.expression.linear_coefficients() {
             coeffs[var.index() + 1] = coeff;
         }
-        let constraint_type = if constraint.is_equality {
+        let constraint_type = if constraint.is_equality() {
             ConstraintType::Eq
         } else {
             ConstraintType::Le

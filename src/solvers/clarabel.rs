@@ -139,15 +139,16 @@ impl SolverModel for ClarabelProblem {
     }
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        let is_equality = constraint.is_equality();
+        let is_greater_than_or_equal = constraint.is_greater_than_or_equal();
         self.constraints_matrix_builder
             .add_row(constraint.expression.linear);
         let index = self.constraint_values.len();
         self.constraint_values.push(-constraint.expression.constant);
-        self.is_greater_than_or_equal
-            .push(constraint.is_greater_than_or_equal);
+        self.is_greater_than_or_equal.push(is_greater_than_or_equal);
         // Cones indicate the type of constraint. We only support nonnegative and equality constraints.
         // To avoid creating a new cone for each constraint, we merge them.
-        let next_cone = if constraint.is_equality {
+        let next_cone = if is_equality {
             ZeroConeT(1)
         } else {
             NonnegativeConeT(1)

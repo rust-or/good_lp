@@ -121,7 +121,7 @@ impl<T: SolverTrait> SolverModel for Model<T> {
             .constraints
             .push(lp_solvers::lp_format::Constraint {
                 lhs: linear_coefficients_str(&c.expression, &self.problem.variables),
-                operator: if c.is_equality {
+                operator: if c.is_equality() {
                     Ordering::Equal
                 } else {
                     Ordering::Less

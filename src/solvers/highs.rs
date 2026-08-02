@@ -350,16 +350,18 @@ impl SolverModel for HighsProblem {
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
         let index = self.highs_problem.num_rows();
+        let is_equality = constraint.is_equality();
+        let is_greater_than_or_equal = constraint.is_greater_than_or_equal();
         let upper_bound = -constraint.expression.constant();
         let columns = &self.columns;
         let factors = constraint
             .expression
             .linear_coefficients()
             .map(|(variable, factor)| (columns[variable.index()], factor));
-        if constraint.is_equality {
+        if is_equality {
             self.highs_problem
                 .add_row(upper_bound..=upper_bound, factors);
-        } else if constraint.is_greater_than_or_equal {
+        } else if is_greater_than_or_equal {
             self.highs_problem.add_row(
                 -upper_bound..,
                 factors.map(|(variable, factor)| (variable, -factor)),

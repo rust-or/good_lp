@@ -137,7 +137,7 @@ impl SolverModel for CPLEXProblem {
             .iter()
             .map(|(var, &coeff)| (self.id_for_var[var], coeff))
             .collect::<Vec<_>>();
-        let con_type = if c.is_equality {
+        let con_type = if c.is_equality() {
             ConstraintType::Eq
         } else {
             ConstraintType::LessThanEq

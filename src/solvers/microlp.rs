@@ -153,9 +153,10 @@ impl SolverModel for MicroLpProblem {
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
         let index = self.n_constraints;
-        let op = match constraint.is_equality {
-            true => microlp::ComparisonOp::Eq,
-            false => microlp::ComparisonOp::Le,
+        let op = if constraint.is_equality() {
+            microlp::ComparisonOp::Eq
+        } else {
+            microlp::ComparisonOp::Le
         };
         let constant = -constraint.expression.constant;
         let mut linear_expr = microlp::LinearExpr::empty();
