@@ -101,6 +101,12 @@ Note that the `lpsolve` and `cplex-rs` features are mutually exclusive, and they
 Used by default, performant, but requires to have the cbc C library headers available on the build machine,
 and the cbc dynamic library available on any machine where you want to run your program.
 
+CBC may write solver progress messages to the process's standard output while solving.
+The current `good_lp` API does not provide a solver-independent way to suppress output
+from CBC. If silent solver output is a requirement for your application, consider
+selecting another solver from the table above and verify its output behavior for your
+deployment. This limitation is tracked in [issue #117](https://github.com/rust-or/good_lp/issues/117).
+
 In ubuntu, you can install it with:
 
 ```bash
