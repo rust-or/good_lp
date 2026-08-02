@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 ```
 
-For a more complex example, see the [resource allocation problem](https://github.com/lovasoa/good_lp/blob/main/tests/resource_allocation_problem.rs).
+For a more complex example, see the [resource allocation problem](https://github.com/rust-or/good_lp/blob/main/tests/resource_allocation_problem.rs).
 
 ## Features and limitations
 
@@ -62,7 +62,14 @@ constraints using an idiomatic rust syntax.
 ## Usage examples
 
 You can find a resource allocation problem example in
-[`resource_allocation_problem.rs`](https://github.com/lovasoa/good_lp/blob/main/tests/resource_allocation_problem.rs).
+[`resource_allocation_problem.rs`](https://github.com/rust-or/good_lp/blob/main/tests/resource_allocation_problem.rs).
+
+The macros (`variables!`, `constraint!`) are convenient, but not required.
+If your problem is built dynamically (its variables and constraints are only known at
+run time), see the
+[macro-free example](https://github.com/rust-or/good_lp/blob/main/tests/no_macro_example.rs)
+which uses `ProblemVariables::new`, `Variable`, `Expression` and
+`SolverModel::add_constraint` directly.
 
 ## Solvers
 
