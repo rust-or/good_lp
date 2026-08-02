@@ -23,14 +23,10 @@ pub(crate) enum ConstraintKind {
 }
 
 impl Constraint {
-    fn new(expression: Expression, is_equality: bool) -> Constraint {
+    fn new(expression: Expression, kind: ConstraintKind) -> Constraint {
         Constraint {
             expression,
-            kind: if is_equality {
-                ConstraintKind::Equal
-            } else {
-                ConstraintKind::LessOrEqual
-            },
+            kind,
             name: None,
         }
     }
@@ -80,12 +76,12 @@ impl Debug for Constraint {
 
 /// equals
 pub fn eq<B, A: Sub<B, Output = Expression>>(a: A, b: B) -> Constraint {
-    Constraint::new(a - b, true)
+    Constraint::new(a - b, ConstraintKind::Equal)
 }
 
 /// less than or equal
 pub fn leq<B, A: Sub<B, Output = Expression>>(a: A, b: B) -> Constraint {
-    Constraint::new(a - b, false)
+    Constraint::new(a - b, ConstraintKind::LessOrEqual)
 }
 
 /// greater than or equal
