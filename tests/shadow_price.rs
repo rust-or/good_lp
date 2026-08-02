@@ -96,6 +96,28 @@ where
     assert_float_eq!(-2.0, dual.dual(lower_bound), abs <= 1e-6);
 }
 
+#[allow(dead_code)]
+fn greater_than_or_equal_constraint_minimisation_for_solver<S: Solver>(solver: S)
+where
+    for<'a> <<S as Solver>::Model as SolverModel>::Solution: SolutionWithDual<'a>,
+{
+    let mut vars = variables!();
+    let x = vars.add(variable().min(0));
+
+    let objective = 2 * x;
+    let mut problem = vars.minimise(objective.clone()).using(solver);
+    let lower_bound = problem.add_constraint(constraint!(x >= 1));
+
+    let mut solution = problem.solve().expect("Library test");
+
+    assert_float_eq!(1.0, solution.value(x), abs <= 1e-6);
+    assert_float_eq!(2.0, solution.eval(&objective), abs <= 1e-6);
+
+    let dual = solution.compute_dual();
+    // Increasing the lower bound by one increases the minimized objective by two.
+    assert_float_eq!(2.0, dual.dual(lower_bound), abs <= 1e-6);
+}
+
 macro_rules! dual_test {
     ($([$solver_feature:literal, $solver:expr])*) => {
         #[test]
@@ -122,6 +144,15 @@ macro_rules! dual_test {
             $(
                 #[cfg(feature = $solver_feature)]
                 greater_than_or_equal_constraint_for_solver($solver);
+            )*
+        }
+
+        #[test]
+        #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
+        fn greater_than_or_equal_constraint_minimisation() {
+            $(
+                #[cfg(feature = $solver_feature)]
+                greater_than_or_equal_constraint_minimisation_for_solver($solver);
             )*
         }
     };

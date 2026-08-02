@@ -38,6 +38,7 @@ pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
     settings.verbose(false).tol_feas(1e-9);
     let mut p = ClarabelProblem {
         objective: objective_vector,
+        objective_direction: direction,
         constraints_matrix_builder,
         constraint_values: Vec::new(),
         variables: variables.len(),
@@ -64,6 +65,7 @@ pub struct ClarabelProblem {
     constraints_matrix_builder: CscMatrixBuilder,
     constraint_values: Vec<f64>,
     objective: Vec<f64>,
+    objective_direction: ObjectiveDirection,
     variables: usize,
     settings: DefaultSettingsBuilder<f64>,
     cones: Vec<SupportedConeT<f64>>,
@@ -112,6 +114,7 @@ impl SolverModel for ClarabelProblem {
     type Error = ResolutionError;
 
     fn solve(self) -> Result<Self::Solution, Self::Error> {
+        let objective_direction = self.objective_direction;
         let mut solver = self.try_into_solver()?;
         solver.solve();
         match solver.solution.status {
@@ -123,6 +126,7 @@ impl SolverModel for ClarabelProblem {
             | SolverStatus::AlmostDualInfeasible
             | SolverStatus::DualInfeasible => Ok(ClarabelSolution {
                 solution: solver.solution,
+                objective_direction,
             }),
             SolverStatus::Unsolved => Err(ResolutionError::Other("Unsolved")),
             SolverStatus::MaxIterations => Err(ResolutionError::Other("Max iterations reached")),
@@ -163,6 +167,7 @@ impl SolverModel for ClarabelProblem {
 /// The solution to a clarabel problem
 pub struct ClarabelSolution {
     solution: DefaultSolution<f64>,
+    objective_direction: ObjectiveDirection,
 }
 
 impl ClarabelSolution {
@@ -196,7 +201,14 @@ impl<'a> SolutionWithDual<'a> for ClarabelSolution {
 
 impl DualValues for &ClarabelSolution {
     fn dual(&self, constraint: ConstraintReference) -> f64 {
-        self.solution.z[constraint.index] * constraint.dual_sign()
+        // The objective is negated for maximization, so only that path needs
+        // the constraint-direction correction for Clarabel's dual convention.
+        let sign = if self.objective_direction == ObjectiveDirection::Maximisation {
+            constraint.dual_sign()
+        } else {
+            1.
+        };
+        self.solution.z[constraint.index] * sign
     }
 }
 
