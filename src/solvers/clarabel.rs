@@ -64,6 +64,8 @@ pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
 pub struct ClarabelProblem {
     constraints_matrix_builder: CscMatrixBuilder,
     constraint_values: Vec<f64>,
+    // Clarabel represents inequalities with a nonnegative cone, so it must
+    // normalize >= rows; retain one bit per row to restore dual signs later.
     is_greater_than_or_equal: Vec<bool>,
     objective: Vec<f64>,
     variables: usize,
@@ -145,6 +147,8 @@ impl SolverModel for ClarabelProblem {
             .add_row(constraint.expression.linear);
         let index = self.constraint_values.len();
         self.constraint_values.push(-constraint.expression.constant);
+        // The stored expression is still the normalized <= form. Clarabel's
+        // raw dual therefore needs the original direction at read time.
         self.is_greater_than_or_equal.push(is_greater_than_or_equal);
         // Cones indicate the type of constraint. We only support nonnegative and equality constraints.
         // To avoid creating a new cone for each constraint, we merge them.
@@ -205,6 +209,8 @@ impl<'a> SolutionWithDual<'a> for ClarabelSolution {
 impl DualValues for &ClarabelSolution {
     fn dual(&self, constraint: ConstraintReference) -> f64 {
         let dual = self.solution.z[constraint.index];
+        // Clarabel returns the dual of the normalized <= row; negate it for a
+        // constraint that the user originally wrote with >=.
         if self.is_greater_than_or_equal[constraint.index] {
             -dual
         } else {

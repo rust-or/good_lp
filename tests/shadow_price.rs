@@ -95,6 +95,9 @@ where
     let mut solution = problem.solve().expect("Library test");
     let dual = solution.compute_dual();
 
+    // At the optimum x2 = x4 = 400. Increasing x4's lower bound by one
+    // exchanges one unit of x2 (coefficient 6) for x4 (coefficient 8), a
+    // change of 8 - 6 = 2; lower-bounded row duals use the opposite sign.
     assert_float_eq!(-2.0, dual.dual(lower_bound), abs <= 1e-3);
 }
 

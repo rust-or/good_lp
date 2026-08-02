@@ -362,6 +362,8 @@ impl SolverModel for HighsProblem {
             self.highs_problem
                 .add_row(upper_bound..=upper_bound, factors);
         } else if is_greater_than_or_equal {
+            // Constraint expressions are normalized as <= rows. Reverse the
+            // coefficients and bound so HiGHS receives the original >= row.
             self.highs_problem.add_row(
                 -upper_bound..,
                 factors.map(|(variable, factor)| (variable, -factor)),

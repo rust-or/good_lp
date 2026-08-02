@@ -7,9 +7,10 @@ use std::ops::{Shl, Shr, Sub};
 /// A constraint represents a single (in)equality that must hold in the solution.
 #[derive(Clone)]
 pub struct Constraint {
-    /// The expression that is constrained to be null or negative
+    /// The expression, normalized to `sum(c_i * x_i) <= b_i`.
     pub(crate) expression: Expression,
-    /// The kind of constraint represented by the expression.
+    /// The kind originally written by the user; this is separate because the
+    /// expression above remains normalized even for an original `>=` constraint.
     pub(crate) kind: ConstraintKind,
     /// Optional constraint name
     pub(crate) name: Option<String>,
@@ -48,6 +49,8 @@ impl Constraint {
     }
 
     pub(crate) fn is_greater_than_or_equal(&self) -> bool {
+        // The coefficients remain in the normalized `sum(c_i * x_i) <= b_i`
+        // form; this records only the user's original inequality direction.
         matches!(self.kind, ConstraintKind::GreaterOrEqual)
     }
 
@@ -87,6 +90,8 @@ pub fn leq<B, A: Sub<B, Output = Expression>>(a: A, b: B) -> Constraint {
 /// greater than or equal
 pub fn geq<A, B: Sub<A, Output = Expression>>(a: A, b: B) -> Constraint {
     let mut constraint = leq(b, a);
+    // Keep the canonical `b - a <= 0` expression, but remember that the user
+    // wrote `a >= b` so dual-capable solvers can restore the row orientation.
     constraint.kind = ConstraintKind::GreaterOrEqual;
     constraint
 }
