@@ -106,7 +106,7 @@ and the cbc dynamic library available on any machine where you want to run your 
 > can suppress much of that output:
 >
 > ```rust
-> let mut model = vars.maximise(objective).using(coin_cbc);
+> let mut model = vars.maximise(objective).using(good_lp::coin_cbc);
 > model.set_parameter("log", "0");
 > ```
 >
