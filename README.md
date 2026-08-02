@@ -102,7 +102,7 @@ Used by default, performant, but requires to have the cbc C library headers avai
 and the cbc dynamic library available on any machine where you want to run your program.
 
 > **Note:** CBC itself does not provide a way to fully suppress its solver
-> progress output — this is a limitation of the underlying CBC library,
+> progress output; this is a limitation of the underlying CBC library,
 > not of `good_lp`'s API. If silent solver output is a requirement for your
 > application, consider selecting another solver from the table above and
 > verify its output behavior for your deployment. This limitation is
