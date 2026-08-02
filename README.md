@@ -101,12 +101,19 @@ Note that the `lpsolve` and `cplex-rs` features are mutually exclusive, and they
 Used by default, performant, but requires to have the cbc C library headers available on the build machine,
 and the cbc dynamic library available on any machine where you want to run your program.
 
-> **Note:** CBC itself does not provide a way to fully suppress its solver
-> progress output — this is a limitation of the underlying CBC library,
-> not of `good_lp`'s API. If silent solver output is a requirement for your
-> application, consider selecting another solver from the table above and
-> verify its output behavior for your deployment. This limitation is
-> tracked in [issue #117](https://github.com/rust-or/good_lp/issues/117).
+> **Note:** CBC can write solver progress output while solving. The
+> `coin_cbc` integration exposes CBC's parameter API, so setting `log` to `0`
+> can suppress much of that output:
+>
+> ```rust
+> let mut model = vars.maximise(objective).using(coin_cbc);
+> model.set_parameter("log", "0");
+> ```
+>
+> This does not guarantee completely silent output for every CBC/CLP version.
+> If silent solver output is a requirement for your application, consider
+> selecting another solver from the table above and verify its output behavior
+> for your deployment. This limitation is tracked in [issue #117](https://github.com/rust-or/good_lp/issues/117).
 
 In ubuntu, you can install it with:
 
