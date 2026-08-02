@@ -16,7 +16,7 @@ use russcip::variable::VarType;
 use crate::variable::{UnsolvedProblem, VariableDefinition};
 use crate::{
     CardinalityConstraintSolver, WithInitialSolution, WithMipGap, WithTimeLimit,
-    constraint::ConstraintReference,
+    constraint::{ConstraintDirection, ConstraintReference},
     solvers::{
         MipGapError, ObjectiveDirection, ResolutionError, Solution, SolutionStatus, SolverModel,
     },
@@ -279,7 +279,7 @@ impl CardinalityConstraintSolver for SCIPProblem {
         let scip_vars: Vec<&russcip::Variable> = vars.iter().map(|v| &id_for_var[v]).collect();
         let index = model.n_conss() + 1;
         model.add_cons_cardinality(scip_vars, rhs, format!("cardinality{}", index).as_str());
-        ConstraintReference { index }
+        ConstraintReference::with_direction(index, ConstraintDirection::LessOrEqual)
     }
 }
 
@@ -316,8 +316,10 @@ impl SolverModel for SCIPProblem {
     }
 
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
+        let reference_index = self.model.n_conss() + 1;
+        let reference = c.reference(reference_index);
         let constant = -c.expression.constant;
-        let lhs = match c.is_equality {
+        let lhs = match c.is_equality() {
             true => constant,
             false => -f64::INFINITY,
         };
@@ -331,16 +333,15 @@ impl SolverModel for SCIPProblem {
             coeffs.push(coeff);
         }
 
-        let index = self.model.n_conss() + 1;
         self.model.add_cons(
             vars_in_cons,
             &coeffs,
             lhs,
             constant,
-            format!("c{}", index).as_str(),
+            format!("c{}", reference_index).as_str(),
         );
 
-        ConstraintReference { index }
+        reference
     }
 
     fn name() -> &'static str {

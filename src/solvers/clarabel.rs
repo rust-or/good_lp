@@ -134,13 +134,14 @@ impl SolverModel for ClarabelProblem {
     }
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+        let reference = constraint.reference(self.constraint_values.len());
+        let is_equality = constraint.is_equality();
         self.constraints_matrix_builder
             .add_row(constraint.expression.linear);
-        let index = self.constraint_values.len();
         self.constraint_values.push(-constraint.expression.constant);
         // Cones indicate the type of constraint. We only support nonnegative and equality constraints.
         // To avoid creating a new cone for each constraint, we merge them.
-        let next_cone = if constraint.is_equality {
+        let next_cone = if is_equality {
             ZeroConeT(1)
         } else {
             NonnegativeConeT(1)
@@ -151,7 +152,7 @@ impl SolverModel for ClarabelProblem {
             (Some(NonnegativeConeT(a)), NonnegativeConeT(b)) => *a += b,
             (_, next_cone) => self.cones.push(next_cone),
         };
-        ConstraintReference { index }
+        reference
     }
 
     fn name() -> &'static str {
@@ -195,7 +196,7 @@ impl<'a> SolutionWithDual<'a> for ClarabelSolution {
 
 impl DualValues for &ClarabelSolution {
     fn dual(&self, constraint: ConstraintReference) -> f64 {
-        self.solution.z[constraint.index]
+        self.solution.z[constraint.index] * constraint.dual_sign()
     }
 }
 

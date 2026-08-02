@@ -350,19 +350,21 @@ impl SolverModel for HighsProblem {
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
         let index = self.highs_problem.num_rows();
+        let reference = constraint.reference(index);
+        let is_equality = constraint.is_equality();
         let upper_bound = -constraint.expression.constant();
         let columns = &self.columns;
         let factors = constraint
             .expression
             .linear_coefficients()
             .map(|(variable, factor)| (columns[variable.index()], factor));
-        if constraint.is_equality {
+        if is_equality {
             self.highs_problem
                 .add_row(upper_bound..=upper_bound, factors);
         } else {
             self.highs_problem.add_row(..=upper_bound, factors);
         }
-        ConstraintReference { index }
+        reference
     }
 
     fn name() -> &'static str {
@@ -411,7 +413,7 @@ impl Solution for HighsSolution {
 
 impl DualValues for &HighsSolution {
     fn dual(&self, constraint: ConstraintReference) -> f64 {
-        self.solution.dual_rows()[constraint.index]
+        self.solution.dual_rows()[constraint.index] * constraint.dual_sign()
     }
 }
 

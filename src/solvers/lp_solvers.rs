@@ -114,14 +114,12 @@ impl<T: SolverTrait> SolverModel for Model<T> {
     }
 
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
-        let reference = ConstraintReference {
-            index: self.problem.constraints.len(),
-        };
+        let reference = c.reference(self.problem.constraints.len());
         self.problem
             .constraints
             .push(lp_solvers::lp_format::Constraint {
                 lhs: linear_coefficients_str(&c.expression, &self.problem.variables),
-                operator: if c.is_equality {
+                operator: if c.is_equality() {
                     Ordering::Equal
                 } else {
                     Ordering::Less

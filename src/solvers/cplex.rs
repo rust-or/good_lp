@@ -129,6 +129,7 @@ impl SolverModel for CPLEXProblem {
     }
 
     fn add_constraint(&mut self, c: Constraint) -> ConstraintReference {
+        let direction = c.direction;
         let rhs = -c.expression.constant;
         let weighted_variables = c
             .expression
@@ -137,7 +138,7 @@ impl SolverModel for CPLEXProblem {
             .iter()
             .map(|(var, &coeff)| (self.id_for_var[var], coeff))
             .collect::<Vec<_>>();
-        let con_type = if c.is_equality {
+        let con_type = if c.is_equality() {
             ConstraintType::Eq
         } else {
             ConstraintType::LessThanEq
@@ -149,9 +150,7 @@ impl SolverModel for CPLEXProblem {
             .add_constraint(cplex_con)
             .expect("Unable to add constraint to cplex model, aborting");
 
-        ConstraintReference {
-            index: con_index.into_inner(),
-        }
+        ConstraintReference::with_direction(con_index.into_inner(), direction)
     }
 
     fn name() -> &'static str {

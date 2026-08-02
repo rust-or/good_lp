@@ -9,17 +9,40 @@ use std::ops::{Shl, Shr, Sub};
 pub struct Constraint {
     /// The expression that is constrained to be null or negative
     pub(crate) expression: Expression,
-    /// if is_equality, represents expression == 0, otherwise, expression <= 0
-    pub(crate) is_equality: bool,
+    /// The direction of the constraint before it is normalized for a solver.
+    pub(crate) direction: ConstraintDirection,
     /// Optional constraint name
     pub(crate) name: Option<String>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ConstraintDirection {
+    LessOrEqual,
+    Equal,
+    GreaterOrEqual,
+}
+
+impl ConstraintDirection {
+    fn is_equality(self) -> bool {
+        matches!(self, Self::Equal)
+    }
+
+    #[cfg(any(feature = "highs", feature = "clarabel"))]
+    fn dual_sign(self) -> f64 {
+        // `>=` constraints are normalized by reversing the expression and its RHS.
+        if matches!(self, Self::GreaterOrEqual) {
+            -1.
+        } else {
+            1.
+        }
+    }
+}
+
 impl Constraint {
-    fn new(expression: Expression, is_equality: bool) -> Constraint {
+    fn new(expression: Expression, direction: ConstraintDirection) -> Constraint {
         Constraint {
             expression,
-            is_equality,
+            direction,
             name: None,
         }
     }
@@ -35,9 +58,13 @@ impl Constraint {
         &self.expression
     }
 
-    /// if is_equality, represents expression == 0, otherwise, expression <= 0
+    /// Returns whether this constraint is an equality.
     pub fn is_equality(&self) -> bool {
-        self.is_equality
+        self.direction.is_equality()
+    }
+
+    pub(crate) fn reference(&self, index: usize) -> ConstraintReference {
+        ConstraintReference::with_direction(index, self.direction)
     }
 
     /// get the constraint name, if it exists.
@@ -52,7 +79,15 @@ impl FormatWithVars for Constraint {
         FUN: FnMut(&mut Formatter<'_>, Variable) -> std::fmt::Result,
     {
         self.expression.linear.format_with(f, variable_format)?;
-        write!(f, " {} ", if self.is_equality { "=" } else { "<=" })?;
+        write!(
+            f,
+            " {} ",
+            if self.direction.is_equality() {
+                "="
+            } else {
+                "<="
+            }
+        )?;
         write!(f, "{}", -self.expression.constant)
     }
 }
@@ -65,17 +100,18 @@ impl Debug for Constraint {
 
 /// equals
 pub fn eq<B, A: Sub<B, Output = Expression>>(a: A, b: B) -> Constraint {
-    Constraint::new(a - b, true)
+    Constraint::new(a - b, ConstraintDirection::Equal)
 }
 
 /// less than or equal
 pub fn leq<B, A: Sub<B, Output = Expression>>(a: A, b: B) -> Constraint {
-    Constraint::new(a - b, false)
+    Constraint::new(a - b, ConstraintDirection::LessOrEqual)
 }
 
 /// greater than or equal
 pub fn geq<A, B: Sub<A, Output = Expression>>(a: A, b: B) -> Constraint {
-    leq(b, a)
+    // Keep the original direction so dual values can be mapped back after normalization.
+    Constraint::new(b - a, ConstraintDirection::GreaterOrEqual)
 }
 
 macro_rules! impl_shifts {
@@ -158,10 +194,38 @@ macro_rules! constraint {
     };
 }
 
-#[derive(Clone, PartialEq, Debug)]
-/// A constraint reference contains the sequence id of the constraint within the problem
+#[derive(Clone)]
+/// A constraint reference contains the sequence id and direction of a constraint within the problem.
 pub struct ConstraintReference {
     pub(crate) index: usize,
+    // This metadata is consumed by the dual-capable solver integrations.
+    #[allow(dead_code)]
+    direction: ConstraintDirection,
+}
+
+impl ConstraintReference {
+    pub(crate) fn with_direction(index: usize, direction: ConstraintDirection) -> Self {
+        Self { index, direction }
+    }
+
+    #[cfg(any(feature = "highs", feature = "clarabel"))]
+    pub(crate) fn dual_sign(&self) -> f64 {
+        self.direction.dual_sign()
+    }
+}
+
+impl PartialEq for ConstraintReference {
+    fn eq(&self, other: &Self) -> bool {
+        self.index == other.index
+    }
+}
+
+impl Debug for ConstraintReference {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ConstraintReference")
+            .field("index", &self.index)
+            .finish()
+    }
 }
 
 #[cfg(test)]

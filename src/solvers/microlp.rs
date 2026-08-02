@@ -153,7 +153,8 @@ impl SolverModel for MicroLpProblem {
 
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
         let index = self.n_constraints;
-        let op = match constraint.is_equality {
+        let reference = constraint.reference(index);
+        let op = match constraint.is_equality() {
             true => microlp::ComparisonOp::Eq,
             false => microlp::ComparisonOp::Le,
         };
@@ -164,7 +165,7 @@ impl SolverModel for MicroLpProblem {
         }
         self.problem.add_constraint(linear_expr, op, constant);
         self.n_constraints += 1;
-        ConstraintReference { index }
+        reference
     }
 
     fn name() -> &'static str {
