@@ -89,13 +89,11 @@ impl SolverModel for LpSolveProblem {
             SolveStatus::NoFeasibleFound => Err(Other("NoFeasibleFound")),
             _ => {
                 let mut solution = vec![0.; self.0.num_cols() as usize];
-                let truncated = self
-                    .0
+                self.0
                     .get_solution_variables(&mut solution)
                     .ok_or(ResolutionError::Other(
                         "Failed to read solution variables from lp_solve",
-                    ))
-                    .map(|truncated| truncated.to_vec());
+                    ))?;
 
                 Ok(LpSolveSolution {
                     problem: self.0,
@@ -108,11 +106,12 @@ impl SolverModel for LpSolveProblem {
     fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
         let index = self.0.num_rows().try_into().expect("too many rows");
         let mut coeffs: Vec<f64> = vec![0.; self.0.num_cols() as usize + 1];
+        let is_equality = constraint.is_equality();
         let target = -constraint.expression.constant;
         for (var, coeff) in constraint.expression.linear_coefficients() {
             coeffs[var.index() + 1] = coeff;
         }
-        let constraint_type = if constraint.is_equality() {
+        let constraint_type = if is_equality {
             ConstraintType::Eq
         } else {
             ConstraintType::Le
