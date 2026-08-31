@@ -412,7 +412,10 @@ impl ProblemVariables {
         Variable::at(index)
     }
 
-    /// Adds many variables with the given definitions
+    /// Adds many variables with the given definitions.
+    ///
+    /// Variables receive indices in iterator order. To construct a deterministic model, pass an
+    /// iterator with a deterministic order rather than an unordered collection.
     ///
     /// ```
     /// use good_lp::*;
@@ -522,7 +525,7 @@ impl ProblemVariables {
         self.optimise(ObjectiveDirection::Minimisation, objective)
     }
 
-    /// Iterates over the couples of variables with their properties
+    /// Iterates over the couples of variables with their properties, in variable-index order.
     pub fn iter_variables_with_def(&self) -> impl Iterator<Item = (Variable, &VariableDefinition)> {
         self.variables
             .iter()
@@ -688,5 +691,32 @@ impl Not for Variable {
 
     fn not(self) -> Self::Output {
         1. - self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn add_all_assigns_variables_in_iterator_order() {
+        let mut variables = ProblemVariables::new();
+        let added: Vec<_> = variables.add_all([
+            variable().name("first"),
+            variable().name("second"),
+            variable().name("third"),
+        ]);
+
+        assert_eq!(
+            added.iter().map(Variable::index).collect::<Vec<_>>(),
+            [0, 1, 2]
+        );
+        assert_eq!(
+            variables
+                .iter_variables_with_def()
+                .map(|(_, definition)| definition.get_name())
+                .collect::<Vec<_>>(),
+            ["first", "second", "third"]
+        );
     }
 }

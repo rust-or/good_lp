@@ -199,7 +199,10 @@ pub trait SolverModel {
         self
     }
 
-    /// Takes a model and adds a list of constraints to it
+    /// Takes a model and adds a list of constraints to it, in iterator order.
+    ///
+    /// Constraint order can affect a solver's result for problems with multiple optimal
+    /// solutions. Pass an iterator with a deterministic order when reproducibility matters.
     ///
     /// # Examples
     /// ```rust
@@ -224,7 +227,10 @@ pub trait SolverModel {
         self
     }
 
-    /// Find the solution for the problem being modeled
+    /// Find the solution for the problem being modeled.
+    ///
+    /// This function returns deterministic results only when the underlying solver guarantees
+    /// deterministic results. good_lp does not make a general solver determinism guarantee.
     fn solve(self) -> Result<Self::Solution, Self::Error>;
 
     /// Adds a constraint to the Model and returns a reference to the index
@@ -512,4 +518,45 @@ pub trait WithMipGap {
     fn with_mip_gap(self, mip_gap: f32) -> Result<Self, MipGapError>
     where
         Self: Sized;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::variables;
+
+    #[derive(Default)]
+    struct RecordingModel {
+        constants: Vec<f64>,
+    }
+
+    impl SolverModel for RecordingModel {
+        type Solution = HashMap<Variable, f64>;
+        type Error = ResolutionError;
+
+        fn solve(self) -> Result<Self::Solution, Self::Error> {
+            unreachable!("this test only verifies model construction")
+        }
+
+        fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+            let index = self.constants.len();
+            self.constants.push(constraint.expression.constant);
+            ConstraintReference { index }
+        }
+
+        fn name() -> &'static str {
+            "recording"
+        }
+    }
+
+    #[test]
+    fn with_all_adds_constraints_in_iterator_order() {
+        variables! {variables:
+            x;
+            y;
+        }
+        let model = RecordingModel::default().with_all([x << 1, y << 2]);
+
+        assert_eq!(model.constants, [-1., -2.]);
+    }
 }

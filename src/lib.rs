@@ -32,6 +32,18 @@
 //! This crate supports multiple solvers,
 //! that can be activated using [feature flags](https://docs.rs/crate/good_lp/latest/features).
 //!
+//! ## Determinism
+//!
+//! good_lp guarantees deterministic model construction when variables, coefficients, and
+//! constraints are supplied in a deterministic order. In particular, the iterator order passed to
+//! [ProblemVariables::add_all] and [SolverModel::with_all] determines the order in the
+//! generated model. Do not pass an unordered collection such as a
+//! [`std::collections::HashMap`] directly to these APIs when model order matters.
+//!
+//! A call to [SolverModel::solve] returns deterministic results only when the underlying solver
+//! guarantees deterministic results. good_lp does not make this guarantee for any solver; see
+//! the documentation for its solver factory.
+//!
 //! ## Usage
 //!
 //! You initially create your variables using [variables] and [ProblemVariables::add].
