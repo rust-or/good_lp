@@ -693,3 +693,30 @@ impl Not for Variable {
         1. - self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn add_all_assigns_variables_in_iterator_order() {
+        let mut variables = ProblemVariables::new();
+        let added: Vec<_> = variables.add_all([
+            variable().name("first"),
+            variable().name("second"),
+            variable().name("third"),
+        ]);
+
+        assert_eq!(
+            added.iter().map(Variable::index).collect::<Vec<_>>(),
+            [0, 1, 2]
+        );
+        assert_eq!(
+            variables
+                .iter_variables_with_def()
+                .map(|(_, definition)| definition.get_name())
+                .collect::<Vec<_>>(),
+            ["first", "second", "third"]
+        );
+    }
+}

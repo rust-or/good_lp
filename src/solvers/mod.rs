@@ -519,3 +519,44 @@ pub trait WithMipGap {
     where
         Self: Sized;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::variables;
+
+    #[derive(Default)]
+    struct RecordingModel {
+        constants: Vec<f64>,
+    }
+
+    impl SolverModel for RecordingModel {
+        type Solution = HashMap<Variable, f64>;
+        type Error = ResolutionError;
+
+        fn solve(self) -> Result<Self::Solution, Self::Error> {
+            unreachable!("this test only verifies model construction")
+        }
+
+        fn add_constraint(&mut self, constraint: Constraint) -> ConstraintReference {
+            let index = self.constants.len();
+            self.constants.push(constraint.expression.constant);
+            ConstraintReference { index }
+        }
+
+        fn name() -> &'static str {
+            "recording"
+        }
+    }
+
+    #[test]
+    fn with_all_adds_constraints_in_iterator_order() {
+        variables! {variables:
+            x;
+            y;
+        }
+        let model = RecordingModel::default().with_all([x << 1, y << 2]);
+
+        assert_eq!(model.constants, [-1., -2.]);
+    }
+}
