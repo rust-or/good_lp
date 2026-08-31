@@ -85,16 +85,17 @@ which uses `ProblemVariables::new`, `Variable`, `Expression` and
 This library offers an abstraction over multiple solvers. By default, it uses [cbc][cbc], but
 you can also activate other solvers using cargo features.
 
-| solver feature name    | integer variables | no C compiler\* | no additional libs\*   | fast\* | WASM\* |
-| ---------------------- | ----------------- | --------------- | ---------------------- | ---- | ---- |
-| [`coin_cbc`][cbc]      | ✅                | ✅              | ❌                     | ✅   | ❌   |
-| [`highs`][highs]       | ✅                | ❌              | ✅¹                    | ✅   | ❌   |
-| [`lpsolve`][lpsolve]   | ✅                | ❌              | ✅                     | ❌   | ❌   |
-| [`microlp`][microlp]   | ✅                | ✅              | ✅                     | ❌   | ✅   |
-| [`lp-solvers`][lps]    | ✅                | ✅              | ✅                     | ❌   | ❌   |
-| [`scip`][scip]         | ✅                | ✅              | ✅²                    | ✅   | ❌   |
-| [`cplex-rs`][cplex]    | ✅                | ❌              | ✅³                    | ✅   | ❌   |
-| [`clarabel`][clarabel] | ❌                | ✅              | ✅                     | ✅   | ✅   |
+| solver feature name    | integer variables | continuous variables | no C compiler\* | no additional libs\*   | fast\* | WASM\* |
+| ---------------------- | ----------------- | -------------------- | --------------- | ---------------------- | ---- | ---- |
+| [`coin_cbc`][cbc]      | ✅                | ✅                   | ✅              | ❌                     | ✅   | ❌   |
+| [`highs`][highs]       | ✅                | ✅                   | ❌              | ✅¹                    | ✅   | ❌   |
+| [`lpsolve`][lpsolve]   | ✅                | ✅                   | ❌              | ✅                     | ❌   | ❌   |
+| [`microlp`][microlp]   | ✅                | ✅                   | ✅              | ✅                     | ❌   | ✅   |
+| [`lp-solvers`][lps]    | ✅                | ✅                   | ✅              | ✅                     | ❌   | ❌   |
+| [`scip`][scip]         | ✅                | ✅                   | ✅              | ✅²                    | ✅   | ❌   |
+| [`cplex-rs`][cplex]    | ✅                | ✅                   | ❌              | ✅³                    | ✅   | ❌   |
+| [`clarabel`][clarabel] | ❌                | ✅                   | ✅              | ✅                     | ✅   | ✅   |
+| [`cp_sat`][cp_sat]     | ✅                | ❌                   | ❌              | ❌                     | ✅   | ❌   |
 
 - \* *no C compiler*: builds with only cargo, without requiring you to install a C compiler
 - \* *no additional libs*: works without additional libraries at runtime, all the dependencies are statically linked
@@ -225,6 +226,25 @@ It does implement the [SolutionWithDual](https://docs.rs/good_lp/latest/good_lp/
 trait, which allows you to access the dual values of the constraints (the shadow prices).
 
 [clarabel]: https://github.com/oxfordcontrol/Clarabel.rs
+
+### [CP-SAT][cp_sat]
+
+[CP-SAT](https://developers.google.com/optimization/cp/cp_solver) is Google's fast constraint programming solver,
+part of [OR-Tools](https://developers.google.com/optimization). It is one of the fastest open-source solvers
+for combinatorial (integer) optimization problems, supporting both integer and boolean variables.
+CP-SAT does **not** support continuous (floating-point) variables; using a non-integer variable will cause a panic.
+
+good_lp uses the [cp_sat crate](https://crates.io/crates/cp_sat) to call the OR-Tools CP-SAT solver
+through its C++ API.
+
+To use CP-SAT, you must install the OR-Tools shared library on your system.
+See the [OR-Tools installation guide](https://developers.google.com/optimization/install) for instructions.
+The cp_sat crate automatically discovers OR-Tools installed in standard locations (`/usr/local`, `/usr`,
+`/opt/ortools`, etc.) or via the `ORTOOLS_PREFIX` environment variable.
+
+If you get a runtime error like `error while loading shared libraries: libortools.so.9`, add your OR-Tools library directory to `LD_LIBRARY_PATH`, or configure the runtime linker via `ldconfig`. The `cp_sat` crate's build script embeds the OR-Tools library path into the binary, but due to a [cargo limitation](https://github.com/rust-lang/cargo/issues/12843) this does not propagate to downstream projects, causing problems on systems where the installation location is not in the default search path.
+
+[cp_sat]: https://developers.google.com/optimization/cp/cp_solver
 
 ## Variable types
 
