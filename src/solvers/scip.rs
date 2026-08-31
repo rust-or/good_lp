@@ -25,10 +25,6 @@ use crate::{Constraint, Variable};
 
 /// The [SCIP](https://scipopt.org) solver,
 /// to be used with [UnsolvedProblem::using].
-///
-/// ## Determinism
-///
-/// good_lp makes no determinism guarantee for this solver.
 pub fn scip(to_solve: UnsolvedProblem) -> SCIPProblem {
     let mut model = Model::new()
         .hide_output()

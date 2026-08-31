@@ -21,10 +21,6 @@ use crate::{
 
 /// The Cbc [COIN-OR](https://www.coin-or.org/) solver library.
 /// To be passed to [`UnsolvedProblem::using`](crate::variable::UnsolvedProblem::using)
-///
-/// ## Determinism
-///
-/// good_lp makes no determinism guarantee for this solver.
 pub fn coin_cbc(to_solve: UnsolvedProblem) -> CoinCbcProblem {
     let UnsolvedProblem {
         objective,

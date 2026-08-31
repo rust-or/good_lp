@@ -41,6 +41,15 @@ For a more complex example, see the [resource allocation problem](https://github
   There is no solving algorithm in good_lp itself. If you have an issue with a solver,
   report it to the solver directly. See below for the list of supported solvers.
 
+## Determinism
+
+good_lp deterministically constructs a model when variables, coefficients, and constraints are
+supplied in a deterministic order. In particular, an unordered collection such as a `HashMap`
+can make the order of dynamically added variables or constraints non-deterministic.
+
+To the best of our knowledge, none of the supported solvers provides a determinism guarantee.
+Consequently, good_lp makes no guarantee that solving a model returns deterministic results.
+
 ### Contributing
 
 Pull requests are welcome !

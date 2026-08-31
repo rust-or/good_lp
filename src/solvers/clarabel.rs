@@ -18,11 +18,6 @@ use clarabel::solver::{DefaultSolver, IPSolver};
 
 /// The [clarabel](https://oxfordcontrol.github.io/ClarabelDocs/stable/) solver,
 /// to be used with [UnsolvedProblem::using].
-///
-/// ## Determinism
-///
-/// Clarabel's documentation does not state a determinism guarantee. Therefore good_lp makes no
-/// determinism guarantee for this solver.
 pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
     let UnsolvedProblem {
         objective,

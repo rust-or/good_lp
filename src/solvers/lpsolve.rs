@@ -34,10 +34,6 @@ fn col_num(var: Variable) -> c_int {
 
 /// The [lp_solve](http://lpsolve.sourceforge.net/5.5/) open-source solver library.
 /// lp_solve is released under the LGPL license.
-///
-/// ## Determinism
-///
-/// good_lp makes no determinism guarantee for this solver.
 pub fn lp_solve(to_solve: UnsolvedProblem) -> LpSolveProblem {
     let UnsolvedProblem {
         objective,

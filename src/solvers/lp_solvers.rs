@@ -18,11 +18,7 @@ use crate::{
     Solver, SolverModel, Variable,
 };
 
-/// An external solver.
-///
-/// ## Determinism
-///
-/// good_lp makes no determinism guarantee for external solvers.
+/// An external solver
 pub struct LpSolver<T: lp_solvers::solvers::SolverTrait>(pub T);
 
 impl<T: lp_solvers::solvers::SolverTrait + Clone> Solver for LpSolver<T> {
