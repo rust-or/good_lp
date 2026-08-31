@@ -32,6 +32,18 @@
 //! This crate supports multiple solvers,
 //! that can be activated using [feature flags](https://docs.rs/crate/good_lp/latest/features).
 //!
+//! ## Determinism
+//!
+//! Model construction is deterministic when variables, coefficients, and constraints are
+//! supplied in a deterministic order. In particular, the iterator order passed to
+//! [ProblemVariables::add_all] and [SolverModel::with_all] determines the order in the
+//! generated model. Do not pass an unordered collection such as a
+//! [`std::collections::HashMap`] directly to these APIs when model order matters.
+//!
+//! Solver determinism depends on the selected backend; see the documentation for its solver
+//! factory. Floating-point results are not guaranteed to be bit-for-bit identical across
+//! platforms or dependency versions.
+//!
 //! ## Usage
 //!
 //! You initially create your variables using [variables] and [ProblemVariables::add].

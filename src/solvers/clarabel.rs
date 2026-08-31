@@ -18,6 +18,13 @@ use clarabel::solver::{DefaultSolver, IPSolver};
 
 /// The [clarabel](https://oxfordcontrol.github.io/ClarabelDocs/stable/) solver,
 /// to be used with [UnsolvedProblem::using].
+///
+/// ## Determinism
+///
+/// With the same ordered model and settings, this solver deterministically constructs and
+/// solves the same Clarabel problem. good_lp enables Clarabel's single-threaded QDLDL linear
+/// solver by default. This does not guarantee bit-for-bit identical floating-point results
+/// across platforms or Clarabel versions.
 pub fn clarabel(to_solve: UnsolvedProblem) -> ClarabelProblem {
     let UnsolvedProblem {
         objective,
@@ -296,7 +303,7 @@ fn fast_flatten_vecs<T: Copy>(vecs: Vec<Vec<T>>) -> Vec<T> {
 mod tests {
 
     use super::*;
-    use crate::variables;
+    use crate::{Solution, SolverModel, variables};
 
     #[test]
     fn test_csc_matrix_builder() {
@@ -321,5 +328,22 @@ mod tests {
         assert_eq!(matrix.get_entry((1, 0)), Some(3.));
         assert_eq!(matrix.get_entry((1, 1)), Some(4.));
         assert_eq!(matrix.get_entry((1, 2)), Some(5.));
+    }
+
+    #[test]
+    fn solving_the_same_model_is_deterministic() {
+        fn solve() -> [u64; 2] {
+            variables! {vars:
+                0 <= x <= 1;
+                0 <= y <= 2;
+            }
+            let solution = vars.maximise(x + 2 * y).using(clarabel).solve().unwrap();
+            [solution.value(x).to_bits(), solution.value(y).to_bits()]
+        }
+
+        let expected = solve();
+        for _ in 0..10 {
+            assert_eq!(solve(), expected);
+        }
     }
 }

@@ -199,7 +199,10 @@ pub trait SolverModel {
         self
     }
 
-    /// Takes a model and adds a list of constraints to it
+    /// Takes a model and adds a list of constraints to it, in iterator order.
+    ///
+    /// Constraint order can affect a solver's result for problems with multiple optimal
+    /// solutions. Pass an iterator with a deterministic order when reproducibility matters.
     ///
     /// # Examples
     /// ```rust

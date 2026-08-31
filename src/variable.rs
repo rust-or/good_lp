@@ -412,7 +412,10 @@ impl ProblemVariables {
         Variable::at(index)
     }
 
-    /// Adds many variables with the given definitions
+    /// Adds many variables with the given definitions.
+    ///
+    /// Variables receive indices in iterator order. To construct a deterministic model, pass an
+    /// iterator with a deterministic order rather than an unordered collection.
     ///
     /// ```
     /// use good_lp::*;
@@ -522,7 +525,7 @@ impl ProblemVariables {
         self.optimise(ObjectiveDirection::Minimisation, objective)
     }
 
-    /// Iterates over the couples of variables with their properties
+    /// Iterates over the couples of variables with their properties, in variable-index order.
     pub fn iter_variables_with_def(&self) -> impl Iterator<Item = (Variable, &VariableDefinition)> {
         self.variables
             .iter()
