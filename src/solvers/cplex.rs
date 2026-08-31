@@ -14,6 +14,10 @@ use super::ObjectiveDirection;
 
 /// The [CPLEX](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer) solver,
 /// to be used with [UnsolvedProblem::using].
+///
+/// ## Determinism
+///
+/// good_lp makes no determinism guarantee for this solver.
 pub fn cplex(to_solve: UnsolvedProblem) -> CPLEXProblem {
     cplex_with_env(
         to_solve,
@@ -23,6 +27,10 @@ pub fn cplex(to_solve: UnsolvedProblem) -> CPLEXProblem {
 
 /// The [CPLEX](https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer) solver,
 /// with an additional cplex_env parameter to specify the CPLEX enviroment
+///
+/// ## Determinism
+///
+/// good_lp makes no determinism guarantee for this solver.
 pub fn cplex_with_env(to_solve: UnsolvedProblem, cplex_env: Environment) -> CPLEXProblem {
     let mut model = Problem::new(cplex_env, "cplex problem")
         .expect("Unable to create cplex model")

@@ -227,7 +227,10 @@ pub trait SolverModel {
         self
     }
 
-    /// Find the solution for the problem being modeled
+    /// Find the solution for the problem being modeled.
+    ///
+    /// This function returns deterministic results only when the underlying solver guarantees
+    /// deterministic results. good_lp does not make a general solver determinism guarantee.
     fn solve(self) -> Result<Self::Solution, Self::Error>;
 
     /// Adds a constraint to the Model and returns a reference to the index

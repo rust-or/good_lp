@@ -16,6 +16,10 @@ use crate::{
 
 /// The [microlp](https://docs.rs/microlp) solver,
 /// to be used with [UnsolvedProblem::using].
+///
+/// ## Determinism
+///
+/// good_lp makes no determinism guarantee for this solver.
 pub fn microlp(to_solve: UnsolvedProblem) -> MicroLpProblem {
     let UnsolvedProblem {
         objective,

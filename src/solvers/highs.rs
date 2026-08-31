@@ -19,6 +19,10 @@ use std::iter::FromIterator;
 ///
 /// This solver does not support integer variables and will panic
 /// if given a problem with integer variables.
+///
+/// ## Determinism
+///
+/// good_lp makes no determinism guarantee for this solver.
 pub fn highs(to_solve: UnsolvedProblem) -> HighsProblem {
     let mut highs_problem = highs::RowProblem::default();
     let sense = match to_solve.direction {
