@@ -159,6 +159,11 @@ You will need a C compiler, but you shouldn't have to install any additional lib
 (it depends only on the C++ standard library).
 More information in the [highs-sys crate](https://crates.io/crates/highs-sys).
 
+> **Warning:** HiGHS can report `UnboundedOrInfeasible` for a mixed-integer model when it cannot
+> distinguish between the two statuses. The generic `SolverModel::solve` method maps this status
+> to `ResolutionError::Infeasible`. Use `HighsProblem::solve_with_highs_status` when this
+> distinction matters.
+
 [highs]: https://highs.dev
 
 ### [lpsolve][lpsolve]
