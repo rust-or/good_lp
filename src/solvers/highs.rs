@@ -188,6 +188,18 @@ pub struct HighsProblem {
 }
 
 impl HighsProblem {
+    /// Solve this model and return the status reported by HiGHS.
+    ///
+    /// # Warning
+    ///
+    /// HiGHS may report [`HighsModelStatus::UnboundedOrInfeasible`] for a mixed-integer
+    /// model when it cannot distinguish between the two statuses. The generic
+    /// [`SolverModel::solve`] method maps that status to [`ResolutionError::Infeasible`].
+    /// Use this method when that distinction matters.
+    pub fn solve_with_highs_status(self) -> Result<HighsModelStatus, ResolutionError> {
+        self.solve_inner().map(|solved| solved.status())
+    }
+
     /// Get a highs model for this problem. Panics if the problem is invalid.
     pub fn into_inner(self) -> highs::Model {
         self.try_into_inner().expect("HiGHS error: invalid problem")
@@ -261,13 +273,8 @@ impl HighsProblem {
     pub fn set_threads(self, threads: u32) -> HighsProblem {
         self.set_option("threads", threads as i32)
     }
-}
 
-impl SolverModel for HighsProblem {
-    type Solution = HighsSolution;
-    type Error = ResolutionError;
-
-    fn solve(mut self) -> Result<Self::Solution, Self::Error> {
+    fn solve_inner(mut self) -> Result<highs::SolvedModel, ResolutionError> {
         let verbose = self.verbose;
         let options = std::mem::take(&mut self.options);
         let initial_solution = self.initial_solution.as_ref().map(|pairs| {
@@ -304,9 +311,18 @@ impl SolverModel for HighsProblem {
             model.set_solution(initial_solution.as_deref(), None, None, None);
         }
 
-        let solved = model
+        model
             .try_solve()
-            .map_err(|e| ResolutionError::Str(format!("HiGHS error while solving model: {e:?}")))?;
+            .map_err(|e| ResolutionError::Str(format!("HiGHS error while solving model: {e:?}")))
+    }
+}
+
+impl SolverModel for HighsProblem {
+    type Solution = HighsSolution;
+    type Error = ResolutionError;
+
+    fn solve(self) -> Result<Self::Solution, Self::Error> {
+        let solved = self.solve_inner()?;
 
         let status = match solved.status() {
             HighsModelStatus::NotSet => return Err(ResolutionError::Other("NotSet")),
@@ -453,6 +469,19 @@ mod tests {
         solvers::{SolutionStatus, WithTimeLimit},
         variable, variables,
     };
+    use highs::HighsModelStatus;
+
+    #[test]
+    fn can_get_highs_model_status() {
+        variables! { vars: 0 <= x (integer); }
+        let status = vars
+            .minimise(-x)
+            .using(highs)
+            .solve_with_highs_status()
+            .unwrap();
+
+        assert_eq!(status, HighsModelStatus::UnboundedOrInfeasible);
+    }
 
     #[test]
     fn can_solve_with_time_limit() {
