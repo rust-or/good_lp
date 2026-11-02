@@ -94,6 +94,7 @@ pub fn microlp(to_solve: UnsolvedProblem) -> MicroLpProblem {
         n_constraints: 0,
         mip_gap: None,
         time_limit: None,
+        presolve: true,
         initial_solution: (!initial_solution.is_empty()).then_some(initial_solution),
         construction_error,
     }
@@ -106,6 +107,7 @@ pub struct MicroLpProblem {
     n_constraints: usize,
     mip_gap: Option<f32>,
     time_limit: Option<f64>,
+    presolve: bool,
     initial_solution: Option<Vec<(microlp::Variable, f64)>>,
     construction_error: Option<ResolutionError>,
 }
@@ -114,6 +116,16 @@ impl MicroLpProblem {
     /// Get the inner microlp model
     pub fn as_inner(&self) -> &microlp::Problem {
         &self.problem
+    }
+
+    /// Sets whether microlp presolves the problem before solving it (on by default).
+    /// Presolve tightens the bounds of integer variables and drops redundant constraints,
+    /// which usually speeds up the search. It also fixes integer variables that the objective
+    /// gives no reason to move, so when several solutions are optimal, turning it off can
+    /// change which one is returned.
+    pub fn set_presolve(mut self, presolve: bool) -> MicroLpProblem {
+        self.presolve = presolve;
+        self
     }
 }
 
@@ -135,6 +147,7 @@ impl SolverModel for MicroLpProblem {
         let mut opts = SolveOptions::default();
         opts.mip_gap = self.mip_gap.unwrap_or(0.0) as f64;
         opts.time_limit = self.time_limit.map(Duration::from_secs_f64);
+        opts.presolve = self.presolve;
         opts.warm_start = self.initial_solution;
         // An interrupted outcome carries no variable values, so the time limit
         // expired before microlp found any feasible solution.
@@ -196,6 +209,8 @@ impl From<microlp::Error> for ResolutionError {
             microlp::Error::InvalidOperation(s) => Self::Str(s),
             microlp::Error::InvalidOptions(s) => Self::Str(s),
             microlp::Error::InternalError(s) => Self::Str(s),
+            // `microlp::Error` is non-exhaustive, keep the message of any new variant
+            other => Self::Str(other.to_string()),
         }
     }
 }
