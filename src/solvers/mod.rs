@@ -41,6 +41,10 @@ pub mod lp_solvers;
 #[cfg_attr(docsrs, doc(cfg(feature = "clarabel")))]
 pub mod clarabel;
 
+#[cfg(feature = "cp_sat")]
+#[cfg_attr(docsrs, doc(cfg(feature = "cp_sat")))]
+pub mod cp_sat;
+
 /// An entity that is able to solve linear problems
 pub trait Solver {
     /// The internal model type used by the solver
@@ -259,7 +263,7 @@ pub trait WithTimeLimit {
 
 /// Information about the status of a solution, such as whether the solution is
 /// optimal
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SolutionStatus {
     /// The solution is optimal
     Optimal,
